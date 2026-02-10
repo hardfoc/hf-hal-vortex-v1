@@ -12,10 +12,10 @@
  */
 
 #include "NtcTemperatureHandler.h"
-#include "utils-and-drivers/hf-core-drivers/external/hf-ntc-thermistor-driver/include/NtcThermistor.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "core/hf-core-drivers/external/hf-ntc-thermistor-driver/include/NtcThermistor.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
+#include "handlers/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 static const char* TAG = "NtcTempHandler";
 

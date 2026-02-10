@@ -1,7 +1,7 @@
 #include "EncoderManager.h"
 
 // As5047u handler for unified encoder interface
-#include "utils-and-drivers/driver-handlers/As5047uHandler.h"
+#include "handlers/As5047uHandler.h"
 
 // Communication manager for SPI access
 #include "CommChannelsManager.h"
@@ -10,17 +10,17 @@
 #include "GpioManager.h"
 
 // Logger for unified logging
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Logger.h"
 
 // Base interfaces
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseGpio.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseGpio.h"
 
 // Platform mapping for functional pin definitions
-#include "utils-and-drivers/hf-core-drivers/internal/hf-pincfg/include/hf_platform_mapping.hpp"
+#include "core/hf-core-drivers/internal/hf-pincfg/include/hf_platform_mapping.hpp"
 
 // RtosMutex for thread safety
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 
 // Standard library
 #include <iostream>

@@ -16,11 +16,11 @@
  * @copyright HardFOC
  */
 
-#include "component-handlers/TemperatureManager.h"
-#include "component-handlers/AdcManager.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/driver-handlers/Tmc9660Handler.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "managers/TemperatureManager.h"
+#include "managers/AdcManager.h"
+#include "handlers/Logger.h"
+#include "handlers/Tmc9660Handler.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>

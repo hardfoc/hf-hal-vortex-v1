@@ -36,7 +36,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include "utils-and-drivers/hf-core-drivers/external/hf-as5047u-driver/src/AS5047U.hpp"
+#include "core/hf-core-drivers/external/hf-as5047u-driver/src/AS5047U.hpp"
 #include "base/BaseSpi.h"
 #include "utils/RtosMutex.h"
 

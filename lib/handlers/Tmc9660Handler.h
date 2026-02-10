@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <memory>
 #include <array>
-#include "utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc/TMC9660.hpp"
-#include "utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc/TMC9660CommInterface.hpp"
+#include "core/hf-core-drivers/external/hf-tmc9660-driver/inc/TMC9660.hpp"
+#include "core/hf-core-drivers/external/hf-tmc9660-driver/inc/TMC9660CommInterface.hpp"
 #include "base/BaseGpio.h"
 #include "base/BaseAdc.h"
 #include "base/BaseTemperature.h"

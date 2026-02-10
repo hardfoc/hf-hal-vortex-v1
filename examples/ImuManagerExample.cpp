@@ -22,17 +22,17 @@
 #include "ImuManager.h"
 
 // BNO08x handler and types
-#include "utils-and-drivers/driver-handlers/Bno08xHandler.h"
+#include "handlers/Bno08xHandler.h"
 
 // Communication manager for device IDs
 #include "CommChannelsManager.h"
 
 // RTOS utilities
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 // Unified Logger
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Logger.h"
 
 static const char* TAG = "ImuManagerExample";
 

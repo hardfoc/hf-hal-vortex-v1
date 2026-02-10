@@ -21,14 +21,14 @@ This documentation index provides comprehensive access to all HardFOC HAL system
 ### Essential Documentation
 - **[🏠 Main README](README.md)** - Project overview and quick start guide
 - **[⚡ Quick Start Examples](#quick-start-examples)** - Get up and running in minutes
-- **[🔧 System Integration](API/README.md)** - Integration with existing projects
+- **[🔧 System Integration](lib/api/README.md)** - Integration with existing projects
 - **[⚙️ Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md)** - Hardware configuration guide
 
 ### Quick Start Examples
 
 ```cpp
 // Minimal HardFOC initialization
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 int main() {
     // Get the Vortex API instance
@@ -194,15 +194,15 @@ Driver handlers provide hardware-specific interfaces for individual devices. Eac
 ## 🔌 API Reference
 
 ### Public API Documentation
-- **[🔌 Complete API Reference](API/README.md)** - Full public API documentation
-- **[🚀 Integration Guide](API/README.md)** - System integration examples  
-- **[⚙️ System Initialization](API/README.md)** - Initialization procedures
+- **[🔌 Complete API Reference](lib/api/README.md)** - Full public API documentation
+- **[🚀 Integration Guide](lib/api/README.md)** - System integration examples  
+- **[⚙️ System Initialization](lib/api/README.md)** - Initialization procedures
 
 ### API Organization
 
 #### Core API Includes
 ```cpp
-#include "API/Vortex.h"                 // Unified Vortex API
+#include "api/Vortex.h"                 // Unified Vortex API
 ```
 
 #### Manager Access Patterns
@@ -307,7 +307,7 @@ private:
 
 ### Health Monitoring
 ```cpp
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Logger.h"
 
 // System health check
 auto& logger = Logger::GetInstance();

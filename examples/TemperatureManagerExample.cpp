@@ -16,10 +16,10 @@
  * @copyright HardFOC
  */
 
-#include "component-handlers/TemperatureManager.h"
-#include "component-handlers/AdcManager.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "managers/TemperatureManager.h"
+#include "managers/AdcManager.h"
+#include "handlers/Logger.h"
+#include "handlers/Logger.h"
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>

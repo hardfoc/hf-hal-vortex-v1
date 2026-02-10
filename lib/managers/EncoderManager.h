@@ -4,7 +4,7 @@
 #include <vector>
 #include <functional>
 #include <array>
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 
 // Forward declarations
 class As5047uHandler;

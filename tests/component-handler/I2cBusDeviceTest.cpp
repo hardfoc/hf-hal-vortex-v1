@@ -17,7 +17,7 @@
 #include <stdexcept>
 
 // Component managers
-#include "../component-handlers/CommChannelsManager.h"
+#include "managers/CommChannelsManager.h"
 
 // Test framework macros
 #define TEST_ASSERT(condition, message) \

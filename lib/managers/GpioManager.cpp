@@ -18,8 +18,8 @@
 #include "GpioManager.h"
 #include "CommChannelsManager.h"
 #include "MotorController.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspGpio.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspGpio.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 
 #include <algorithm>
 #include <cstring>

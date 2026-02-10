@@ -28,10 +28,10 @@
 #include <cmath>
 #include <functional>
 
-#include "component-handlers/EncoderManager.h"
-#include "component-handlers/CommChannelsManager.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "managers/EncoderManager.h"
+#include "managers/CommChannelsManager.h"
+#include "handlers/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 // Example configuration
 constexpr uint8_t EXAMPLE_RUNTIME_SECONDS = 30;

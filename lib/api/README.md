@@ -42,7 +42,7 @@ The initialization order is carefully managed to handle dependencies:
 ### Basic Usage
 
 ```cpp
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 // Get the Vortex API instance
 auto& vortex = Vortex::GetInstance();
@@ -289,7 +289,7 @@ See `examples/VortexApiExample.cpp` for a comprehensive demonstration of all Vor
 ### Minimal Example
 
 ```cpp
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 extern "C" void app_main(void) {
     // Get Vortex API instance

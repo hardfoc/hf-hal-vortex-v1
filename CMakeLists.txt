@@ -12,11 +12,11 @@ set(HF_HAL_ROOT ${CMAKE_CURRENT_LIST_DIR})
 #==============================================================================
 
 # Expose external drivers as components for header access
-list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/")
-list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-ws2812-rmt-driver")
+list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/")
+list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ws2812-rmt-driver")
 
 # Include the API directory for Vortex API component
-list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/API")
+list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/api")
 
 #==============================================================================
 # 1. SYSTEMATIC SOURCE FILE COLLECTION
@@ -24,79 +24,79 @@ list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/API")
 
 # API Layer Sources
 set(API_SOURCES
-    "${HF_HAL_ROOT}/API/Vortex.cpp"
+    "${HF_HAL_ROOT}/lib/api/Vortex.cpp"
 )
 
-# Component Handlers Sources (8 managers)
-set(COMPONENT_HANDLER_SOURCES
-    "${HF_HAL_ROOT}/component-handlers/CommChannelsManager.cpp"
-    "${HF_HAL_ROOT}/component-handlers/GpioManager.cpp"
-    "${HF_HAL_ROOT}/component-handlers/AdcManager.cpp"
-    "${HF_HAL_ROOT}/component-handlers/MotorController.cpp"
-    "${HF_HAL_ROOT}/component-handlers/ImuManager.cpp"
-    "${HF_HAL_ROOT}/component-handlers/EncoderManager.cpp"
-    "${HF_HAL_ROOT}/component-handlers/LedManager.cpp"
-    "${HF_HAL_ROOT}/component-handlers/TemperatureManager.cpp"
+# Manager Sources (8 managers, formerly component-handlers)
+set(MANAGER_SOURCES
+    "${HF_HAL_ROOT}/lib/managers/CommChannelsManager.cpp"
+    "${HF_HAL_ROOT}/lib/managers/GpioManager.cpp"
+    "${HF_HAL_ROOT}/lib/managers/AdcManager.cpp"
+    "${HF_HAL_ROOT}/lib/managers/MotorController.cpp"
+    "${HF_HAL_ROOT}/lib/managers/ImuManager.cpp"
+    "${HF_HAL_ROOT}/lib/managers/EncoderManager.cpp"
+    "${HF_HAL_ROOT}/lib/managers/LedManager.cpp"
+    "${HF_HAL_ROOT}/lib/managers/TemperatureManager.cpp"
 )
 
-# Driver Handlers Sources (6 drivers + 1 wrapper)
-set(DRIVER_HANDLER_SOURCES
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/Tmc9660Handler.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/Pcal95555Handler.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/As5047uHandler.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/Bno08xHandler.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/NtcTemperatureHandler.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/Logger.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers/Tmc9660AdcWrapper.cpp"
+# Handler Sources (6 handlers + 1 wrapper, formerly driver-handlers)
+set(HANDLER_SOURCES
+    "${HF_HAL_ROOT}/lib/handlers/Tmc9660Handler.cpp"
+    "${HF_HAL_ROOT}/lib/handlers/Pcal95555Handler.cpp"
+    "${HF_HAL_ROOT}/lib/handlers/As5047uHandler.cpp"
+    "${HF_HAL_ROOT}/lib/handlers/Bno08xHandler.cpp"
+    "${HF_HAL_ROOT}/lib/handlers/NtcTemperatureHandler.cpp"
+    "${HF_HAL_ROOT}/lib/handlers/Logger.cpp"
+    "${HF_HAL_ROOT}/lib/handlers/Tmc9660AdcWrapper.cpp"
 )
 
 # Core Drivers Sources (Interface Wrappers)
 set(CORE_DRIVER_SOURCES
     # ESP32 implementations
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspSpi.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspI2c.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspGpio.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspAdc.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspUart.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspCan.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspPwm.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspPio.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspNvs.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspLogger.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspTemperature.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspPeriodicTimer.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspSpi.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspI2c.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspGpio.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspAdc.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspUart.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspCan.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspPwm.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspPio.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspNvs.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspLogger.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspTemperature.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/src/mcu/esp32/EspPeriodicTimer.cpp"
 )
 
 # Core Utils Sources
 set(CORE_UTILS_SOURCES
     # RTOS wrappers
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/BaseThread.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/CriticalSection.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/FreeRTOSUtils.c"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/Mutex.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/MutexGuard.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/OsUtility.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/PeriodicTimer.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/src/SignalSemaphore.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/BaseThread.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/CriticalSection.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/FreeRTOSUtils.c"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/Mutex.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/MutexGuard.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/OsUtility.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/PeriodicTimer.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/src/SignalSemaphore.cpp"
     
     # General utilities
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/src/SoftwareVersion.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/src/TimestampedVariable.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/src/CrcCalculator.c"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/src/Utility.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/src/VariableAnomalyMonitor.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/src/VariableMonitor.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/src/SoftwareVersion.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/src/TimestampedVariable.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/src/CrcCalculator.c"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/src/Utility.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/src/VariableAnomalyMonitor.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/src/VariableMonitor.cpp"
     
     # CAN utilities
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-canopen/src/CanOpenUtils.cpp"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-canopen/src/CanOpenMotorUtils.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-canopen/src/CanOpenUtils.cpp"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-canopen/src/CanOpenMotorUtils.cpp"
 )
 
 # Combine all sources
 set(HF_HAL_SRCS
     ${API_SOURCES}
-    ${COMPONENT_HANDLER_SOURCES}
-    ${DRIVER_HANDLER_SOURCES}
+    ${MANAGER_SOURCES}
+    ${HANDLER_SOURCES}
     ${CORE_DRIVER_SOURCES}
     ${CORE_UTILS_SOURCES}
 )
@@ -105,56 +105,62 @@ set(HF_HAL_SRCS
 # 2. SYSTEMATIC INCLUDE DIRECTORY COLLECTION
 #==============================================================================
 
+# Library root include (resolves api/, managers/, handlers/, core/ prefixed includes)
+set(LIB_ROOT_INCLUDE_DIR
+    "${HF_HAL_ROOT}/lib"
+)
+
 # API include directories
 set(API_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/API"
+    "${HF_HAL_ROOT}/lib/api"
 )
 
-# Component handlers include directories
-set(COMPONENT_HANDLER_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/component-handlers"
+# Manager include directories
+set(MANAGER_INCLUDE_DIRS
+    "${HF_HAL_ROOT}/lib/managers"
 )
 
-# Driver handlers include directories
-set(DRIVER_HANDLER_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/utils-and-drivers/driver-handlers"
+# Handler include directories
+set(HANDLER_INCLUDE_DIRS
+    "${HF_HAL_ROOT}/lib/handlers"
 )
 
 # Core drivers include directories
 set(CORE_DRIVER_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/internal/hf-pincfg/src"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/inc"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/internal/hf-pincfg/src"
 )
 
 # Core utils include directories
 set(CORE_UTILS_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-general/include"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-canopen/include"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-utils/hf-utils-thread-safe/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-canopen/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-thread-safe/include"
 )
 
 # External driver include directories
 set(EXTERNAL_DRIVER_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-as5047u-driver/src"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-bno08x-driver/src"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-ntc-thermistor-driver/include"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-pcal95555-driver/src"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc/register_mode"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc/parameter_mode"
-    "${HF_HAL_ROOT}/utils-and-drivers/hf-core-drivers/external/hf-ws2812-rmt-driver/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-as5047u-driver/src"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-bno08x-driver/src"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ntc-thermistor-driver/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-pcal95555-driver/src"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc/register_mode"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc/parameter_mode"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ws2812-rmt-driver/include"
 )
 
 # Combine all include directories
 set(HF_HAL_INC_DIRS
+    ${LIB_ROOT_INCLUDE_DIR}
     ${API_INCLUDE_DIRS}
-    ${COMPONENT_HANDLER_INCLUDE_DIRS}
-    ${DRIVER_HANDLER_INCLUDE_DIRS}
+    ${MANAGER_INCLUDE_DIRS}
+    ${HANDLER_INCLUDE_DIRS}
     ${CORE_DRIVER_INCLUDE_DIRS}
     ${CORE_UTILS_INCLUDE_DIRS}
     ${EXTERNAL_DRIVER_INCLUDE_DIRS}
@@ -393,8 +399,8 @@ set_target_properties(${COMPONENT_LIB} PROPERTIES
 message(STATUS "=== HardFOC HAL Build Configuration ===")
 message(STATUS "Root Directory: ${HF_HAL_ROOT}")
 message(STATUS "API Sources: ${API_SOURCES}")
-message(STATUS "Component Handler Sources: ${COMPONENT_HANDLER_SOURCES}")
-message(STATUS "Driver Handler Sources: ${DRIVER_HANDLER_SOURCES}")
+message(STATUS "Manager Sources: ${MANAGER_SOURCES}")
+message(STATUS "Handler Sources: ${HANDLER_SOURCES}")
 message(STATUS "Core Driver Sources: ${CORE_DRIVER_SOURCES}")
 message(STATUS "Core Utils Sources: ${CORE_UTILS_SOURCES}")
 message(STATUS "Total Sources: ${HF_HAL_SRCS}")

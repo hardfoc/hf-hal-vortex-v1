@@ -21,7 +21,7 @@
 #include <cmath>
 #include <algorithm>
 #include "utils/RtosTask.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Logger.h"
 
 // Include SH2 error codes for proper error handling
 extern "C" {

@@ -3,7 +3,7 @@
 
 #include "Tmc9660Handler.h"
 #include "CommChannelsManager.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 #include <memory>
 #include <array>
 #include <vector>

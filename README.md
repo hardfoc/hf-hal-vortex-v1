@@ -59,7 +59,7 @@ The API design mirrors the **Vortex V1** board's philosophy of integrated operat
 ### 🚀 Quick Start with Vortex API
 
 ```cpp
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 extern "C" void app_main(void) {
     // Get the unified Vortex API instance for HardFOC Vortex V1
@@ -224,13 +224,13 @@ All API methods return error codes that should be checked:
 ### 1. Include the Vortex API
 
 ```cpp
-#include "API/Vortex.h"  // Unified Vortex API for HardFOC Vortex V1
+#include "api/Vortex.h"  // Unified Vortex API for HardFOC Vortex V1
 ```
 
 ### 2. Initialize and Use the System
 
 ```cpp
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 extern "C" void app_main(void) {
     // Get the unified Vortex API for HardFOC Vortex V1
@@ -385,9 +385,9 @@ if (encoder_handler) {
 - **[📋 Documentation Index](DOCUMENTATION_INDEX.md)** - Complete guide to all documentation
 
 ### 🔌 Vortex API Documentation
-- **[🔌 Vortex API Guide](API/README.md)** - Comprehensive Vortex API documentation
+- **[🔌 Vortex API Guide](lib/api/README.md)** - Comprehensive Vortex API documentation
 - **[🚀 Vortex API Example](examples/VortexApiExample.cpp)** - Complete usage example
-- **[🏗️ Vortex API Architecture](API/Vortex.h)** - API design and implementation
+- **[🏗️ Vortex API Architecture](lib/api/Vortex.h)** - API design and implementation
 
 ### 🎯 Core System Documentation
 - **[🔧 GPIO Manager](docs/component-handlers/GPIO_MANAGER_README.md)** - GPIO system guide
@@ -699,7 +699,7 @@ if (adc_result != hf_adc_err_t::ADC_SUCCESS) {
 
 ### Complete Vortex API Example
 ```cpp
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 extern "C" void app_main(void) {
     logger.Info("MAIN", "=== HardFOC Vortex V1 API Example ===\n");
@@ -913,7 +913,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 - **📚 Documentation**: Start with [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)
-- **🔌 Vortex API**: See [API/README.md](API/README.md) for unified API guide
+- **🔌 Vortex API**: See [lib/api/README.md](lib/api/README.md) for unified API guide
 - **🏗️ HardFOC Vortex V1**: See [Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md) for board details
 - **🐛 Issues**: Report bugs via GitHub Issues
 - **💬 Discussions**: Use GitHub Discussions for questions

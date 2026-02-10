@@ -26,7 +26,7 @@
 
 #include "MotorController.h"
 #include "CommChannelsManager.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Logger.h"
 #include <memory>
 
 /**

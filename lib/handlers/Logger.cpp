@@ -14,9 +14,9 @@
 #include "Logger.h"
 
 // Include the base logger from the internal interface wrapper
-#include "../hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseLogger.h"
+#include "../core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseLogger.h"
 #ifdef HF_MCU_FAMILY_ESP32
-#include "../hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspLogger.h"
+#include "../core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspLogger.h"
 #endif
 
 #include <cstdarg>

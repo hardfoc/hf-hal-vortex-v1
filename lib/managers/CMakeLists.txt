@@ -57,9 +57,9 @@ idf_component_register(
     SRCS ${COMPONENT_SOURCES}
     INCLUDE_DIRS 
     "."
-    "../utils-and-drivers/driver-handlers"
-    "../utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc"
-    "../utils-and-drivers/hf-core-drivers/internal/hf-pincfg/src"
+    "../handlers"
+    "../core/hf-core-drivers/internal/hf-internal-interface-wrap/inc"
+    "../core/hf-core-drivers/internal/hf-pincfg/src"
     REQUIRES 
         driver
         esp_timer
@@ -265,16 +265,16 @@ target_compile_options(${COMPONENT_NAME} INTERFACE
 # Add include directories
 target_include_directories(${COMPONENT_NAME} INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-drivers/internal/hf-pincfg/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-drivers/external/hf-pcal95555-driver/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc/register_mode
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-drivers/external/hf-tmc9660-driver/inc/parameter_mode
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-utils/hf-utils-general/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../utils-and-drivers/hf-core-utils/hf-utils-canopen/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../API
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-drivers/internal/hf-internal-interface-wrap/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-drivers/internal/hf-pincfg/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-drivers/external/hf-pcal95555-driver/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-drivers/external/hf-tmc9660-driver/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-drivers/external/hf-tmc9660-driver/inc/register_mode
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-drivers/external/hf-tmc9660-driver/inc/parameter_mode
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-utils/hf-utils-general/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-utils/hf-utils-rtos-wrap/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/hf-core-utils/hf-utils-canopen/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../api
 )
 
 # Set C++ standard

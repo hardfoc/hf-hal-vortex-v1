@@ -22,7 +22,7 @@
 
 #include "base/BaseGpio.h"
 #include "base/BaseI2c.h"
-#include "utils-and-drivers/hf-core-drivers/external/hf-pcal95555-driver/src/pcal95555.hpp"
+#include "core/hf-core-drivers/external/hf-pcal95555-driver/src/pcal95555.hpp"
 #include "utils/RtosMutex.h"
 #include <memory>
 #include <cstdint>

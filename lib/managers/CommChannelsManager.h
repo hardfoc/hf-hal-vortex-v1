@@ -5,7 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <atomic> // Added for std::atomic
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/RtosMutex.h" // Added for RtosMutex
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/RtosMutex.h" // Added for RtosMutex
 
 // Forward declarations for ESP32 comm interface classes
 class EspSpiBus;
@@ -16,13 +16,13 @@ class EspUart;
 class EspCan;
 
 // Base interface includes
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseI2c.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseUart.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseCan.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseI2c.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseUart.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseCan.h"
 
 // Board mapping includes (for pin/bus config)
-#include "utils-and-drivers/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config.hpp"
+#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config.hpp"
 
 /**
  * @enum SpiDeviceId

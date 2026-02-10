@@ -12,8 +12,8 @@
  * @copyright HardFOC
  */
 
-#include "component-handlers/LedManager.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "managers/LedManager.h"
+#include "handlers/Logger.h"
 #include "utils/RtosMutex.h"
 #include "utils/OsAbstraction.h"
 
@@ -385,7 +385,7 @@ void RunLedManagerExample() noexcept {
  * To use this example in your main application:
  * 
  * 1. Include the LedManager header:
- *    #include "component-handlers/LedManager.h"
+ *    #include "managers/LedManager.h"
  * 
  * 2. Call the example function:
  *    RunLedManagerExample();

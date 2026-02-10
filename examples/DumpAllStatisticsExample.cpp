@@ -12,18 +12,18 @@
  * @copyright HardFOC
  */
 
-#include "component-handlers/LedManager.h"
-#include "component-handlers/GpioManager.h"
-#include "component-handlers/AdcManager.h"
-#include "component-handlers/CommChannelsManager.h"
-#include "component-handlers/ImuManager.h"
-#include "component-handlers/EncoderManager.h"
-#include "component-handlers/MotorController.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/driver-handlers/Tmc9660Handler.h"
-#include "utils-and-drivers/driver-handlers/As5047uHandler.h"
-#include "utils-and-drivers/driver-handlers/Bno08xHandler.h"
-#include "utils-and-drivers/driver-handlers/Pcal95555Handler.h"
+#include "managers/LedManager.h"
+#include "managers/GpioManager.h"
+#include "managers/AdcManager.h"
+#include "managers/CommChannelsManager.h"
+#include "managers/ImuManager.h"
+#include "managers/EncoderManager.h"
+#include "managers/MotorController.h"
+#include "handlers/Logger.h"
+#include "handlers/Tmc9660Handler.h"
+#include "handlers/As5047uHandler.h"
+#include "handlers/Bno08xHandler.h"
+#include "handlers/Pcal95555Handler.h"
 #include "utils/OsAbstraction.h"
 
 #include <cstdio>

@@ -26,7 +26,7 @@
 #include <esp_log.h>
 
 // Include the Vortex API
-#include "API/Vortex.h"
+#include "api/Vortex.h"
 
 //==============================================================================
 // GLOBAL VARIABLES

@@ -41,14 +41,14 @@
 #include "CommonIDs.h"
 #include "ThingsToString.h"
 #include "base/BaseTemperature.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspTemperature.h"
-#include "utils-and-drivers/driver-handlers/NtcTemperatureHandler.h"
-#include "utils-and-drivers/driver-handlers/Tmc9660Handler.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
-#include "component-handlers/AdcManager.h"
-#include "component-handlers/MotorController.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspTemperature.h"
+#include "handlers/NtcTemperatureHandler.h"
+#include "handlers/Tmc9660Handler.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
+#include "managers/AdcManager.h"
+#include "managers/MotorController.h"
+#include "handlers/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 #include <array>
 #include <memory>

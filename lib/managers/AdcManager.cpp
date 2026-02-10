@@ -35,14 +35,14 @@
 
 #include "AdcManager.h"
 #include "MotorController.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 
 // Logger for unified logging
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Logger.h"
 
 #include <algorithm>
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 #include <cstring>
 #include <sstream>
 #include <iomanip>

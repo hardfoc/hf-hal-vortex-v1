@@ -103,9 +103,10 @@ dependencies:
 files:
   # Include all source files and headers
   include:
-    - "API/**/*"
-    - "component-handlers/**/*"
-    - "utils-and-drivers/**/*"
+    - "lib/api/**/*"
+    - "lib/managers/**/*"
+    - "lib/handlers/**/*"
+    - "lib/core/**/*"
     - "CMakeLists.txt"
     - "idf_component.yml"
     - "LICENSE"
@@ -159,12 +160,12 @@ files:
 #  
 #  The HardFOC HAL consists of several layers:
 #
-#  1. API Layer (API/)
+#  1. API Layer (lib/api/)
 #     - Vortex API singleton providing unified access to all components
 #     - System diagnostics and health monitoring
 #     - Initialization order management
 #
-#  2. Component Handlers (component-handlers/)
+#  2. Managers (lib/managers/)
 #     - CommChannelsManager: SPI, I2C, UART, CAN interfaces
 #     - GpioManager: Multi-source GPIO management (ESP32, PCAL95555, TMC9660)
 #     - AdcManager: ADC channel management (ESP32, TMC9660)
@@ -174,28 +175,28 @@ files:
 #     - LedManager: WS2812 LED control
 #     - TemperatureManager: Multi-source temperature monitoring
 #
-#  3. Driver Handlers (utils-and-drivers/driver-handlers/)
-#     - Hardware-specific drivers for each device type
+#  3. Handlers (lib/handlers/)
+#     - HAL-specific driver+util glue for each device type
 #     - Unified interfaces for device communication
 #     - Error handling and diagnostics
 #
-#  4. Core Drivers (utils-and-drivers/hf-core-drivers/)
+#  4. Core Drivers (lib/core/hf-core-drivers/)
 #     - Interface wrappers for ESP32 peripherals
 #     - Platform mapping and pin configuration
 #     - Hardware abstraction layer
 #
-#  5. Core Utils (utils-and-drivers/hf-core-utils/)
+#  5. Core Utils (lib/core/hf-core-utils/)
 #     - RTOS wrappers and utilities
 #     - General-purpose utilities
 #     - CAN communication utilities
 #
-#  6. External Drivers (utils-and-drivers/hf-core-drivers/external/)
-#     - Third-party device drivers
+#  6. External Drivers (lib/core/hf-core-drivers/external/)
+#     - HardFOC ecosystem device drivers
 #     - Hardware-specific implementations
 #
 #  Usage Example:
 #  ```cpp
-#  #include "API/Vortex.h"
+#  #include "api/Vortex.h"
 #  
 #  // Get the unified API instance
 #  auto& vortex = Vortex::GetInstance();

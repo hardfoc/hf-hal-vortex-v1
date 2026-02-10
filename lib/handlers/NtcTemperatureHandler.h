@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseTemperature.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
-#include "utils-and-drivers/hf-core-drivers/external/hf-ntc-thermistor-driver/include/NtcThermistor.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseTemperature.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
+#include "core/hf-core-drivers/external/hf-ntc-thermistor-driver/include/NtcThermistor.h"
 
 #include <memory>
 #include <mutex>

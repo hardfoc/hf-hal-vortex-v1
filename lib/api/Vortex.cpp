@@ -13,17 +13,17 @@
 #include "Vortex.h"
 
 // Include all component handler headers
-#include "component-handlers/CommChannelsManager.h"
-#include "component-handlers/GpioManager.h"
-#include "component-handlers/AdcManager.h"
-#include "component-handlers/MotorController.h"
-#include "component-handlers/ImuManager.h"
-#include "component-handlers/EncoderManager.h"
-#include "component-handlers/LedManager.h"
-#include "component-handlers/TemperatureManager.h"
+#include "managers/CommChannelsManager.h"
+#include "managers/GpioManager.h"
+#include "managers/AdcManager.h"
+#include "managers/MotorController.h"
+#include "managers/ImuManager.h"
+#include "managers/EncoderManager.h"
+#include "managers/LedManager.h"
+#include "managers/TemperatureManager.h"
 
 // Include OS abstraction for timing
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 //==============================================================================
 // SINGLETON IMPLEMENTATION

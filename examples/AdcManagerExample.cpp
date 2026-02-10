@@ -29,9 +29,9 @@
 
 #include "AdcManager.h"
 #include "MotorController.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/ConsolePort.h"
+#include "handlers/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/ConsolePort.h"
 
 #include <vector>
 #include <string>

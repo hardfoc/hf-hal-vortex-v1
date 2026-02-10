@@ -15,8 +15,8 @@
 
 #include "ImuManager.h"
 #include "GpioManager.h"
-#include "utils-and-drivers/driver-handlers/Bno08xHandler.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "handlers/Bno08xHandler.h"
+#include "handlers/Logger.h"
 #include <memory>
 
 // ESP-IDF for tasks

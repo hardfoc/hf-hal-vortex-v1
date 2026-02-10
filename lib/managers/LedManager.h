@@ -33,11 +33,11 @@
 #ifndef COMPONENT_HANDLER_LED_MANAGER_H_
 #define COMPONENT_HANDLER_LED_MANAGER_H_
 
-#include "utils-and-drivers/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_cpp.hpp"
-#include "utils-and-drivers/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_effects.hpp"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_cpp.hpp"
+#include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_effects.hpp"
+#include "handlers/Logger.h"
 #include "utils/RtosMutex.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
+#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 
 #include <cstdint>
 #include <atomic>

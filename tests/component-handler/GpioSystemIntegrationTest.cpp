@@ -8,8 +8,8 @@
 
 #include "component-handler/GpioManager.h"
 #include "component-handler/SystemInit.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-general/include/ConsolePort.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "core/hf-core-utils/hf-utils-general/include/ConsolePort.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 static const char* TAG = "GpioIntegrationTest";
 

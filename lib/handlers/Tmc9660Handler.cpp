@@ -1,9 +1,9 @@
 #include "Tmc9660Handler.h"
 #include <cstring>
 #include <algorithm>
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
-#include "utils-and-drivers/driver-handlers/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "handlers/Logger.h"
 
 /**
  * @brief Default TMC9660 bootloader configuration based on TMC9660-3PH-EVAL board settings.

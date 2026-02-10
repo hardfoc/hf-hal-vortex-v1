@@ -21,10 +21,10 @@
  * @version 2.0
  */
 
-#include "component-handlers/GpioManager.h"
-#include "utils-and-drivers/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
-#include "utils-and-drivers/driver-handlers/Logger.h"
-#include "utils-and-drivers/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "managers/GpioManager.h"
+#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
+#include "handlers/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 //==============================================================================
 // EXAMPLE FUNCTIONS

@@ -40,8 +40,8 @@
 #include <string>
 #include <array>
 #include <functional>
-#include "utils-and-drivers/hf-core-drivers/external/hf-bno08x-driver/src/BNO085.hpp"
-#include "utils-and-drivers/hf-core-drivers/external/hf-bno08x-driver/src/BNO085_Transport.hpp"
+#include "core/hf-core-drivers/external/hf-bno08x-driver/src/BNO085.hpp"
+#include "core/hf-core-drivers/external/hf-bno08x-driver/src/BNO085_Transport.hpp"
 #include "base/BaseI2c.h"
 #include "base/BaseSpi.h"
 #include "base/BaseGpio.h"
