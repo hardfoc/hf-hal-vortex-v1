@@ -1,10 +1,16 @@
 /**
  * @file Tmc9660AdcWrapper.cpp
- * @brief Implementation of TMC9660 ADC wrapper that delegates to TMC9660Handler::Adc.
- * 
+ * @brief Implementation of the TMC9660 ADC delegation wrapper.
+ *
+ * @details
+ * Every method is a one-line delegation to handler_.adc().Method().
+ * No additional logic is performed in this layer.
+ *
+ * @see Tmc9660AdcWrapper  Class declaration and architectural documentation.
+ * @see Tmc9660Handler::Adc  The actual ADC implementation being delegated to.
+ *
  * @author HardFOC Team
  * @date 2025
- * @version 1.0
  */
 
 #include "Tmc9660AdcWrapper.h"
@@ -19,7 +25,7 @@ Tmc9660AdcWrapper::Tmc9660AdcWrapper(Tmc9660Handler& handler) noexcept
 }
 
 //==============================================================================
-// BASE ADC IMPLEMENTATION (DELEGATION)
+// BASE ADC DELEGATION
 //==============================================================================
 
 bool Tmc9660AdcWrapper::Initialize() noexcept {
@@ -41,23 +47,31 @@ bool Tmc9660AdcWrapper::IsChannelAvailable(hf_channel_id_t channel_id) const noe
 hf_adc_err_t Tmc9660AdcWrapper::ReadChannelV(hf_channel_id_t channel_id, float& channel_reading_v,
                                            hf_u8_t numOfSamplesToAvg,
                                            hf_time_t timeBetweenSamples) noexcept {
-    return handler_.adc().ReadChannelV(channel_id, channel_reading_v, numOfSamplesToAvg, timeBetweenSamples);
+    return handler_.adc().ReadChannelV(channel_id, channel_reading_v,
+                                       numOfSamplesToAvg, timeBetweenSamples);
 }
 
-hf_adc_err_t Tmc9660AdcWrapper::ReadChannelCount(hf_channel_id_t channel_id, hf_u32_t& channel_reading_count,
+hf_adc_err_t Tmc9660AdcWrapper::ReadChannelCount(hf_channel_id_t channel_id,
+                                               hf_u32_t& channel_reading_count,
                                                hf_u8_t numOfSamplesToAvg,
                                                hf_time_t timeBetweenSamples) noexcept {
-    return handler_.adc().ReadChannelCount(channel_id, channel_reading_count, numOfSamplesToAvg, timeBetweenSamples);
+    return handler_.adc().ReadChannelCount(channel_id, channel_reading_count,
+                                           numOfSamplesToAvg, timeBetweenSamples);
 }
 
-hf_adc_err_t Tmc9660AdcWrapper::ReadChannel(hf_channel_id_t channel_id, hf_u32_t& channel_reading_count,
-                                         float& channel_reading_v, hf_u8_t numOfSamplesToAvg,
+hf_adc_err_t Tmc9660AdcWrapper::ReadChannel(hf_channel_id_t channel_id,
+                                         hf_u32_t& channel_reading_count,
+                                         float& channel_reading_v,
+                                         hf_u8_t numOfSamplesToAvg,
                                          hf_time_t timeBetweenSamples) noexcept {
-    return handler_.adc().ReadChannel(channel_id, channel_reading_count, channel_reading_v, numOfSamplesToAvg, timeBetweenSamples);
+    return handler_.adc().ReadChannel(channel_id, channel_reading_count, channel_reading_v,
+                                      numOfSamplesToAvg, timeBetweenSamples);
 }
 
-hf_adc_err_t Tmc9660AdcWrapper::ReadMultipleChannels(const hf_channel_id_t* channel_ids, hf_u8_t num_channels,
-                                                   hf_u32_t* readings, float* voltages) noexcept {
+hf_adc_err_t Tmc9660AdcWrapper::ReadMultipleChannels(const hf_channel_id_t* channel_ids,
+                                                   hf_u8_t num_channels,
+                                                   hf_u32_t* readings,
+                                                   float* voltages) noexcept {
     return handler_.adc().ReadMultipleChannels(channel_ids, num_channels, readings, voltages);
 }
 
@@ -75,4 +89,4 @@ hf_adc_err_t Tmc9660AdcWrapper::ResetStatistics() noexcept {
 
 hf_adc_err_t Tmc9660AdcWrapper::ResetDiagnostics() noexcept {
     return handler_.adc().ResetDiagnostics();
-} 
+}

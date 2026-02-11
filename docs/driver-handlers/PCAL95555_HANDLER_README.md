@@ -3,426 +3,315 @@
 <div align="center">
 
 ![Driver](https://img.shields.io/badge/driver-Pcal95555Handler-blue.svg)
-![Hardware](https://img.shields.io/badge/hardware-PCAL95555-orange.svg)
+![Hardware](https://img.shields.io/badge/hardware-PCA9555%20|%20PCAL9555A-orange.svg)
 ![Interface](https://img.shields.io/badge/interface-I2C-green.svg)
 
-**Minimal, platform-agnostic handler for PCAL95555 16-bit I2C GPIO expander**
+**Non-templated HAL handler for the PCA9555 / PCAL9555A 16-bit I2C GPIO expander**
 
 </div>
 
-## 📋 Overview
+## Overview
 
-The `Pcal95555Handler` is a focused, platform-agnostic handler for the PCAL95555 16-bit I2C GPIO expander. It provides direct pin control operations by pin number (0-15) with no platform mapping or diagnostics, offering a minimal, modern C++ interface for GPIO expansion.
+The `Pcal95555Handler` wraps the templated `pcal95555::PCAL95555<I2cType>` driver behind a non-templated facade, bridging it into the HardFOC HAL layer. It provides per-pin and batch GPIO operations, a `BaseGpio`-compatible pin factory, hardware interrupt support with edge-filtered callbacks, and PCAL9555A "Agile I/O" features (pull resistors, drive strength, input latch, output mode).
 
-### ✨ Key Features
+### Key Features
 
-- **🔌 16-Bit GPIO Expansion**: Full 16-pin GPIO expansion per chip
-- **📡 I2C Interface**: Flexible I2C communication with configurable addressing
-- **🔔 Interrupt Support**: Hardware interrupt capabilities with edge detection
-- **⚡ Direct Pin Control**: Pin-level operations without platform abstractions
-- **🔧 BaseGpio Compatible**: Drop-in replacement for standard GPIO interfaces
-- **🛡️ Thread-Safe**: Concurrent access from multiple tasks
-- **📊 Minimal Design**: Focused functionality without unnecessary features
-- **🏥 Error Handling**: Comprehensive error detection and reporting
+- **16-Bit GPIO Expansion**: Per-pin direction, read, write, toggle, pull mode
+- **Batch Operations**: 16-bit mask operations for direction, output, and pull modes via driver API
+- **BaseGpio Pin Factory**: `CreateGpioPin()` returns `shared_ptr<BaseGpio>` instances for manager integration
+- **Chip Variant Awareness**: Auto-detects PCA9555 vs PCAL9555A; Agile I/O methods gracefully fail on PCA9555
+- **Interrupt Management**: Hardware INT pin support with per-pin rising/falling edge callbacks
+- **Lazy Initialization**: Driver and adapter created on first use
+- **Thread-Safe**: Single `handler_mutex_` protects all state (I2C is serialized anyway)
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                   Pcal95555Handler                             │
-├─────────────────────────────────────────────────────────────────┤
-│  Direct Pin Control │ Pin-level operations (0-15)              │
-├─────────────────────────────────────────────────────────────────┤
-│  I2C Communication  │ Efficient register access via adapter    │
-├─────────────────────────────────────────────────────────────────┤
-│  Interrupt System   │ Hardware interrupt handling              │
-├─────────────────────────────────────────────────────────────────┤
-│  PCAL95555 Driver   │ Low-level device register control        │
-└─────────────────────────────────────────────────────────────────┘
+GpioManager
+    |
+    v
+Pcal95555Handler (non-templated facade)
+  |-- Pin Registry: up to 16 Pcal95555GpioPin (BaseGpio) instances
+  |-- Edge-filtered interrupt dispatch (prev_input_state_ tracking)
+  |-- Pull mode cache (seeded from hardware on PCAL9555A init)
+    |
+    v
+pcal95555::PCAL95555<HalI2cPcal95555Comm>  (typed driver)
+    |
+    v
+HalI2cPcal95555Comm  (CRTP I2C adapter)
+    |
+    v
+BaseI2c (platform I2C device)
 ```
 
-## 🚀 Quick Start
-
-### Basic GPIO Operations
+## Construction
 
 ```cpp
-#include "utils-and-drivers/driver-handlers/Pcal95555Handler.h"
-#include "component-handlers/CommChannelsManager.h"
+// Without hardware interrupt support (polling mode)
+Pcal95555Handler handler(i2c_device);
 
-void pcal95555_basic_example() {
-    // Get I2C interface
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) {
-        logger.Info("PCAL95555", "I2C interface not available\n");
-        return;
-    }
-    
-    // Create PCAL95555 handler
-    Pcal95555Handler handler(*i2c);
-    
-    // Initialize handler
-    if (!handler.EnsureInitialized()) {
-        logger.Info("PCAL95555", "Failed to initialize PCAL95555\n");
-        return;
-    }
-    
-    // Configure pins
-    handler.SetDirection(0, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    handler.SetDirection(1, hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-    
-    // Basic operations
-    handler.SetOutput(0, true);         // Set pin 0 high
-    hf_bool_t state;
-    handler.ReadInput(1, state);        // Read pin 1
-    
-    logger.Info("PCAL95555", "PCAL95555 GPIO operations complete\n");
-    logger.Info("PCAL95555", "Pin 1 state: %s\n", state ? "HIGH" : "LOW");
+// With hardware interrupt support
+Pcal95555Handler handler(i2c_device, &interrupt_gpio_pin);
+```
+
+**Parameters:**
+- `i2c_device` -- `BaseI2c&` with 7-bit I2C address pre-configured (0x20-0x27). Must outlive handler.
+- `interrupt_pin` -- Optional `BaseGpio*` connected to the expander's active-low INT output. Pass `nullptr` for polling mode.
+
+## Initialization
+
+```cpp
+if (!handler.EnsureInitialized()) {
+    // Failed to create driver or detect chip
+}
+
+// Check chip features
+if (handler.HasAgileIO()) {
+    // PCAL9555A detected -- pull resistors, drive strength, etc. available
 }
 ```
 
-## 📖 API Reference
+`EnsureInitialized()` creates the I2C adapter and driver, auto-detects the chip variant, optionally configures the hardware interrupt pin, seeds `prev_input_state_` for edge detection, and (on PCAL9555A) seeds the internal pull mode cache from hardware registers.
 
-### Core Operations
+## Per-Pin GPIO Operations
 
-#### Construction and Initialization
+Pin numbers are 0-15 (Port 0 = pins 0-7, Port 1 = pins 8-15).
+
 ```cpp
-class Pcal95555Handler {
-public:
-    // Constructor
-    explicit Pcal95555Handler(BaseI2c& i2c_device, BaseGpio* interrupt_pin = nullptr) noexcept;
-    
-    // Initialization
-    bool EnsureInitialized() noexcept;
-    bool EnsureDeinitialized() noexcept;
-    bool IsInitialized() const noexcept;
-};
+// Direction
+handler.SetDirection(0, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
+
+// Write output
+handler.SetOutput(0, true);    // HIGH
+handler.SetOutput(0, false);   // LOW
+handler.Toggle(0);
+
+// Read input
+bool state;
+handler.ReadInput(5, state);
+
+// Pull mode (PCAL9555A only)
+handler.SetPullMode(5, hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULL_UP);
+
+// Get pull mode (from internal cache)
+hf_gpio_pull_mode_t pull;
+handler.GetPullMode(5, pull);
 ```
 
-#### Basic GPIO Operations
+All per-pin methods return `hf_gpio_err_t` (`GPIO_SUCCESS` on success).
+
+## Batch GPIO Operations
+
+Operate on multiple pins simultaneously using 16-bit masks (bit N = pin N):
+
 ```cpp
-// Pin direction control
-hf_gpio_err_t SetDirection(hf_u8_t pin, hf_gpio_direction_t direction) noexcept;
-hf_gpio_err_t SetDirections(uint16_t pin_mask, hf_gpio_direction_t direction) noexcept;
+// Set pins 0-3 as outputs
+handler.SetDirections(0x000F, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
 
-// Pin output control
-hf_gpio_err_t SetOutput(hf_u8_t pin, hf_bool_t active) noexcept;
-hf_gpio_err_t Toggle(hf_u8_t pin) noexcept;
+// Set pins 0-3 HIGH (uses driver's SetMultipleOutputs for efficiency)
+handler.SetOutputs(0x000F, true);
 
-// Pin input reading
-hf_gpio_err_t ReadInput(hf_u8_t pin, hf_bool_t& active) noexcept;
-
-// Pull resistor configuration
-hf_gpio_err_t SetPullMode(hf_u8_t pin, hf_gpio_pull_mode_t pull_mode) noexcept;
-hf_gpio_err_t GetPullMode(hf_u8_t pin, hf_gpio_pull_mode_t& pull_mode) noexcept;
-hf_gpio_err_t SetPullModes(uint16_t pin_mask, hf_gpio_pull_mode_t pull_mode) noexcept;
+// Set pull-up on pins 8-11 (PCAL9555A only)
+handler.SetPullModes(0x0F00, hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULL_UP);
 ```
 
-#### Interrupt Management
+## BaseGpio Pin Factory
+
+Create `BaseGpio`-compatible pin wrappers for use with `GpioManager`:
+
 ```cpp
-// Interrupt support
-bool HasInterruptSupport() const noexcept;
-bool IsInterruptConfigured() const noexcept;
+auto pin0 = handler.CreateGpioPin(
+    0,                                                    // pin number
+    hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT,        // initial direction
+    hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH,          // polarity
+    hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL, // output mode
+    hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING,      // pull mode
+    true);                                                 // allow_existing
 
-// Interrupt configuration
-hf_gpio_err_t ConfigureInterrupt(hf_gpio_interrupt_trigger_t trigger,
-                                InterruptCallback callback = nullptr,
-                                void* user_data = nullptr) noexcept;
-hf_gpio_err_t EnableInterrupt() noexcept;
-hf_gpio_err_t DisableInterrupt() noexcept;
+if (pin0) {
+    // Standard BaseGpio interface
+    pin0->SetActive(true);
+    pin0->Toggle();
+}
 
-// Interrupt status
-hf_gpio_err_t GetAllInterruptMasks(uint16_t& mask) noexcept;
-hf_gpio_err_t GetAllInterruptStatus(uint16_t& status) noexcept;
+// Retrieve existing pin
+auto existing = handler.GetGpioPin(0);  // returns shared_ptr or nullptr
+
+// Check pin state
+bool created = handler.IsPinCreated(0);
+uint16_t mask = handler.GetCreatedPinMask();  // bit N set if pin N exists
 ```
 
-#### BaseGpio Interface
-```cpp
-// Pin creation and management
-std::shared_ptr<BaseGpio> CreateGpioPin(
-    hf_pin_num_t pin,
-    hf_gpio_direction_t direction = hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT,
-    hf_gpio_active_state_t active_state = hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH,
-    hf_gpio_output_mode_t output_mode = hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL,
-    hf_gpio_pull_mode_t pull_mode = hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING) noexcept;
+Multiple calls to `CreateGpioPin()` for the same pin number return the same instance (when `allow_existing = true`).
 
-std::shared_ptr<BaseGpio> GetGpioPin(hf_pin_num_t pin) noexcept;
-bool IsPinCreated(hf_pin_num_t pin) const noexcept;
+### Pcal95555GpioPin Features
+
+Each `Pcal95555GpioPin` implements `BaseGpio` and delegates to the parent handler:
+
+- **Direction**: INPUT / OUTPUT via expander driver
+- **Read/Write**: Level read/write via expander driver
+- **Pull Mode**: FLOATING / PULL_UP / PULL_DOWN (PCAL9555A only)
+- **Polarity Inversion**: `pin->SetPolarityInversion(true)` (PCAL9555A only)
+- **Interrupt Masking**: `pin->SetInterruptMask(false)` to enable interrupts
+- **Interrupt Configuration**: `pin->ConfigureInterrupt(trigger, callback)` for edge callbacks
+- **Output Mode**: Returns `GPIO_ERR_UNSUPPORTED_OPERATION` (use handler's `SetOutputMode()` for per-port control)
+
+## Interrupt Management
+
+### Hardware Interrupt Setup
+
+Pass a `BaseGpio*` interrupt pin at construction. The handler configures it as a falling-edge interrupt input (the PCAL9555A INT output is active-low, open-drain).
+
+```cpp
+BaseGpio* int_pin = /* ... */;
+Pcal95555Handler handler(i2c_device, int_pin);
+handler.EnsureInitialized();
+
+// Check capabilities
+handler.HasInterruptSupport();   // true if int_pin provided
+handler.IsInterruptConfigured(); // true after successful init
 ```
 
-#### Advanced Features
+### Per-Pin Callbacks with Edge Detection
+
+Register callbacks on individual pins. The handler's `ProcessInterrupts()` reads the current input state, computes rising/falling edges against `prev_input_state_`, and only dispatches if the edge matches the configured trigger:
+
 ```cpp
-// Polarity inversion
-hf_bool_t SetPolarityInversion(hf_pin_num_t pin, hf_bool_t invert) noexcept;
-hf_bool_t GetPolarityInversion(hf_pin_num_t pin, hf_bool_t& invert) noexcept;
+// Via Pcal95555GpioPin (BaseGpio interface)
+auto pin5 = handler.CreateGpioPin(5, hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+pin5->ConfigureInterrupt(
+    hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE,
+    [](BaseGpio* gpio, hf_gpio_interrupt_trigger_t trigger, void* data) {
+        // Called only on falling edges of pin 5
+    });
 
-// Interrupt masking
-hf_bool_t SetInterruptMask(hf_pin_num_t pin, hf_bool_t mask) noexcept;
-hf_bool_t GetInterruptMask(hf_pin_num_t pin, hf_bool_t& mask) noexcept;
-hf_bool_t GetInterruptStatus(hf_pin_num_t pin, hf_bool_t& status) noexcept;
-
-// Pin validation
-static constexpr hf_u8_t PinCount() noexcept { return 16; }
+// Unmask pin 5's interrupt on the PCAL9555A
+handler.SetInterruptMask(5, false);  // false = unmask (enable)
 ```
 
-## 🎯 Hardware Support
-
-### PCAL95555 Features
-
-- **16 GPIO Pins**: Independent input/output control
-- **I2C Interface**: 7-bit addressing (0x20-0x27)
-- **Interrupt Support**: Configurable interrupt generation
-- **Pull-up/Pull-down**: Programmable pull resistors
-- **Polarity Inversion**: Configurable active high/low
-- **Input Filtering**: Built-in noise filtering
-- **ESD Protection**: Robust electrostatic discharge protection
-
-### Communication Interface
-
-The handler uses an I2C adapter that bridges the `BaseI2c` interface with the PCAL95555 driver's `i2cBus` interface, providing type-safe communication and address validation.
-
-## 📊 Examples
-
-### Basic GPIO Control
+### Interrupt Status
 
 ```cpp
-void basic_gpio_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    Pcal95555Handler handler(*i2c);
+// Read and clear all 16 pin interrupt status bits
+uint16_t status;
+handler.GetAllInterruptStatus(status);
+
+// Per-pin status
+bool pin5_pending;
+handler.GetInterruptStatus(5, pin5_pending);
+
+// Read current interrupt mask
+uint16_t mask;
+handler.GetAllInterruptMasks(mask);  // 0=enabled, 1=masked per PCAL convention
+```
+
+## PCAL9555A Agile I/O Features
+
+These methods require PCAL9555A. On PCA9555 they return `false` or `GPIO_ERR_UNSUPPORTED_OPERATION`.
+
+```cpp
+// Check chip variant
+handler.HasAgileIO();           // true if PCAL9555A
+handler.GetChipVariant();       // pcal95555::ChipVariant::PCAL9555A
+
+// Input polarity inversion
+handler.SetPolarityInversion(0, true);   // invert pin 0 input
+
+// Per-pin interrupt mask (PCAL register-level)
+handler.SetInterruptMask(0, false);      // unmask pin 0
+
+// Drive strength (25% / 50% / 75% / 100%)
+handler.SetDriveStrength(0, DriveStrength::Level3);  // 100%
+
+// Input latch
+handler.EnableInputLatch(0, true);
+
+// Output mode (per-port, not per-pin)
+handler.SetOutputMode(false, true);  // Port 0 push-pull, Port 1 open-drain
+
+// Reset all registers to power-on defaults
+handler.ResetToDefault();
+```
+
+## Error Management
+
+```cpp
+// Get driver error flags (see pcal95555 Error enum for bit meanings)
+uint16_t errors = handler.GetErrorFlags();
+
+// Clear specific or all error flags
+handler.ClearErrorFlags();           // clear all
+handler.ClearErrorFlags(0x0001);     // clear specific bit
+```
+
+## Diagnostics
+
+```cpp
+handler.DumpDiagnostics();
+```
+
+Logs initialization status, I2C address, chip variant, pin registry contents, interrupt configuration, and error flags at INFO level.
+
+## Utility
+
+```cpp
+constexpr uint8_t count = Pcal95555Handler::PinCount();  // 16
+uint8_t addr = handler.GetI2cAddress();                   // 7-bit I2C address
+```
+
+## Deinitialization
+
+```cpp
+handler.EnsureDeinitialized();
+// Disables hardware interrupt, clears pin registry, releases driver and adapter
+```
+
+## Typical Usage Example
+
+```cpp
+#include "Pcal95555Handler.h"
+
+void example(BaseI2c& i2c, BaseGpio& int_pin) {
+    // Create handler with interrupt support
+    Pcal95555Handler handler(i2c, &int_pin);
+
     if (!handler.EnsureInitialized()) return;
-    
-    // Configure pins
-    handler.SetDirection(0, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    handler.SetDirection(1, hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-    handler.SetPullMode(1, hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULLUP);
-    
-    // Control output
-    handler.SetOutput(0, true);
-    handler.Toggle(0);
-    
+
+    // Batch configure: pins 0-7 as outputs, 8-15 as inputs with pull-ups
+    handler.SetDirections(0x00FF, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
+    handler.SetDirections(0xFF00, hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+    handler.SetPullModes(0xFF00, hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULL_UP);
+
+    // Set outputs HIGH
+    handler.SetOutputs(0x00FF, true);
+
+    // Create a BaseGpio pin for GpioManager integration
+    auto pin8 = handler.CreateGpioPin(8, hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+    if (pin8) {
+        pin8->ConfigureInterrupt(
+            hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_BOTH_EDGES,
+            [](BaseGpio* gpio, hf_gpio_interrupt_trigger_t trigger, void* data) {
+                // Edge-filtered callback
+            });
+        handler.SetInterruptMask(8, false);  // unmask
+    }
+
     // Read input
-    hf_bool_t state;
-    if (handler.ReadInput(1, state) == hf_gpio_err_t::HF_GPIO_ERR_NONE) {
-        logger.Info("PCAL95555", "Pin 1 state: %s\n", state ? "HIGH" : "LOW");
-    }
+    bool state;
+    handler.ReadInput(8, state);
+
+    // Diagnostics
+    handler.DumpDiagnostics();
 }
 ```
 
-### Interrupt Handling
+## See Also
 
-```cpp
-void interrupt_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    // Create handler with interrupt pin
-    BaseGpio* int_pin = nullptr; // Get from GPIO manager
-    Pcal95555Handler handler(*i2c, int_pin);
-    
-    if (!handler.EnsureInitialized()) return;
-    
-    // Configure interrupt
-    if (handler.HasInterruptSupport()) {
-        handler.ConfigureInterrupt(
-            hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE,
-            [](BaseGpio* gpio, hf_gpio_interrupt_trigger_t trigger, void* user_data) {
-                logger.Info("PCAL95555", "PCAL95555 interrupt triggered\n");
-            }
-        );
-        
-        handler.EnableInterrupt();
-    }
-    
-    // Monitor interrupt status
-    uint16_t interrupt_status;
-    if (handler.GetAllInterruptStatus(interrupt_status) == hf_gpio_err_t::HF_GPIO_ERR_NONE) {
-        logger.Info("PCAL95555", "Interrupt status: 0x%04X\n", interrupt_status);
-    }
-}
-```
-
-### BaseGpio Integration
-
-```cpp
-void base_gpio_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    Pcal95555Handler handler(*i2c);
-    if (!handler.EnsureInitialized()) return;
-    
-    // Create BaseGpio pin
-    auto pin = handler.CreateGpioPin(0, 
-        hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT,
-        hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH);
-    
-    if (pin) {
-        // Use standard BaseGpio interface
-        pin->SetActive(true);
-        pin->Toggle();
-        
-        // Configure interrupt
-        pin->ConfigureInterrupt(
-            hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_RISING_EDGE,
-            [](BaseGpio* gpio, hf_gpio_interrupt_trigger_t trigger, void* user_data) {
-                logger.Info("PCAL95555", "Pin interrupt triggered\n");
-            }
-        );
-    }
-}
-```
-
-### Batch Operations
-
-```cpp
-void batch_operations_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    Pcal95555Handler handler(*i2c);
-    if (!handler.EnsureInitialized()) return;
-    
-    // Configure multiple pins as outputs
-    uint16_t output_mask = 0x000F; // Pins 0-3
-    handler.SetDirections(output_mask, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    
-    // Set multiple outputs
-    handler.SetOutputs(output_mask, true);
-    
-    // Configure pull resistors for input pins
-    uint16_t input_mask = 0x00F0; // Pins 4-7
-    handler.SetPullModes(input_mask, hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULLUP);
-}
-```
-
-### Error Handling
-
-```cpp
-void error_handling_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    Pcal95555Handler handler(*i2c);
-    
-    // Check initialization
-    if (!handler.EnsureInitialized()) {
-        logger.Info("PCAL95555", "ERROR: Failed to initialize PCAL95555\n");
-        return;
-    }
-    
-    // Validate pin operations
-    hf_gpio_err_t result = handler.SetDirection(20, hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    if (result != hf_gpio_err_t::HF_GPIO_ERR_NONE) {
-        logger.Info("PCAL95555", "ERROR: Invalid pin operation: %d\n", static_cast<int>(result));
-        return;
-    }
-    
-    // Safe pin operations
-    for (hf_u8_t pin = 0; pin < handler.PinCount(); pin++) {
-        result = handler.SetDirection(pin, hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-        if (result != hf_gpio_err_t::HF_GPIO_ERR_NONE) {
-            logger.Info("PCAL95555", "ERROR: Failed to configure pin %d: %d\n", pin, static_cast<int>(result));
-        }
-    }
-}
-```
-
-## 🔍 Advanced Usage
-
-### Multi-Pin Management
-
-```cpp
-void multi_pin_management() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    Pcal95555Handler handler(*i2c);
-    if (!handler.EnsureInitialized()) return;
-    
-    // Create multiple BaseGpio pins
-    std::vector<std::shared_ptr<BaseGpio>> pins;
-    for (hf_u8_t pin_num = 0; pin_num < handler.PinCount(); pin_num++) {
-        auto pin = handler.CreateGpioPin(pin_num);
-        if (pin) {
-            pins.push_back(pin);
-        }
-    }
-    
-    // Use pins through BaseGpio interface
-    for (auto& pin : pins) {
-        pin->SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-        pin->SetActive(true);
-    }
-}
-```
-
-### Interrupt Monitoring
-
-```cpp
-void interrupt_monitoring() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* i2c = comm.GetI2cDevice(I2cDeviceId::PCAL9555_GPIO_EXPANDER);
-    if (!i2c) return;
-    
-    BaseGpio* int_pin = nullptr; // Get from GPIO manager
-    Pcal95555Handler handler(*i2c, int_pin);
-    
-    if (!handler.EnsureInitialized()) return;
-    
-    // Configure interrupt monitoring
-    if (handler.HasInterruptSupport()) {
-        // Set up interrupt masks
-        for (hf_u8_t pin = 0; pin < handler.PinCount(); pin++) {
-            handler.SetInterruptMask(pin, true);
-        }
-        
-        // Enable interrupt
-        handler.EnableInterrupt();
-        
-        // Monitor interrupt status
-        uint16_t interrupt_status;
-        uint16_t interrupt_masks;
-        
-        handler.GetAllInterruptMasks(interrupt_masks);
-        handler.GetAllInterruptStatus(interrupt_status);
-        
-        logger.Info("PCAL95555", "Interrupt masks: 0x%04X\n", interrupt_masks);
-        logger.Info("PCAL95555", "Interrupt status: 0x%04X\n", interrupt_status);
-    }
-}
-```
-
-## 📚 See Also
-
-- **[GpioManager Documentation](../component-handlers/GPIO_MANAGER_README.md)** - GPIO management system
-- **[CommChannelsManager Documentation](../component-handlers/COMM_CHANNELS_MANAGER_README.md)** - Communication interfaces
-- **[TMC9660 Handler Documentation](TMC9660_HANDLER_README.md)** - Motor controller with GPIO
-- **[BNO08x Handler Documentation](BNO08X_HANDLER_README.md)** - IMU sensor handler
+- **[GpioManager](../component-handlers/GPIO_MANAGER_README.md)** -- Creates and owns Pcal95555Handler instances
+- **[TMC9660 Handler](TMC9660_HANDLER_README.md)** -- Motor controller handler
+- **[hf-pcal95555-driver](../../lib/core/hf-core-drivers/external/hf-pcal95555-driver/)** -- Underlying templated driver
 
 ---
 
-*This documentation is part of the HardFOC HAL system. For complete system documentation, see [Documentation Index](../../DOCUMENTATION_INDEX.md).*
+*Part of the HardFOC HAL system. For complete system documentation, see [Documentation Index](../../DOCUMENTATION_INDEX.md).*

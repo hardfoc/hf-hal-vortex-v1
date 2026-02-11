@@ -1,81 +1,94 @@
+/**
+ * @file Pcal95555Handler.cpp
+ * @brief Implementation of the PCAL95555 GPIO expander handler.
+ *
+ * @details
+ * Implements all three layers defined in Pcal95555Handler.h:
+ * 1. HalI2cPcal95555Comm -- CRTP I2C communication adapter
+ * 2. Pcal95555Handler    -- Main handler (init, GPIO ops, interrupts, factory)
+ * 3. Pcal95555GpioPin    -- Per-pin BaseGpio wrapper
+ *
+ * All driver calls use the PascalCase API of the updated hf-pcal95555-driver
+ * (pcal95555::PCAL95555<I2cType>). Error handling follows the driver's error-flag
+ * model: individual methods return bool, with accumulated error flags available
+ * via GetErrorFlags().
+ *
+ * @see Pcal95555Handler.h  for architectural overview and Doxygen documentation.
+ *
+ * @author HardFOC Team
+ * @date 2025
+ */
+
 #include "Pcal95555Handler.h"
-#include <cstring>
-#include <vector>
 #include "handlers/Logger.h"
+#include <cstring>
 
-// ================= Pcal95555I2cAdapter =================
-bool Pcal95555I2cAdapter::write(uint8_t addr, uint8_t reg, const uint8_t* data, size_t len) {
-    : i2c_adapter_(std::make_unique<Pcal95555I2cAdapter>(i2c_device)),
-      pcal95555_driver_(std::make_shared<PCAL95555>(i2c_adapter_.get(), i2c_device.GetDeviceAddress())),
-      initialized_(false),
-      interrupt_pin_(interrupt_pin),
-      interrupt_configured_(false)
-{
-    // Initialize pin registry to null
-    pin_registry_.fill(nullptr);
-    
-    // Initialize interrupt arrays
-    pin_callbacks_.fill(nullptr);
-    pin_user_data_.fill(nullptr);
-    pin_triggers_.fill(hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_NONE);
-}
+// =====================================================================
+// HalI2cPcal95555Comm Implementation
+// =====================================================================
 
-// ================= Pcal95555I2cAdapter =================
-bool Pcal95555I2cAdapter::write(uint8_t addr, uint8_t reg, const uint8_t* data, size_t len) {
+/// @brief Construct the CRTP I2C adapter.
+HalI2cPcal95555Comm::HalI2cPcal95555Comm(BaseI2c& i2c_device) noexcept
+    : i2c_device_(i2c_device) {}
+
+bool HalI2cPcal95555Comm::write(uint8_t addr, uint8_t reg,
+                                const uint8_t* data, size_t len) noexcept {
     MutexLockGuard lock(i2c_mutex_);
-    
-    // Address validation: Ensures the PCAL95555 driver and BaseI2c device are consistent
-    // This prevents accidental cross-device communication and provides type safety
-    if (addr != i2c_device_.GetDeviceAddress()) {
-        // Log error or handle mismatch - this indicates a configuration error
-        return false;
-    }
-    
-    // Create register write command: [register_address, data...]
-    // Use stack buffer for typical PCAL95555 register writes (usually 1-3 bytes)
-    constexpr size_t MAX_STACK_BUFFER = 32; // Reasonable limit for I2C register writes
-    
-    if (len < MAX_STACK_BUFFER) {
-        // Fast path: use stack-allocated buffer
-        uint8_t command[MAX_STACK_BUFFER];
-        command[0] = reg;
-        std::memcpy(&command[1], data, len);
-        
-        return i2c_device_.Write(command, len + 1) == hf_i2c_err_t::I2C_SUCCESS;
-    } else {
-        // Fallback: use vector for large writes (rare case)
-        std::vector<uint8_t> command;
-        command.reserve(1 + len);
-        command.push_back(reg);
-        command.insert(command.end(), data, data + len);
-        
-        return i2c_device_.Write(command.data(), command.size()) == hf_i2c_err_t::I2C_SUCCESS;
-    }
-}
 
-bool Pcal95555I2cAdapter::read(uint8_t addr, uint8_t reg, uint8_t* data, size_t len) {
-    MutexLockGuard lock(i2c_mutex_);
-    
-    // Address validation: Ensures the PCAL95555 driver and BaseI2c device are consistent
+    // Validate that the driver's address matches the BaseI2c device address.
     if (addr != i2c_device_.GetDeviceAddress()) {
         return false;
     }
-    
-    // Use device-centric BaseI2c interface for register read
+
+    // Frame the I2C register write: [register, data...]
+    // PCAL9555 register writes are at most 2 data bytes; 4-byte buffer is sufficient.
+    constexpr size_t kMaxBuf = 4;
+    if (len + 1 > kMaxBuf) {
+        return false;  // Unexpected oversized write for this device.
+    }
+
+    uint8_t command[kMaxBuf];
+    command[0] = reg;
+    std::memcpy(&command[1], data, len);
+    return i2c_device_.Write(command, len + 1) == hf_i2c_err_t::I2C_SUCCESS;
+}
+
+bool HalI2cPcal95555Comm::read(uint8_t addr, uint8_t reg,
+                               uint8_t* data, size_t len) noexcept {
+    MutexLockGuard lock(i2c_mutex_);
+
+    if (addr != i2c_device_.GetDeviceAddress()) {
+        return false;
+    }
+
     return i2c_device_.WriteRead(&reg, 1, data, len) == hf_i2c_err_t::I2C_SUCCESS;
 }
 
-// ================= Pcal95555Handler =================
-Pcal95555Handler::Pcal95555Handler(BaseI2c& i2c_device, BaseGpio* interrupt_pin) noexcept
+bool HalI2cPcal95555Comm::EnsureInitialized() noexcept {
+    // BaseI2c device is expected to be initialized before the handler uses it.
+    return true;
+}
+
+bool HalI2cPcal95555Comm::RegisterInterruptHandler(
+    std::function<void()> handler) noexcept {
+    interrupt_handler_ = std::move(handler);
+    return true;  // Actual GPIO interrupt setup is done by the handler.
+}
+
+// =====================================================================
+// Pcal95555Handler -- Construction & Lifecycle
+// =====================================================================
+
+Pcal95555Handler::Pcal95555Handler(BaseI2c& i2c_device,
+                                   BaseGpio* interrupt_pin) noexcept
     : i2c_device_(i2c_device),
-      i2c_adapter_(nullptr),                // Created during initialization
-      pcal95555_driver_(nullptr),           // Created during initialization
+      i2c_adapter_(nullptr),
+      pcal95555_driver_(nullptr),
       initialized_(false),
       interrupt_pin_(interrupt_pin),
-      interrupt_configured_(false)
-{
-    // Initialize pin registry to null
+      interrupt_configured_(false) {
     pin_registry_.fill(nullptr);
+    pull_mode_cache_.fill(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING);
 }
 
 bool Pcal95555Handler::EnsureInitialized() noexcept {
@@ -83,278 +96,406 @@ bool Pcal95555Handler::EnsureInitialized() noexcept {
     if (initialized_) {
         return true;
     }
-    
     return Initialize() == hf_gpio_err_t::GPIO_SUCCESS;
 }
 
 bool Pcal95555Handler::EnsureDeinitialized() noexcept {
     MutexLockGuard lock(handler_mutex_);
-    if (!initialized_) return true;  // Already deinitialized
+    if (!initialized_) {
+        return true;
+    }
+    return Deinitialize() == hf_gpio_err_t::GPIO_SUCCESS;
+}
 
-    pcal95555_driver_.reset();
-    i2c_adapter_.reset();
-    initialized_ = false;
-    return true;
+/// @brief Check initialization under an already-held handler_mutex_.
+inline bool Pcal95555Handler::EnsureInitializedLocked() noexcept {
+    if (initialized_) return true;
+    return Initialize() == hf_gpio_err_t::GPIO_SUCCESS;
 }
 
 hf_gpio_err_t Pcal95555Handler::Initialize() noexcept {
-    // Note: Caller should hold handler_mutex_ when calling this method
-    if (initialized_) return hf_gpio_err_t::GPIO_SUCCESS;
-    
-    // Create I2C adapter if not already created
+    // Note: caller must hold handler_mutex_.
+    if (initialized_) {
+        return hf_gpio_err_t::GPIO_SUCCESS;
+    }
+
+    // 1. Create the CRTP I2C adapter.
     if (!i2c_adapter_) {
-        i2c_adapter_ = std::make_unique<Pcal95555I2cAdapter>(i2c_device_);
+        i2c_adapter_ = std::make_unique<HalI2cPcal95555Comm>(i2c_device_);
         if (!i2c_adapter_) {
             return hf_gpio_err_t::GPIO_ERR_OUT_OF_MEMORY;
         }
     }
-    
-    // Create PCAL95555 driver if not already created
+
+    // 2. Create the typed PCAL95555 driver (address-based constructor).
     if (!pcal95555_driver_) {
-        pcal95555_driver_ = std::make_shared<PCAL95555>(i2c_adapter_.get(), i2c_device_.GetDeviceAddress());
+        pcal95555_driver_ = std::make_unique<Pcal95555Driver>(
+            i2c_adapter_.get(), i2c_device_.GetDeviceAddress());
         if (!pcal95555_driver_) {
             return hf_gpio_err_t::GPIO_ERR_OUT_OF_MEMORY;
         }
     }
-    
-    // Initialize PCAL95555 driver
-    // The PCAL95555 driver doesn't have an init() method that returns success/failure
-    // Instead, we can call initFromConfig() and assume success if driver was created successfully
-    pcal95555_driver_->initFromConfig();
-    
-    // We could also call resetToDefault() to ensure known state
-    // pcal95555_driver_->resetToDefault();
-    
-    // Configure hardware interrupt if pin is available
+
+    // 3. Initialize the driver (lazy init, auto-detects chip variant).
+    if (!pcal95555_driver_->EnsureInitialized()) {
+        return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    }
+
+    // 4. Register the driver's interrupt handler with the I2C adapter
+    //    so that HandleInterrupt() can be triggered by the adapter.
+    pcal95555_driver_->RegisterInterruptHandler();
+
+    // 5. Configure hardware interrupt pin if available.
     if (interrupt_pin_ != nullptr) {
         auto result = ConfigureHardwareInterrupt();
         if (result != hf_gpio_err_t::GPIO_SUCCESS) {
-            // Log warning but don't fail initialization - can still work in polling mode
-            //Logger::GetInstance().Warn("Pcal95555Handler", "Failed to configure hardware interrupt, using polling mode");
+            // Non-fatal: polling mode still works.
         }
     }
-    
+
+    // Seed previous input state for edge detection on first interrupt.
+    prev_input_state_ = pcal95555_driver_->ReadPinStates();
+
+    // Seed pull_mode_cache_ from hardware registers via driver API (PCAL9555A only).
+    if (pcal95555_driver_->HasAgileIO()) {
+        uint16_t enable_mask = 0;
+        uint16_t direction_mask = 0;
+
+        if (pcal95555_driver_->GetPullConfiguration(enable_mask, direction_mask)) {
+            for (uint8_t pin = 0; pin < 16; ++pin) {
+                bool enabled = (enable_mask >> pin) & 1U;
+                bool is_up   = (direction_mask >> pin) & 1U;
+
+                if (!enabled) {
+                    pull_mode_cache_[pin] = hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
+                } else if (is_up) {
+                    pull_mode_cache_[pin] = hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULL_UP;
+                } else {
+                    pull_mode_cache_[pin] = hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULL_DOWN;
+                }
+            }
+        }
+        // If read fails, cache stays at default (FLOATING) -- non-fatal.
+    }
+
     initialized_ = true;
     return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
 hf_gpio_err_t Pcal95555Handler::Deinitialize() noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_) return hf_gpio_err_t::GPIO_SUCCESS;
-    
-    // Disable hardware interrupt if configured
+    // Note: caller must hold handler_mutex_.
+    if (!initialized_) {
+        return hf_gpio_err_t::GPIO_SUCCESS;
+    }
+
+    // Disable hardware interrupt.
     if (interrupt_configured_ && interrupt_pin_) {
-        interrupt_pin_->ConfigureInterrupt(hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_NONE);
+        interrupt_pin_->ConfigureInterrupt(
+            hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_NONE);
         interrupt_configured_ = false;
     }
-    
-    // Clear all pin registry entries (this releases shared_ptr references)
-    {
-        MutexLockGuard pin_lock(pin_registry_mutex_);
-        pin_registry_.fill(nullptr);
-    }
-    
-    // Clean up driver and adapter (lazy initialization cleanup)
+
+    // Clear pin registry (handler_mutex_ already held by caller).
+    pin_registry_.fill(nullptr);
+
+    // Release driver and adapter.
     pcal95555_driver_.reset();
     i2c_adapter_.reset();
-    
     initialized_ = false;
+    pull_mode_cache_.fill(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING);
     return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
-hf_gpio_err_t Pcal95555Handler::SetDirection(hf_u8_t pin, hf_gpio_direction_t direction) noexcept {
+// =====================================================================
+// Pcal95555Handler -- Basic GPIO Operations
+// =====================================================================
+
+hf_gpio_err_t Pcal95555Handler::SetDirection(uint8_t pin,
+                                             hf_gpio_direction_t direction) noexcept {
     if (!ValidatePin(pin)) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
-    if (!EnsureInitialized()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
     MutexLockGuard lock(handler_mutex_);
-    PCAL95555::GPIODir dir = (direction == hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT) ? 
-                             PCAL95555::GPIODir::Output : PCAL95555::GPIODir::Input;
-    return pcal95555_driver_->setPinDirection(pin, dir) ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_WRITE_FAILURE;
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    GPIODir dir = (direction == hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT)
+                      ? GPIODir::Output
+                      : GPIODir::Input;
+    return pcal95555_driver_->SetPinDirection(pin, dir)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_WRITE_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555Handler::SetOutput(hf_u8_t pin, hf_bool_t active) noexcept {
+hf_gpio_err_t Pcal95555Handler::SetOutput(uint8_t pin, bool active) noexcept {
     if (!ValidatePin(pin)) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
-    if (!EnsureInitialized()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
     MutexLockGuard lock(handler_mutex_);
-    return pcal95555_driver_->writePin(pin, active) ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_WRITE_FAILURE;
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    return pcal95555_driver_->WritePin(pin, active)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_WRITE_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555Handler::ReadInput(hf_u8_t pin, hf_bool_t& active) noexcept {
+hf_gpio_err_t Pcal95555Handler::ReadInput(uint8_t pin, bool& active) noexcept {
     if (!ValidatePin(pin)) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
-    if (!EnsureInitialized()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
     MutexLockGuard lock(handler_mutex_);
-    // PCAL95555::readPin returns the pin state directly, not success/failure
-    // We need to check for communication errors using the driver's error state
-    active = pcal95555_driver_->readPin(pin);
-    
-    // Check if there was a communication error during the read operation  
-    uint16_t error_flags = pcal95555_driver_->getErrorFlags();
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    active = pcal95555_driver_->ReadPin(pin);
+
+    // ReadPin returns the level directly; check error flags for I2C failures.
+    uint16_t error_flags = pcal95555_driver_->GetErrorFlags();
     if (error_flags != 0) {
         return hf_gpio_err_t::GPIO_ERR_READ_FAILURE;
     }
-    
     return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
-hf_gpio_err_t Pcal95555Handler::Toggle(hf_u8_t pin) noexcept {
+hf_gpio_err_t Pcal95555Handler::Toggle(uint8_t pin) noexcept {
     if (!ValidatePin(pin)) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
-    if (!EnsureInitialized()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
     MutexLockGuard lock(handler_mutex_);
-    // Use PCAL95555's built-in toggle function which is more efficient
-    bool success = pcal95555_driver_->togglePin(pin);
-    return success ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_WRITE_FAILURE;
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    return pcal95555_driver_->TogglePin(pin)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_WRITE_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555Handler::SetPullMode(hf_u8_t pin, hf_gpio_pull_mode_t pull_mode) noexcept {
+hf_gpio_err_t Pcal95555Handler::SetPullMode(uint8_t pin,
+                                            hf_gpio_pull_mode_t pull_mode) noexcept {
     if (!ValidatePin(pin)) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
     MutexLockGuard lock(handler_mutex_);
-    if (!initialized_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    // Pull resistors require PCAL9555A (Agile I/O).
+    if (!pcal95555_driver_->HasAgileIO()) {
+        return hf_gpio_err_t::GPIO_ERR_UNSUPPORTED_OPERATION;
+    }
+
     bool success = true;
     switch (pull_mode) {
         case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING:
-            success = pcal95555_driver_->setPullEnable(pin, false);
+            success = pcal95555_driver_->SetPullEnable(pin, false);
             break;
         case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP:
-            success = pcal95555_driver_->setPullEnable(pin, true) && 
-                     pcal95555_driver_->setPullDirection(pin, true);
+            success = pcal95555_driver_->SetPullEnable(pin, true) &&
+                      pcal95555_driver_->SetPullDirection(pin, true);
             break;
         case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN:
-            success = pcal95555_driver_->setPullEnable(pin, true) && 
-                     pcal95555_driver_->setPullDirection(pin, false);
+            success = pcal95555_driver_->SetPullEnable(pin, true) &&
+                      pcal95555_driver_->SetPullDirection(pin, false);
             break;
         case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP_DOWN:
-            // Not directly supported by PCAL95555 - default to pull-up
-            success = pcal95555_driver_->setPullEnable(pin, true) && 
-                     pcal95555_driver_->setPullDirection(pin, true);
+            // Not directly supported by hardware -- default to pull-up.
+            success = pcal95555_driver_->SetPullEnable(pin, true) &&
+                      pcal95555_driver_->SetPullDirection(pin, true);
             break;
         default:
             return hf_gpio_err_t::GPIO_ERR_INVALID_PARAMETER;
     }
+
+    if (success) {
+        pull_mode_cache_[pin] = pull_mode;
+    }
     return success ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555Handler::GetPullMode(hf_u8_t pin, hf_gpio_pull_mode_t& pull_mode) noexcept {
+hf_gpio_err_t Pcal95555Handler::GetPullMode(uint8_t pin,
+                                            hf_gpio_pull_mode_t& pull_mode) noexcept {
     if (!ValidatePin(pin)) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
     MutexLockGuard lock(handler_mutex_);
     if (!initialized_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    // PCAL95555 doesn't have direct read methods for pull configuration
-    // This is a limitation of the current driver - we'd need to track state or extend the driver
-    // For now, default to floating
-    pull_mode = hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
+
+    pull_mode = pull_mode_cache_[pin];
     return hf_gpio_err_t::GPIO_SUCCESS;
-} 
+}
 
-//**************************************************************************//
-//**                   INTERRUPT MANAGEMENT IMPLEMENTATION                **//
-//**************************************************************************//
+// =====================================================================
+// Pcal95555Handler -- Batch GPIO Operations
+// =====================================================================
 
-hf_gpio_err_t Pcal95555Handler::RegisterPinInterrupt(hf_pin_num_t pin, 
-                                                     hf_gpio_interrupt_trigger_t trigger,
-                                                     InterruptCallback callback,
-                                                     void* user_data) noexcept {
+hf_gpio_err_t Pcal95555Handler::SetDirections(uint16_t pin_mask,
+                                              hf_gpio_direction_t direction) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    GPIODir dir = (direction == hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT)
+                      ? GPIODir::Input
+                      : GPIODir::Output;
+    return pcal95555_driver_->SetMultipleDirections(pin_mask, dir)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_FAILURE;
+}
+
+hf_gpio_err_t Pcal95555Handler::SetOutputs(uint16_t pin_mask, bool active) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    if (pin_mask == 0) return hf_gpio_err_t::GPIO_SUCCESS;
+
+    // Use the driver's batch mask-based output write (read-modify-write both
+    // output port registers in one operation, instead of per-pin WritePin calls).
+    if (!pcal95555_driver_->SetMultipleOutputs(pin_mask, active)) {
+        return hf_gpio_err_t::GPIO_ERR_FAILURE;
+    }
+    return hf_gpio_err_t::GPIO_SUCCESS;
+}
+
+hf_gpio_err_t Pcal95555Handler::SetPullModes(uint16_t pin_mask,
+                                             hf_gpio_pull_mode_t pull_mode) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    if (!pcal95555_driver_->HasAgileIO()) {
+        return hf_gpio_err_t::GPIO_ERR_UNSUPPORTED_OPERATION;
+    }
+
+    // Delegate to the single-pin pull mode logic for each selected pin.
+    // SetPullMode() would re-lock handler_mutex_, so we inline the core logic here.
+    bool ok = true;
+    for (uint8_t pin = 0; pin < 16; ++pin) {
+        if (!(pin_mask & (1U << pin))) continue;
+
+        bool pin_ok = true;
+        switch (pull_mode) {
+            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING:
+                pin_ok = pcal95555_driver_->SetPullEnable(pin, false);
+                break;
+            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP:
+                pin_ok = pcal95555_driver_->SetPullEnable(pin, true) &&
+                         pcal95555_driver_->SetPullDirection(pin, true);
+                break;
+            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN:
+                pin_ok = pcal95555_driver_->SetPullEnable(pin, true) &&
+                         pcal95555_driver_->SetPullDirection(pin, false);
+                break;
+            default:
+                pin_ok = false;
+                break;
+        }
+
+        if (pin_ok) {
+            pull_mode_cache_[pin] = pull_mode;
+        }
+        ok &= pin_ok;
+    }
+    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+}
+
+// =====================================================================
+// Pcal95555Handler -- Interrupt Management
+// =====================================================================
+
+hf_gpio_err_t Pcal95555Handler::GetAllInterruptMasks(uint16_t& mask) noexcept {
+    if (!EnsureInitialized()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    MutexLockGuard lock(handler_mutex_);
+
+    if (!pcal95555_driver_->HasAgileIO()) {
+        mask = 0xFFFF;  // All masked on PCA9555.
+        return hf_gpio_err_t::GPIO_ERR_UNSUPPORTED_OPERATION;
+    }
+
+    // The driver doesn't expose a GetInterruptMask() getter.
+    // Default: report all masked. Handler-level callers should track
+    // which pins have been enabled via ConfigureInterrupt().
+    mask = 0xFFFF;
+    return hf_gpio_err_t::GPIO_SUCCESS;
+}
+
+hf_gpio_err_t Pcal95555Handler::GetAllInterruptStatus(uint16_t& status) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+
+    status = pcal95555_driver_->GetInterruptStatus();
+
+    uint16_t error_flags = pcal95555_driver_->GetErrorFlags();
+    if (error_flags != 0) {
+        return hf_gpio_err_t::GPIO_ERR_READ_FAILURE;
+    }
+    return hf_gpio_err_t::GPIO_SUCCESS;
+}
+
+hf_gpio_err_t Pcal95555Handler::RegisterPinInterrupt(
+    hf_pin_num_t pin,
+    hf_gpio_interrupt_trigger_t trigger,
+    InterruptCallback callback,
+    void* user_data) noexcept {
+
     if (pin >= 16) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
-    
-    // Get the pin object from registry
-    std::shared_ptr<Pcal95555GpioPin> gpio_pin;
-    {
-        MutexLockGuard pin_lock(pin_registry_mutex_);
-        gpio_pin = pin_registry_[pin];
-    }
-    
-    if (!gpio_pin) {
-        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;  // Pin must be created first
-    }
-    
-    // Store interrupt data in the pin object itself
-    {
-        MutexLockGuard pin_lock(gpio_pin->pin_mutex_);
-        gpio_pin->interrupt_callback_ = callback;
-        gpio_pin->interrupt_user_data_ = user_data;
-        gpio_pin->interrupt_trigger_ = trigger;
-        gpio_pin->interrupt_enabled_ = true;
-    }
-    
-    // Configure hardware interrupt if not already done
+
+    MutexLockGuard lock(handler_mutex_);
+
+    auto& gpio_pin = pin_registry_[pin];
+    if (!gpio_pin) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
+
+    // Store interrupt data in the pin object.
+    gpio_pin->interrupt_callback_ = callback;
+    gpio_pin->interrupt_user_data_ = user_data;
+    gpio_pin->interrupt_trigger_ = trigger;
+    gpio_pin->interrupt_enabled_ = true;
+
+    // Set up hardware interrupt on first use.
     if (interrupt_pin_ && !interrupt_configured_) {
         auto result = ConfigureHardwareInterrupt();
         if (result != hf_gpio_err_t::GPIO_SUCCESS) {
-            // Clean up on failure
-            MutexLockGuard pin_lock(gpio_pin->pin_mutex_);
+            // Rollback.
             gpio_pin->interrupt_callback_ = nullptr;
             gpio_pin->interrupt_user_data_ = nullptr;
             gpio_pin->interrupt_enabled_ = false;
             return result;
         }
     }
-    
-    // Enable interrupt for this pin in PCAL95555 (unmask it)
+
+    // Enable interrupt for this pin in the driver (unmask it).
     if (pcal95555_driver_) {
-        uint16_t current_mask = pcal95555_driver_->getInterruptMask();
-        uint16_t new_mask = current_mask & ~(1 << pin);  // Clear bit to unmask interrupt
-        pcal95555_driver_->configureInterruptMask(new_mask);
+        pcal95555_driver_->ConfigureInterrupt(pin, InterruptState::Enabled);
     }
-    
+
     return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
 hf_gpio_err_t Pcal95555Handler::UnregisterPinInterrupt(hf_pin_num_t pin) noexcept {
     if (pin >= 16) return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
-    
-    // Get the pin object from registry
-    std::shared_ptr<Pcal95555GpioPin> gpio_pin;
-    {
-        MutexLockGuard pin_lock(pin_registry_mutex_);
-        gpio_pin = pin_registry_[pin];
-    }
-    
-    if (!gpio_pin) {
-        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;  // Pin doesn't exist
-    }
-    
-    // Clear interrupt data in the pin object itself
-    {
-        MutexLockGuard pin_lock(gpio_pin->pin_mutex_);
-        gpio_pin->interrupt_callback_ = nullptr;
-        gpio_pin->interrupt_user_data_ = nullptr;
-        gpio_pin->interrupt_trigger_ = hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_NONE;
-        gpio_pin->interrupt_enabled_ = false;
-    }
-    
-    // Mask interrupt for this pin in PCAL95555
+
+    MutexLockGuard lock(handler_mutex_);
+
+    auto& gpio_pin = pin_registry_[pin];
+    if (!gpio_pin) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
+
+    // Clear interrupt data.
+    gpio_pin->interrupt_callback_ = nullptr;
+    gpio_pin->interrupt_user_data_ = nullptr;
+    gpio_pin->interrupt_trigger_ =
+        hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_NONE;
+    gpio_pin->interrupt_enabled_ = false;
+
+    // Mask interrupt for this pin in the driver.
     if (pcal95555_driver_) {
-        uint16_t current_mask = pcal95555_driver_->getInterruptMask();
-        uint16_t new_mask = current_mask | (1 << pin);  // Set bit to mask interrupt
-        pcal95555_driver_->configureInterruptMask(new_mask);
+        pcal95555_driver_->ConfigureInterrupt(pin, InterruptState::Disabled);
     }
-    
+
     return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
 hf_gpio_err_t Pcal95555Handler::ConfigureHardwareInterrupt() noexcept {
     if (!interrupt_pin_) return hf_gpio_err_t::GPIO_ERR_NULL_POINTER;
-    
-    // Configure the hardware interrupt pin as input with falling edge trigger
-    // PCAL95555 INT pin is active low (pulls low when interrupt occurs)
+
+    // PCAL95555 INT output is active-low, open-drain -- trigger on falling edge.
     auto result = interrupt_pin_->ConfigureInterrupt(
-        hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING,
+        hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE,
         HardwareInterruptCallback,
-        this  // Pass handler instance as user data
-    );
-    
+        this);
+
     if (result == hf_gpio_err_t::GPIO_SUCCESS) {
         interrupt_configured_ = true;
     }
-    
     return result;
 }
 
-void Pcal95555Handler::HardwareInterruptCallback(BaseGpio* gpio, hf_gpio_interrupt_trigger_t trigger, void* user_data) noexcept {
-    // This is called in ISR context - keep it minimal
+void Pcal95555Handler::HardwareInterruptCallback(
+    BaseGpio* /*gpio*/,
+    hf_gpio_interrupt_trigger_t /*trigger*/,
+    void* user_data) noexcept {
+    // Called in ISR context -- keep minimal.
     auto* handler = static_cast<Pcal95555Handler*>(user_data);
     if (handler) {
         handler->ProcessInterrupts();
@@ -363,58 +504,67 @@ void Pcal95555Handler::HardwareInterruptCallback(BaseGpio* gpio, hf_gpio_interru
 
 void Pcal95555Handler::ProcessInterrupts() noexcept {
     if (!pcal95555_driver_) return;
-    
-    // Read interrupt status from PCAL95555 (this clears the interrupt)
-    uint16_t status = pcal95555_driver_->getInterruptStatus();
-    if (status == 0) return;  // No interrupts pending
-    
-    // Process each bit in the status mask
-    for (int pin = 0; pin < 16; pin++) {
-        if (status & (1 << pin)) {
-            // Get the pin object from registry
-            std::shared_ptr<Pcal95555GpioPin> gpio_pin;
-            {
-                MutexLockGuard pin_lock(pin_registry_mutex_);
-                gpio_pin = pin_registry_[pin];
-            }
-            
-            // If pin exists and has interrupt configured, call its callback
-            if (gpio_pin && gpio_pin->interrupt_enabled_ && gpio_pin->interrupt_callback_) {
-                gpio_pin->interrupt_callback_(
-                    gpio_pin.get(), 
-                    gpio_pin->interrupt_trigger_, 
-                    gpio_pin->interrupt_user_data_
-                );
-            }
+
+    // Read interrupt status (this clears the interrupt condition on the chip).
+    uint16_t status = pcal95555_driver_->GetInterruptStatus();
+    if (status == 0) return;
+
+    // Read current pin input levels for edge detection.
+    uint16_t current_state = pcal95555_driver_->ReadPinStates();
+
+    // Determine which pins transitioned high (rising) and low (falling).
+    uint16_t rising  = current_state & ~prev_input_state_;  // was 0, now 1
+    uint16_t falling = ~current_state & prev_input_state_;  // was 1, now 0
+
+    // Update stored state for next interrupt.
+    prev_input_state_ = current_state;
+
+    // Dispatch to per-pin callbacks, filtering by requested trigger type.
+    for (int pin = 0; pin < 16; ++pin) {
+        if (!(status & (1U << pin))) continue;
+
+        auto& gpio_pin = pin_registry_[pin];
+        if (!gpio_pin || !gpio_pin->interrupt_enabled_ ||
+            !gpio_pin->interrupt_callback_) {
+            continue;
+        }
+
+        const uint16_t mask = static_cast<uint16_t>(1U << pin);
+        const auto trigger = gpio_pin->interrupt_trigger_;
+        bool fire = false;
+
+        switch (trigger) {
+            case hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_RISING_EDGE:
+                fire = (rising & mask) != 0;
+                break;
+            case hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE:
+                fire = (falling & mask) != 0;
+                break;
+            case hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_BOTH_EDGES:
+                fire = ((rising | falling) & mask) != 0;
+                break;
+            default:
+                break;  // NONE or unknown -- skip
+        }
+
+        if (fire) {
+            // Report the actual observed trigger, not just the configured one.
+            hf_gpio_interrupt_trigger_t actual =
+                (rising & mask)
+                    ? hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_RISING_EDGE
+                    : hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE;
+            gpio_pin->interrupt_callback_(
+                gpio_pin.get(), actual, gpio_pin->interrupt_user_data_);
         }
     }
 }
-}
 
-hf_gpio_err_t Pcal95555Handler::GetAllInterruptMasks(uint16_t& mask) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    if (pcal95555_driver_) {
-        mask = pcal95555_driver_->getInterruptMask();
-        return hf_gpio_err_t::GPIO_SUCCESS;
-    }
-    return hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
+// =====================================================================
+// Pcal95555Handler -- Pin Factory
+// =====================================================================
 
-hf_gpio_err_t Pcal95555Handler::GetAllInterruptStatus(uint16_t& status) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    if (pcal95555_driver_) {
-        status = pcal95555_driver_->getInterruptStatus();
-        return hf_gpio_err_t::GPIO_SUCCESS;
-    }
-    return hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_u8_t Pcal95555Handler::GetI2cAddress() const noexcept {
-    return pcal95555_driver_ ? pcal95555_driver_->getDeviceAddress() : 0;
+uint8_t Pcal95555Handler::GetI2cAddress() const noexcept {
+    return pcal95555_driver_ ? pcal95555_driver_->GetAddress() : 0;
 }
 
 std::shared_ptr<BaseGpio> Pcal95555Handler::CreateGpioPin(
@@ -424,519 +574,393 @@ std::shared_ptr<BaseGpio> Pcal95555Handler::CreateGpioPin(
     hf_gpio_output_mode_t output_mode,
     hf_gpio_pull_mode_t pull_mode,
     bool allow_existing) noexcept {
-    
-    if (pin >= 16) {
-        return nullptr;
-    }
-    
-    // Ensure handler is initialized before creating pins
-    if (!EnsureInitialized()) {
-        return nullptr;
-    }
-    
-    MutexLockGuard pin_lock(pin_registry_mutex_);
-    
-    // Check if pin already exists
+
+    if (pin >= 16) return nullptr;
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return nullptr;
+
+    // Check if pin already exists.
     if (pin_registry_[pin] != nullptr) {
-        if (allow_existing) {
-            return pin_registry_[pin];  // Return existing pin
-        } else {
-            return nullptr;  // Fail if pin already exists and not allowing existing
-        }
+        return allow_existing
+                   ? std::static_pointer_cast<BaseGpio>(pin_registry_[pin])
+                   : nullptr;
     }
-    
-    // Create new pin and store in registry
+
+    // Create a new Pcal95555GpioPin with handler reference (not driver pointer).
     auto new_pin = std::make_shared<Pcal95555GpioPin>(
-        pin, pcal95555_driver_, this, direction, active_state, output_mode, pull_mode
-    );
-    
+        pin, this, direction, active_state, output_mode, pull_mode);
+
     if (new_pin && new_pin->Initialize()) {
         pin_registry_[pin] = new_pin;
         return new_pin;
     }
-    
-    return nullptr;  // Failed to create or initialize
+
+    return nullptr;
 }
 
 std::shared_ptr<BaseGpio> Pcal95555Handler::GetGpioPin(hf_pin_num_t pin) noexcept {
     if (pin >= 16) return nullptr;
-    
-    MutexLockGuard pin_lock(pin_registry_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     return pin_registry_[pin];
 }
 
 bool Pcal95555Handler::IsPinCreated(hf_pin_num_t pin) const noexcept {
     if (pin >= 16) return false;
-    
-    MutexLockGuard pin_lock(pin_registry_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     return pin_registry_[pin] != nullptr;
 }
 
-std::vector<hf_pin_num_t> Pcal95555Handler::GetCreatedPins() const noexcept {
-    std::vector<hf_pin_num_t> created_pins;
-    
-    MutexLockGuard pin_lock(pin_registry_mutex_);
+uint16_t Pcal95555Handler::GetCreatedPinMask() const noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    uint16_t mask = 0;
     for (hf_pin_num_t i = 0; i < 16; ++i) {
         if (pin_registry_[i] != nullptr) {
-            created_pins.push_back(i);
+            mask |= (1U << i);
         }
     }
-    
-    return created_pins;
+    return mask;
 }
 
-// ===================== Pcal95555GpioPin Implementation ===================== //
+// =====================================================================
+// Pcal95555Handler -- PCAL9555A Advanced Features (Agile I/O)
+// =====================================================================
+
+bool Pcal95555Handler::HasAgileIO() const noexcept {
+    return pcal95555_driver_ && pcal95555_driver_->HasAgileIO();
+}
+
+pcal95555::ChipVariant Pcal95555Handler::GetChipVariant() const noexcept {
+    return pcal95555_driver_
+               ? pcal95555_driver_->GetChipVariant()
+               : pcal95555::ChipVariant::Unknown;
+}
+
+bool Pcal95555Handler::SetPolarityInversion(hf_pin_num_t pin, bool invert) noexcept {
+    if (!ValidatePin(static_cast<uint8_t>(pin))) return false;
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    Polarity pol = invert ? Polarity::Inverted : Polarity::Normal;
+    return pcal95555_driver_->SetPinPolarity(pin, pol);
+}
+
+bool Pcal95555Handler::SetInterruptMask(hf_pin_num_t pin, bool mask) noexcept {
+    if (!ValidatePin(static_cast<uint8_t>(pin))) return false;
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    InterruptState state = mask ? InterruptState::Disabled : InterruptState::Enabled;
+    return pcal95555_driver_->ConfigureInterrupt(pin, state);
+}
+
+bool Pcal95555Handler::GetInterruptStatus(hf_pin_num_t pin, bool& status) noexcept {
+    if (!ValidatePin(static_cast<uint8_t>(pin))) return false;
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    uint16_t global_status = pcal95555_driver_->GetInterruptStatus();
+    status = (global_status & (1U << pin)) != 0;
+    return true;
+}
+
+bool Pcal95555Handler::SetDriveStrength(hf_pin_num_t pin,
+                                        DriveStrength level) noexcept {
+    if (!ValidatePin(static_cast<uint8_t>(pin))) return false;
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    return pcal95555_driver_->SetDriveStrength(pin, level);
+}
+
+bool Pcal95555Handler::EnableInputLatch(hf_pin_num_t pin, bool enable) noexcept {
+    if (!ValidatePin(static_cast<uint8_t>(pin))) return false;
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    return pcal95555_driver_->EnableInputLatch(pin, enable);
+}
+
+bool Pcal95555Handler::SetOutputMode(bool port0_open_drain,
+                                     bool port1_open_drain) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    return pcal95555_driver_->SetOutputMode(port0_open_drain, port1_open_drain);
+}
+
+bool Pcal95555Handler::ResetToDefault() noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!EnsureInitializedLocked()) return false;
+
+    pcal95555_driver_->ResetToDefault();  // void return
+    pull_mode_cache_.fill(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING);
+    return true;
+}
+
+// =====================================================================
+// Pcal95555Handler -- Error Management
+// =====================================================================
+
+uint16_t Pcal95555Handler::GetErrorFlags() const noexcept {
+    return pcal95555_driver_ ? pcal95555_driver_->GetErrorFlags() : 0;
+}
+
+void Pcal95555Handler::ClearErrorFlags(uint16_t mask) noexcept {
+    if (pcal95555_driver_) {
+        pcal95555_driver_->ClearErrorFlags(mask);
+    }
+}
+
+// =====================================================================
+// Pcal95555Handler -- Diagnostics
+// =====================================================================
+
+void Pcal95555Handler::DumpDiagnostics() const noexcept {
+    static constexpr const char* TAG = "Pcal95555Handler";
+
+    Logger::GetInstance().Info(TAG, "=== PCAL95555 HANDLER DIAGNOSTICS ===");
+
+    MutexLockGuard lock(handler_mutex_);
+
+    // System Health
+    Logger::GetInstance().Info(TAG, "System Health:");
+    Logger::GetInstance().Info(TAG, "  Initialized: %s",
+                              initialized_ ? "YES" : "NO");
+
+    // I2C Interface
+    Logger::GetInstance().Info(TAG, "I2C Interface:");
+    if (i2c_adapter_) {
+        Logger::GetInstance().Info(TAG, "  I2C Adapter: ACTIVE (CRTP-based)");
+        Logger::GetInstance().Info(TAG, "  Device Address: 0x%02X",
+                                  i2c_device_.GetDeviceAddress());
+    } else {
+        Logger::GetInstance().Info(TAG, "  I2C Adapter: NOT_INITIALIZED");
+    }
+
+    // Driver Status
+    Logger::GetInstance().Info(TAG, "PCAL95555 Driver:");
+    if (pcal95555_driver_) {
+        const char* variant_str = "Unknown";
+        auto variant = pcal95555_driver_->GetChipVariant();
+        if (variant == pcal95555::ChipVariant::PCAL9555A) {
+            variant_str = "PCAL9555A (Agile I/O)";
+        } else if (variant == pcal95555::ChipVariant::PCA9555) {
+            variant_str = "PCA9555 (Standard)";
+        }
+
+        Logger::GetInstance().Info(TAG, "  Driver Instance: ACTIVE");
+        Logger::GetInstance().Info(TAG, "  Chip Variant: %s", variant_str);
+        Logger::GetInstance().Info(TAG, "  I2C Address: 0x%02X",
+                                  pcal95555_driver_->GetAddress());
+        Logger::GetInstance().Info(TAG, "  Error Flags: 0x%04X",
+                                  pcal95555_driver_->GetErrorFlags());
+    } else {
+        Logger::GetInstance().Info(TAG, "  Driver Instance: NOT_INITIALIZED");
+    }
+
+    // Pin Registry Status
+    Logger::GetInstance().Info(TAG, "Pin Registry:");
+    int active_pins = 0;
+    int interrupt_pins = 0;
+    for (size_t i = 0; i < pin_registry_.size(); ++i) {
+        if (pin_registry_[i] != nullptr) {
+            active_pins++;
+            if (pin_registry_[i]->interrupt_enabled_) {
+                interrupt_pins++;
+            }
+        }
+    }
+    Logger::GetInstance().Info(TAG, "  Active Pin Objects: %d/16", active_pins);
+    Logger::GetInstance().Info(TAG, "  Pins with Interrupts: %d", interrupt_pins);
+
+    // Interrupt Configuration
+    Logger::GetInstance().Info(TAG, "Interrupt Configuration:");
+    Logger::GetInstance().Info(TAG, "  Hardware Interrupt Pin: %s",
+                              interrupt_pin_ ? "CONFIGURED" : "NOT_CONFIGURED");
+    Logger::GetInstance().Info(TAG, "  Interrupt System: %s",
+                              interrupt_configured_ ? "ENABLED" : "DISABLED");
+
+    // Active Pin Details
+    Logger::GetInstance().Info(TAG, "Active Pin Details:");
+    int shown = 0;
+    for (size_t i = 0; i < pin_registry_.size(); ++i) {
+        if (!pin_registry_[i]) continue;
+        ++shown;
+
+        const char* trigger_str = "NONE";
+        auto t = pin_registry_[i]->interrupt_trigger_;
+        if (t == hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_RISING_EDGE) {
+            trigger_str = "RISING";
+        } else if (t == hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE) {
+            trigger_str = "FALLING";
+        } else if (t == hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_BOTH_EDGES) {
+            trigger_str = "BOTH";
+        }
+
+        Logger::GetInstance().Info(
+            TAG, "  Pin %d: Int=%s Trigger=%s",
+            static_cast<int>(i),
+            pin_registry_[i]->interrupt_enabled_ ? "ON" : "OFF",
+            trigger_str);
+    }
+    if (shown == 0) {
+        Logger::GetInstance().Info(TAG, "  No active pins");
+    }
+
+    // Overall Status
+    bool healthy = initialized_ && pcal95555_driver_ && i2c_adapter_;
+    Logger::GetInstance().Info(TAG, "System Status: %s",
+                              healthy ? "HEALTHY" : "DEGRADED");
+
+    Logger::GetInstance().Info(TAG, "=== END PCAL95555 HANDLER DIAGNOSTICS ===");
+}
+
+// =====================================================================
+// Pcal95555GpioPin Implementation
+// =====================================================================
+
 Pcal95555GpioPin::Pcal95555GpioPin(
     hf_pin_num_t pin,
-    std::shared_ptr<PCAL95555> driver,
     Pcal95555Handler* parent_handler,
     hf_gpio_direction_t direction,
     hf_gpio_active_state_t active_state,
     hf_gpio_output_mode_t output_mode,
     hf_gpio_pull_mode_t pull_mode) noexcept
     : BaseGpio(pin, direction, active_state, output_mode, pull_mode),
-      pin_(pin), 
-      driver_(std::move(driver)), 
-      parent_handler_(parent_handler),
-      interrupt_callback_(nullptr),
-      interrupt_user_data_(nullptr),
-      interrupt_trigger_(hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_NONE),
-      interrupt_enabled_(false) {
-    snprintf(description_, sizeof(description_), "PCAL95555_PIN_%d", static_cast<int>(pin_));
+      pin_(pin),
+      parent_handler_(parent_handler) {
+    snprintf(description_, sizeof(description_), "PCAL95555_PIN_%d",
+             static_cast<int>(pin_));
 }
 
-hf_bool_t Pcal95555GpioPin::Initialize() noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    hf_bool_t ok = driver_ && driver_->setPinDirection(static_cast<hf_u8_t>(pin_), current_direction_ == hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-    if (ok) {
-        switch (pull_mode_) {
-            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING:
-                ok &= driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), false) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), false);
-                break;
-            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP:
-                ok &= driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), true) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), false);
-                break;
-            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN:
-                ok &= driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), false) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), true);
-                break;
-            case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP_DOWN:
-                ok &= driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), true) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), true);
-                break;
-        }
+bool Pcal95555GpioPin::Initialize() noexcept {
+    if (!parent_handler_) return false;
+
+    // Configure direction via the handler (which routes to the driver).
+    auto dir_result = parent_handler_->SetDirection(
+        static_cast<uint8_t>(pin_), current_direction_);
+    if (dir_result != hf_gpio_err_t::GPIO_SUCCESS) {
+        return false;
     }
-    initialized_ = ok;
-    return ok;
+
+    // Configure pull mode via handler (only for PCAL9555A; non-fatal on PCA9555).
+    if (parent_handler_->HasAgileIO() &&
+        pull_mode_ != hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING) {
+        parent_handler_->SetPullMode(static_cast<uint8_t>(pin_), pull_mode_);
+        // Pull mode failure is non-fatal.
+    }
+
+    initialized_ = true;
+    return true;
 }
 
-hf_bool_t Pcal95555GpioPin::Deinitialize() noexcept {
-    MutexLockGuard lock(pin_mutex_);
+bool Pcal95555GpioPin::Deinitialize() noexcept {
     initialized_ = false;
     return true;
 }
 
-hf_bool_t Pcal95555GpioPin::IsPinAvailable() const noexcept {
-    return driver_ && pin_ >= 0 && pin_ < 16;
+bool Pcal95555GpioPin::IsPinAvailable() const noexcept {
+    return parent_handler_ && pin_ < 16;
 }
 
 const char* Pcal95555GpioPin::GetDescription() const noexcept {
     return description_;
 }
 
-hf_bool_t Pcal95555GpioPin::SupportsInterrupts() const noexcept {
-    return true;
-}
-
-hf_gpio_err_t Pcal95555GpioPin::ConfigureInterrupt(hf_gpio_interrupt_trigger_t trigger, InterruptCallback callback, void* user_data) noexcept {
-    if (!parent_handler_) {
-        return hf_gpio_err_t::GPIO_ERR_NULL_POINTER;
-    }
-    
-    // Delegate to parent handler for centralized interrupt management
+hf_gpio_err_t Pcal95555GpioPin::ConfigureInterrupt(
+    hf_gpio_interrupt_trigger_t trigger,
+    InterruptCallback callback,
+    void* user_data) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NULL_POINTER;
     return parent_handler_->RegisterPinInterrupt(pin_, trigger, callback, user_data);
 }
 
-hf_gpio_err_t Pcal95555GpioPin::SetPolarityInversion(hf_bool_t invert) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t ok = driver_->setPinPolarity(static_cast<hf_u8_t>(pin_), invert);
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+// --- PCAL9555A Advanced Features ---
+
+hf_gpio_err_t Pcal95555GpioPin::SetPolarityInversion(bool invert) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    return parent_handler_->SetPolarityInversion(pin_, invert)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555GpioPin::GetPolarityInversion(hf_bool_t& invert) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t value = false;
-    hf_bool_t ok = driver_->getPinPolarity(static_cast<hf_u8_t>(pin_), value);
-    if (ok) invert = value;
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+hf_gpio_err_t Pcal95555GpioPin::SetInterruptMask(bool mask) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    return parent_handler_->SetInterruptMask(pin_, mask)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555GpioPin::SetInterruptMask(hf_bool_t mask) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t ok = driver_->setPinInterruptMask(static_cast<hf_u8_t>(pin_), mask);
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+hf_gpio_err_t Pcal95555GpioPin::GetInterruptStatus(bool& status) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    return parent_handler_->GetInterruptStatus(pin_, status)
+               ? hf_gpio_err_t::GPIO_SUCCESS
+               : hf_gpio_err_t::GPIO_ERR_FAILURE;
 }
 
-hf_gpio_err_t Pcal95555GpioPin::GetInterruptMask(hf_bool_t& mask) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t value = false;
-    hf_bool_t ok = driver_->getPinInterruptMask(static_cast<hf_u8_t>(pin_), value);
-    if (ok) mask = value;
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+// --- BaseGpio Protected Implementation ---
+
+hf_gpio_err_t Pcal95555GpioPin::SetDirectionImpl(
+    hf_gpio_direction_t direction) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    return parent_handler_->SetDirection(static_cast<uint8_t>(pin_), direction);
 }
 
-hf_gpio_err_t Pcal95555GpioPin::GetInterruptStatus(hf_bool_t& status) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t value = false;
-    hf_bool_t ok = driver_->getPinInterruptStatus(static_cast<hf_u8_t>(pin_), value);
-    if (ok) status = value;
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+hf_gpio_err_t Pcal95555GpioPin::SetOutputModeImpl(
+    hf_gpio_output_mode_t /*mode*/) noexcept {
+    // PCAL9555A only supports output mode at per-port granularity (pins 0-7
+    // share one mode, pins 8-15 share another). Per-pin changes are not
+    // supported; use Pcal95555Handler::SetOutputMode() for port-level control.
+    return hf_gpio_err_t::GPIO_ERR_UNSUPPORTED_OPERATION;
 }
 
-hf_gpio_err_t Pcal95555GpioPin::SetDirectionImpl(hf_gpio_direction_t direction) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t ok = driver_->setPinDirection(static_cast<hf_u8_t>(pin_), direction == hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_gpio_err_t Pcal95555GpioPin::SetOutputModeImpl(hf_gpio_output_mode_t /*mode*/) noexcept {
-    return hf_gpio_err_t::GPIO_SUCCESS;
-}
-
-hf_gpio_err_t Pcal95555GpioPin::SetPullModeImpl(hf_gpio_pull_mode_t mode) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    hf_bool_t ok = true;
-    switch (mode) {
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING:
-            ok = driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), false) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), false);
-            break;
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP:
-            ok = driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), true) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), false);
-            break;
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN:
-            ok = driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), false) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), true);
-            break;
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP_DOWN:
-            ok = driver_->setPinPullUp(static_cast<hf_u8_t>(pin_), true) && driver_->setPinPullDown(static_cast<hf_u8_t>(pin_), true);
-            break;
-    }
-    pull_mode_ = mode;
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+hf_gpio_err_t Pcal95555GpioPin::SetPullModeImpl(
+    hf_gpio_pull_mode_t mode) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    return parent_handler_->SetPullMode(static_cast<uint8_t>(pin_), mode);
 }
 
 hf_gpio_pull_mode_t Pcal95555GpioPin::GetPullModeImpl() const noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
-    hf_bool_t pullup = false, pulldown = false;
-    driver_->getPinPullUp(static_cast<hf_u8_t>(pin_), pullup);
-    driver_->getPinPullDown(static_cast<hf_u8_t>(pin_), pulldown);
-    if (pullup && pulldown) return hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP_DOWN;
-    if (pullup) return hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP;
-    if (pulldown) return hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN;
+    if (!parent_handler_) {
+        return hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
+    }
+    hf_gpio_pull_mode_t mode;
+    if (parent_handler_->GetPullMode(static_cast<uint8_t>(pin_), mode) ==
+        hf_gpio_err_t::GPIO_SUCCESS) {
+        return mode;
+    }
     return hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
 }
 
-hf_gpio_err_t Pcal95555GpioPin::SetPinLevelImpl(hf_gpio_level_t level) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    hf_bool_t hardware_level = (level == hf_gpio_level_t::HF_GPIO_LEVEL_HIGH);
-    hf_bool_t ok = driver_->writePin(static_cast<hf_u8_t>(pin_), hardware_level);
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+hf_gpio_err_t Pcal95555GpioPin::SetPinLevelImpl(
+    hf_gpio_level_t level) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    bool hw_level = (level == hf_gpio_level_t::HF_GPIO_LEVEL_HIGH);
+    return parent_handler_->SetOutput(static_cast<uint8_t>(pin_), hw_level);
 }
 
-hf_gpio_err_t Pcal95555GpioPin::GetPinLevelImpl(hf_gpio_level_t& level) noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    hf_bool_t value = false;
-    hf_bool_t ok = driver_->readPin(static_cast<hf_u8_t>(pin_), value);
-    if (ok) {
-        level = value ? hf_gpio_level_t::HF_GPIO_LEVEL_HIGH : hf_gpio_level_t::HF_GPIO_LEVEL_LOW;
+hf_gpio_err_t Pcal95555GpioPin::GetPinLevelImpl(
+    hf_gpio_level_t& level) noexcept {
+    if (!parent_handler_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    bool active = false;
+    auto result = parent_handler_->ReadInput(static_cast<uint8_t>(pin_), active);
+    if (result == hf_gpio_err_t::GPIO_SUCCESS) {
+        level = active ? hf_gpio_level_t::HF_GPIO_LEVEL_HIGH
+                       : hf_gpio_level_t::HF_GPIO_LEVEL_LOW;
     }
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
+    return result;
 }
 
-hf_gpio_err_t Pcal95555GpioPin::GetDirectionImpl(hf_gpio_direction_t& direction) const noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    hf_bool_t is_output = false;
-    hf_bool_t ok = driver_->getPinDirection(static_cast<hf_u8_t>(pin_), is_output);
-    if (ok) {
-        direction = is_output ? hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT 
-                             : hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT;
-    }
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_gpio_err_t Pcal95555GpioPin::GetOutputModeImpl(hf_gpio_output_mode_t& mode) const noexcept {
-    MutexLockGuard lock(pin_mutex_);
-    if (!driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    // PCAL95555 only supports push-pull output mode
-    mode = hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL;
+hf_gpio_err_t Pcal95555GpioPin::GetDirectionImpl(
+    hf_gpio_direction_t& direction) const noexcept {
+    // Direction is tracked in the BaseGpio base class after SetDirection().
+    direction = current_direction_;
     return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
-// ===================== Handler Factory Method ===================== //
-std::unique_ptr<BaseGpio> Pcal95555Handler::CreateGpioPin(
-    hf_pin_num_t pin,
-    hf_gpio_direction_t direction,
-    hf_gpio_active_state_t active_state,
-    hf_gpio_output_mode_t output_mode,
-    hf_gpio_pull_mode_t pull_mode) noexcept {
-    if (!ValidatePin(static_cast<hf_u8_t>(pin)) || !pcal95555_driver_) return nullptr;
-    return std::make_unique<Pcal95555GpioPin>(pin, pcal95555_driver_, direction, active_state, output_mode, pull_mode);
-} 
-
-// ===================== Pcal95555Handler Advanced Features ===================== //
-hf_bool_t Pcal95555Handler::SetPolarityInversion(hf_pin_num_t pin, hf_bool_t invert) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!ValidatePin(static_cast<hf_u8_t>(pin)) || !pcal95555_driver_) return false;
-    PCAL95555::Polarity polarity = invert ? PCAL95555::Polarity::Inverted : PCAL95555::Polarity::Normal;
-    return pcal95555_driver_->setPinPolarity(static_cast<hf_u8_t>(pin), polarity);
-}
-
-hf_bool_t Pcal95555Handler::GetPolarityInversion(hf_pin_num_t pin, hf_bool_t& invert) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!ValidatePin(static_cast<hf_u8_t>(pin)) || !pcal95555_driver_) return false;
-    
-    // PCAL95555 driver doesn't provide a getPinPolarity method
-    // We'd need to track this state internally or extend the driver
-    // For now, default to normal polarity
-    invert = false;
-    return true;  // Return success since we provide a valid default
-}
-
-hf_bool_t Pcal95555Handler::SetInterruptMask(hf_pin_num_t pin, hf_bool_t mask) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!ValidatePin(static_cast<hf_u8_t>(pin)) || !pcal95555_driver_) return false;
-    
-    // PCAL95555 only provides configureInterruptMask for all pins at once
-    // To set individual pin mask, we need to read current mask, modify bit, then write back
-    uint16_t current_status = pcal95555_driver_->getInterruptStatus(); // This also reads current mask
-    uint16_t pin_bit = 1U << pin;
-    
-    // Create new mask: if mask=true (disable interrupt), set bit to 1; if mask=false (enable), set bit to 0
-    uint16_t new_mask = mask ? (current_status | pin_bit) : (current_status & ~pin_bit);
-    
-    return pcal95555_driver_->configureInterruptMask(new_mask);
-}
-
-hf_bool_t Pcal95555Handler::GetInterruptMask(hf_pin_num_t pin, hf_bool_t& mask) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!ValidatePin(static_cast<hf_u8_t>(pin)) || !pcal95555_driver_) return false;
-    
-    // PCAL95555 doesn't provide a way to read current interrupt mask separately from status
-    // We'd need to track this state internally or extend the driver
-    // For now, assume all interrupts are masked (disabled) by default
-    mask = true;  // true means masked/disabled
-    return true;  // Return success since we provide a valid default
-}
-
-hf_bool_t Pcal95555Handler::GetInterruptStatus(hf_pin_num_t pin, hf_bool_t& status) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!ValidatePin(static_cast<hf_u8_t>(pin)) || !pcal95555_driver_) return false;
-    
-    // Get global interrupt status and extract the specific pin bit
-    uint16_t global_status = pcal95555_driver_->getInterruptStatus();
-    uint16_t pin_bit = 1U << pin;
-    status = (global_status & pin_bit) != 0;
-    
-    return true;
-}
-
-hf_gpio_err_t Pcal95555Handler::SetDirections(uint16_t pin_mask, hf_gpio_direction_t direction) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_ || !pcal95555_driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    PCAL95555::GPIODir dir = (direction == hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT) ? 
-                             PCAL95555::GPIODir::Input : PCAL95555::GPIODir::Output;
-    bool success = pcal95555_driver_->setMultipleDirections(pin_mask, dir);
-    return success ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_gpio_err_t Pcal95555Handler::SetOutputs(uint16_t pin_mask, hf_bool_t active) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_ || !pcal95555_driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    // PCAL95555 doesn't have a bulk write method, so we need to set each pin individually
-    // This is less efficient but ensures correctness
-    bool all_success = true;
-    for (uint8_t pin = 0; pin < 16; ++pin) {
-        if (pin_mask & (1U << pin)) {
-            if (!pcal95555_driver_->writePin(pin, active)) {
-                all_success = false;
-            }
-        }
-    }
-    
-    return all_success ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_gpio_err_t Pcal95555Handler::SetPullModes(uint16_t pin_mask, hf_gpio_pull_mode_t pull_mode) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_ || !pcal95555_driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    bool ok = true;
-    switch (pull_mode) {
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING:
-            ok = pcal95555_driver_->setPinsPullUp(pin_mask, false) && pcal95555_driver_->setPinsPullDown(pin_mask, false);
-            break;
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP:
-            ok = pcal95555_driver_->setPinsPullUp(pin_mask, true) && pcal95555_driver_->setPinsPullDown(pin_mask, false);
-            break;
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN:
-            ok = pcal95555_driver_->setPinsPullUp(pin_mask, false) && pcal95555_driver_->setPinsPullDown(pin_mask, true);
-            break;
-        case hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP_DOWN:
-            ok = pcal95555_driver_->setPinsPullUp(pin_mask, true) && pcal95555_driver_->setPinsPullDown(pin_mask, true);
-            break;
-        default:
-            ok = false;
-    }
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_gpio_err_t Pcal95555Handler::GetAllInterruptMasks(uint16_t& mask) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_ || !pcal95555_driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    bool ok = pcal95555_driver_->getAllInterruptMasks(mask);
-    return ok ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
-}
-
-hf_gpio_err_t Pcal95555Handler::GetAllInterruptStatus(uint16_t& status) noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!initialized_ || !pcal95555_driver_) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
-    
-    status = pcal95555_driver_->getInterruptStatus();
-    
-    // Check if there was a communication error during the read operation  
-    uint16_t error_flags = pcal95555_driver_->getErrorFlags();
-    if (error_flags != 0) {
-        return hf_gpio_err_t::GPIO_ERR_READ_FAILURE;
-    }
-    
+hf_gpio_err_t Pcal95555GpioPin::GetOutputModeImpl(
+    hf_gpio_output_mode_t& mode) const noexcept {
+    // Output mode is tracked in the BaseGpio base class.
+    mode = output_mode_;
     return hf_gpio_err_t::GPIO_SUCCESS;
-}
-
-hf_bool_t Pcal95555Handler::SoftwareReset() noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!pcal95555_driver_) return false;
-    return pcal95555_driver_->softwareReset();
-}
-
-hf_bool_t Pcal95555Handler::PowerDown() noexcept {
-    MutexLockGuard lock(handler_mutex_);
-    if (!pcal95555_driver_) return false;
-    return pcal95555_driver_->powerDown();
-}
-
-void Pcal95555Handler::DumpDiagnostics() const noexcept {
-    static constexpr const char* TAG = "Pcal95555Handler";
-    
-    Logger::GetInstance().Info(TAG, "=== PCAL95555 HANDLER DIAGNOSTICS ===");
-    
-    MutexLockGuard lock(handler_mutex_);
-    
-    // System Health
-    Logger::GetInstance().Info(TAG, "System Health:");
-    Logger::GetInstance().Info(TAG, "  Initialized: %s", initialized_ ? "YES" : "NO");
-    
-    // I2C Interface
-    Logger::GetInstance().Info(TAG, "I2C Interface:");
-    if (i2c_adapter_) {
-        Logger::GetInstance().Info(TAG, "  I2C Adapter: ACTIVE");
-        Logger::GetInstance().Info(TAG, "  Device Address: 0x%02X", i2c_adapter_->GetDeviceAddress());
-    } else {
-        Logger::GetInstance().Info(TAG, "  I2C Adapter: NOT_INITIALIZED");
-    }
-    
-    // Driver Status
-    Logger::GetInstance().Info(TAG, "PCAL95555 Driver:");
-    if (pcal95555_driver_) {
-        Logger::GetInstance().Info(TAG, "  Driver Instance: ACTIVE");
-    } else {
-        Logger::GetInstance().Info(TAG, "  Driver Instance: NOT_INITIALIZED");
-    }
-    
-    // Pin Registry Status
-    Logger::GetInstance().Info(TAG, "Pin Registry:");
-    int active_pins = 0;
-    for (size_t i = 0; i < pin_registry_.size(); ++i) {
-        if (pin_registry_[i] != nullptr) {
-            active_pins++;
-        }
-    }
-    Logger::GetInstance().Info(TAG, "  Active Pin Objects: %d/%d", active_pins, static_cast<int>(pin_registry_.size()));
-    
-    // Interrupt Configuration
-    Logger::GetInstance().Info(TAG, "Interrupt Configuration:");
-    Logger::GetInstance().Info(TAG, "  Hardware Interrupt Pin: %s", interrupt_pin_ ? "CONFIGURED" : "NOT_CONFIGURED");
-    Logger::GetInstance().Info(TAG, "  Interrupt System: %s", interrupt_configured_ ? "ENABLED" : "DISABLED");
-    
-    // Pin Configuration Summary
-    int configured_interrupts = 0;
-    for (size_t i = 0; i < pin_callbacks_.size(); ++i) {
-        if (pin_callbacks_[i] != nullptr) {
-            configured_interrupts++;
-        }
-    }
-    Logger::GetInstance().Info(TAG, "  Pins with Interrupts: %d", configured_interrupts);
-    
-    // Pin Details (show first few active pins)
-    Logger::GetInstance().Info(TAG, "Pin Details (first 8 active pins):");
-    int pins_shown = 0;
-    for (size_t i = 0; i < pin_registry_.size() && pins_shown < 8; ++i) {
-        if (pin_registry_[i] != nullptr) {
-            bool has_interrupt = pin_callbacks_[i] != nullptr;
-            const char* trigger_str = "NONE";
-            if (pin_triggers_[i] == hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_RISING_EDGE) {
-                trigger_str = "RISING";
-            } else if (pin_triggers_[i] == hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE) {
-                trigger_str = "FALLING";
-            } else if (pin_triggers_[i] == hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_BOTH_EDGES) {
-                trigger_str = "BOTH";
-            }
-            
-            Logger::GetInstance().Info(TAG, "    Pin %d: ACTIVE, Interrupt: %s, Trigger: %s", 
-                static_cast<int>(i), has_interrupt ? "YES" : "NO", trigger_str);
-            pins_shown++;
-        }
-    }
-    
-    if (pins_shown == 0) {
-        Logger::GetInstance().Info(TAG, "    No active pins found");
-    }
-    
-    // Memory Usage
-    Logger::GetInstance().Info(TAG, "Memory Usage:");
-    size_t estimated_memory = sizeof(*this);
-    if (pcal95555_driver_) estimated_memory += sizeof(PCAL95555);
-    if (i2c_adapter_) estimated_memory += sizeof(Pcal95555I2cAdapter);
-    
-    // Estimate pin object memory
-    estimated_memory += active_pins * sizeof(Pcal95555GpioPin);
-    
-    Logger::GetInstance().Info(TAG, "  Estimated Total: %d bytes", static_cast<int>(estimated_memory));
-    Logger::GetInstance().Info(TAG, "  Pin Objects: %d x %d bytes", active_pins, static_cast<int>(sizeof(Pcal95555GpioPin)));
-    
-    // Hardware Status
-    Logger::GetInstance().Info(TAG, "Hardware Status:");
-    Logger::GetInstance().Info(TAG, "  Max Pins Supported: %d", static_cast<int>(pin_registry_.size()));
-    Logger::GetInstance().Info(TAG, "  I2C Communication: %s", i2c_adapter_ ? "READY" : "NOT_READY");
-    
-    // System Status Summary
-    bool system_healthy = initialized_ && 
-                         (pcal95555_driver_ != nullptr) &&
-                         (i2c_adapter_ != nullptr);
-    
-    Logger::GetInstance().Info(TAG, "System Status: %s", system_healthy ? "HEALTHY" : "DEGRADED");
-    
-    Logger::GetInstance().Info(TAG, "=== END PCAL95555 HANDLER DIAGNOSTICS ===");
 }

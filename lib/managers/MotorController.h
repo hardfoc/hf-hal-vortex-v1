@@ -19,7 +19,29 @@
  * - Access to individual TMC9660 drivers, GPIO, and ADC by device index
  * - Thread-safe device registration and access
  * - Board-aware device management with predefined CS pin assignments
+ *
+ * @note Since the TMC9660 driver update, handler construction requires host-side GPIO
+ *       control pins (RST, DRV_EN, FAULTN, WAKE). These must be provided when creating
+ *       TMC9660 devices via the Tmc9660ControlPins struct.
  */
+
+/**
+ * @brief Bundle of host-side GPIO references for TMC9660 control pins.
+ *
+ * These are the GPIO pins on the host MCU (e.g., ESP32) that connect to the
+ * TMC9660's control signals. They are required by the TMC9660 bootloader
+ * initialization sequence for hardware reset and fault monitoring.
+ *
+ * @note The BaseGpio instances must be pre-configured (pin number, direction)
+ *       before being passed to the handler.
+ */
+struct Tmc9660ControlPins {
+    BaseGpio& rst;      ///< RST pin (output) - hardware reset
+    BaseGpio& drv_en;   ///< DRV_EN pin (output) - driver enable
+    BaseGpio& faultn;   ///< FAULTN pin (input) - fault status
+    BaseGpio& wake;     ///< WAKE pin (output) - wake from hibernation
+};
+
 class MotorController {
 public:
     static constexpr uint8_t MAX_TMC9660_DEVICES = 4;   ///< Maximum supported TMC9660 devices (board + external)
@@ -58,22 +80,78 @@ public:
     Tmc9660Handler* handler(uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
 
     /**
-     * @brief Get access to the underlying TMC9660 driver by device index.
-     * @param deviceIndex Device index (0=onboard, 2-3=external) 
-     * @return Shared pointer to TMC9660 driver, nullptr if invalid/not ready
-     * @note Returns nullptr if deviceIndex is invalid, device not active/initialized, or driver unavailable
+     * @brief Visit the underlying typed TMC9660 driver by device index.
+     *
+     * Since the TMC9660 driver is now template-based, direct pointer access is
+     * replaced by a visitor pattern. The provided function receives a reference
+     * to the typed driver (either TMC9660<HalSpiTmc9660Comm> or TMC9660<HalUartTmc9660Comm>).
+     *
+     * @tparam Func Callable type accepting auto& (the typed driver reference)
+     * @param func The visitor function to execute on the driver
+     * @param deviceIndex Device index (0=onboard, 2-3=external)
+     * @return The return value of func, or default-constructed if driver not available
+     *
+     * @code
+     * motorController.visitDriver([](auto& driver) {
+     *     driver.motorConfig.setType(tmc9660::tmcl::MotorType::BLDC, 7);
+     * });
+     * @endcode
      */
-    std::shared_ptr<TMC9660> driver(uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+    template <typename Func>
+    auto visitDriver(Func&& func, uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept {
+        auto* h = handler(deviceIndex);
+        if (h) {
+            return h->visitDriver(std::forward<Func>(func));
+        }
+        // Driver not available - return default
+        using ReturnType = decltype(h->visitDriver(std::forward<Func>(func)));
+        if constexpr (std::is_void_v<ReturnType>) {
+            return;
+        } else {
+            return ReturnType{};
+        }
+    }
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//
     //**************************************************************************//
 
     /**
-     * @brief Create an external TMC9660 device on specified CS line.
+     * @brief Create the onboard TMC9660 device using an SPI interface.
+     * @param spiInterface Reference to BaseSpi implementation
+     * @param address TMC9660 device address
+     * @param pins Host-side GPIO control pin references for the TMC9660
+     * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
+     * @return true if device created successfully, false if already exists
+     * @note Must be called before Initialize() so the onboard device is registered.
+     *       The GPIO pins must already be configured (pin number, direction).
+     */
+    bool CreateOnboardDevice(BaseSpi& spiInterface, 
+                            uint8_t address,
+                            const Tmc9660ControlPins& pins,
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+
+    /**
+     * @brief Create the onboard TMC9660 device using a UART interface.
+     * @param uartInterface Reference to BaseUart implementation
+     * @param address TMC9660 device address
+     * @param pins Host-side GPIO control pin references for the TMC9660
+     * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
+     * @return true if device created successfully, false if already exists
+     * @note Must be called before Initialize() so the onboard device is registered.
+     *       The GPIO pins must already be configured (pin number, direction).
+     */
+    bool CreateOnboardDevice(BaseUart& uartInterface,
+                            uint8_t address,
+                            const Tmc9660ControlPins& pins,
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+
+    /**
+     * @brief Create an external TMC9660 device on specified CS line (SPI).
      * @param csDeviceIndex External device CS index (2 or 3 only)
      * @param spiDeviceId SPI device ID for communication (EXTERNAL_DEVICE_1 or EXTERNAL_DEVICE_2)
      * @param address TMC9660 device address
+     * @param pins Host-side GPIO control pin references for the TMC9660
      * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
      * @return true if device created successfully, false otherwise
      * @note Only EXTERNAL_DEVICE_1_INDEX (2) and EXTERNAL_DEVICE_2_INDEX (3) are allowed
@@ -81,6 +159,23 @@ public:
     bool CreateExternalDevice(uint8_t csDeviceIndex, 
                             SpiDeviceId spiDeviceId, 
                             uint8_t address,
+                            const Tmc9660ControlPins& pins,
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+
+    /**
+     * @brief Create an external TMC9660 device on a UART interface.
+     * @param csDeviceIndex External device slot index (2 or 3 only)
+     * @param uartInterface Reference to BaseUart implementation
+     * @param address TMC9660 device address
+     * @param pins Host-side GPIO control pin references for the TMC9660
+     * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
+     * @return true if device created successfully, false otherwise
+     * @note Only EXTERNAL_DEVICE_1_INDEX (2) and EXTERNAL_DEVICE_2_INDEX (3) are allowed
+     */
+    bool CreateExternalDevice(uint8_t csDeviceIndex,
+                            BaseUart& uartInterface,
+                            uint8_t address,
+                            const Tmc9660ControlPins& pins,
                             const tmc9660::BootloaderConfig* bootCfg = nullptr);
 
     /**
@@ -143,9 +238,13 @@ private:
     MotorController& operator=(const MotorController&) = delete;
 
     /**
-     * @brief Initialize the motor controller system.
-     * @note This automatically creates the onboard TMC9660 device using CommChannelsManager
-     * @return true if initialization successful, false otherwise
+     * @brief Initialize all registered motor controller devices.
+     *
+     * Calls Tmc9660Handler::Initialize() on every active device. Devices must
+     * be created first via CreateOnboardDevice() / CreateExternalDevice() which
+     * supply the required host-side GPIO control pins.
+     *
+     * @return true if all active devices initialized successfully, false otherwise
      */
     bool Initialize();
 

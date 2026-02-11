@@ -743,9 +743,9 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
         return false;
     }
     
-    // Create PCAL95555 handler
+    // Create PCAL95555 handler (lazy-initialized via EnsureInitialized)
     pcal95555_handler_ = std::make_unique<Pcal95555Handler>(*i2c_device);
-    if (!pcal95555_handler_->Initialize()) {
+    if (!pcal95555_handler_->EnsureInitialized()) {
         UpdateLastError(hf_gpio_err_t::GPIO_ERR_HARDWARE_FAULT);
         pcal95555_handler_.reset();
         return false;
@@ -812,32 +812,36 @@ std::shared_ptr<BaseGpio> GpioManager::CreatePcal95555GpioPin(hf_u8_t pin_id, hf
         return nullptr;
     }
     
-    // Use PCAL95555 handler's factory method with unit number
-    auto gpio = pcal95555_handler_->CreateGpioPin(pin_id, unit_number);
+    // Determine pull mode from primitive values
+    hf_gpio_pull_mode_t pull_mode = hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
+    if (has_pull) {
+        pull_mode = pull_is_up ? hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP 
+                               : hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN;
+    }
+    
+    // Determine output mode from primitive value
+    hf_gpio_output_mode_t output_mode_val = is_push_pull 
+        ? hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL 
+        : hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_OPEN_DRAIN;
+    
+    // Determine active state from inversion
+    hf_gpio_active_state_t active_state = is_inverted 
+        ? hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW 
+        : hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH;
+    
+    // Use PCAL95555 handler's factory method with full configuration
+    // Note: unit_number is handled at handler construction level, not per-pin
+    auto gpio = pcal95555_handler_->CreateGpioPin(
+        static_cast<hf_pin_num_t>(pin_id),
+        hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT,  // Default to input; caller configures later
+        active_state,
+        output_mode_val,
+        pull_mode);
+    
     if (!gpio) {
         UpdateLastError(hf_gpio_err_t::GPIO_ERR_HARDWARE_FAULT);
         return nullptr;
     }
-    
-    // Configure pull mode based on primitive values
-    if (has_pull) {
-        hf_gpio_pull_mode_t pull_mode = pull_is_up ? 
-            hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP : 
-            hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN;
-        gpio->SetPullMode(pull_mode);
-    } else {
-        gpio->SetPullMode(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING);
-    }
-    
-    // Configure output mode based on primitive value
-    hf_gpio_output_mode_t output_mode = is_push_pull ? 
-        hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL : 
-        hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_OPEN_DRAIN;
-    gpio->SetOutputMode(output_mode);
-    
-    // Set active state based on inversion
-    gpio->SetActiveState(is_inverted ? hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW 
-                                    : hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH);
     
     return gpio;
 }

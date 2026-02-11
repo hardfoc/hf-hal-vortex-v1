@@ -27,24 +27,6 @@ bool MotorController::Initialize() {
         return false;
     }
     
-    // Automatically create onboard TMC9660 device if not already created
-    if (!onboardDeviceCreated_) {
-        BaseSpi* spiInterface = commManager.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-        if (spiInterface) {
-            // Create onboard TMC9660 handler with default address 1
-            auto onboardHandler = std::make_unique<Tmc9660Handler>(
-                *spiInterface, 
-                0x01,  // Default TMC9660 address
-                &Tmc9660Handler::kDefaultBootConfig
-            );
-            
-            tmcHandlers_[ONBOARD_TMC9660_INDEX] = std::move(onboardHandler);
-            deviceActive_[ONBOARD_TMC9660_INDEX] = true;
-            deviceInitialized_[ONBOARD_TMC9660_INDEX] = false;
-            onboardDeviceCreated_ = true;
-        }
-    }
-    
     // Initialize all active devices
     bool allSuccess = true;
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
@@ -59,8 +41,13 @@ bool MotorController::Initialize() {
     return allSuccess;
 }
 
+// ---------------------------------------------------------------------------
+// Onboard Device Creation (SPI)
+// ---------------------------------------------------------------------------
+
 bool MotorController::CreateOnboardDevice(BaseSpi& spiInterface, 
                                         uint8_t address,
+                                        const Tmc9660ControlPins& pins,
                                         const tmc9660::BootloaderConfig* bootCfg) {
     MutexLockGuard lock(deviceMutex_);
     
@@ -68,9 +55,10 @@ bool MotorController::CreateOnboardDevice(BaseSpi& spiInterface,
         return false; // Onboard device already exists
     }
     
-    // Create onboard TMC9660 handler
+    // Create onboard TMC9660 handler with SPI and control pins
     auto onboardHandler = std::make_unique<Tmc9660Handler>(
         spiInterface, 
+        pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
@@ -88,8 +76,13 @@ bool MotorController::CreateOnboardDevice(BaseSpi& spiInterface,
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// Onboard Device Creation (UART)
+// ---------------------------------------------------------------------------
+
 bool MotorController::CreateOnboardDevice(BaseUart& uartInterface,
-                                        uint8_t address, 
+                                        uint8_t address,
+                                        const Tmc9660ControlPins& pins,
                                         const tmc9660::BootloaderConfig* bootCfg) {
     MutexLockGuard lock(deviceMutex_);
     
@@ -97,9 +90,10 @@ bool MotorController::CreateOnboardDevice(BaseUart& uartInterface,
         return false; // Onboard device already exists
     }
     
-    // Create onboard TMC9660 handler with UART
+    // Create onboard TMC9660 handler with UART and control pins
     auto onboardHandler = std::make_unique<Tmc9660Handler>(
         uartInterface, 
+        pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
@@ -116,10 +110,15 @@ bool MotorController::CreateOnboardDevice(BaseUart& uartInterface,
     
     return true;
 }
+
+// ---------------------------------------------------------------------------
+// External Device Creation (SPI via CommChannelsManager)
+// ---------------------------------------------------------------------------
 
 bool MotorController::CreateExternalDevice(uint8_t csDeviceIndex, 
                                          SpiDeviceId spiDeviceId, 
                                          uint8_t address,
+                                         const Tmc9660ControlPins& pins,
                                          const tmc9660::BootloaderConfig* bootCfg) {
     MutexLockGuard lock(deviceMutex_);
     
@@ -142,9 +141,10 @@ bool MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
         return false; // Invalid SPI device ID or interface not available
     }
     
-    // Create external TMC9660 handler
+    // Create external TMC9660 handler with SPI and control pins
     auto externalHandler = std::make_unique<Tmc9660Handler>(
         *spiInterface, 
+        pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
@@ -161,9 +161,14 @@ bool MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     return true;
 }
 
+// ---------------------------------------------------------------------------
+// External Device Creation (UART)
+// ---------------------------------------------------------------------------
+
 bool MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
                                          BaseUart& uartInterface,
-                                         uint8_t address, 
+                                         uint8_t address,
+                                         const Tmc9660ControlPins& pins,
                                          const tmc9660::BootloaderConfig* bootCfg) {
     MutexLockGuard lock(deviceMutex_);
     
@@ -175,9 +180,10 @@ bool MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
         return false; // Device slot already occupied
     }
     
-    // Create external TMC9660 handler with UART
+    // Create external TMC9660 handler with UART and control pins
     auto externalHandler = std::make_unique<Tmc9660Handler>(
         uartInterface, 
+        pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
@@ -193,6 +199,10 @@ bool MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     
     return true;
 }
+
+// ---------------------------------------------------------------------------
+// Device Deletion
+// ---------------------------------------------------------------------------
 
 bool MotorController::DeleteExternalDevice(uint8_t csDeviceIndex) {
     MutexLockGuard lock(deviceMutex_);
@@ -212,6 +222,10 @@ bool MotorController::DeleteExternalDevice(uint8_t csDeviceIndex) {
     
     return true;
 }
+
+// ---------------------------------------------------------------------------
+// Utility & Query Methods
+// ---------------------------------------------------------------------------
 
 bool MotorController::IsExternalDeviceIndex(uint8_t csDeviceIndex) const noexcept {
     return (csDeviceIndex == EXTERNAL_DEVICE_1_INDEX || 
@@ -257,6 +271,10 @@ std::vector<uint8_t> MotorController::GetActiveDeviceIndices() const noexcept {
     return activeIndices;
 }
 
+// ---------------------------------------------------------------------------
+// Handler Access
+// ---------------------------------------------------------------------------
+
 Tmc9660Handler* MotorController::handler(uint8_t deviceIndex) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
@@ -267,19 +285,9 @@ Tmc9660Handler* MotorController::handler(uint8_t deviceIndex) noexcept {
     return tmcHandlers_[deviceIndex].get();
 }
 
-std::shared_ptr<TMC9660> MotorController::driver(uint8_t deviceIndex) noexcept {
-    MutexLockGuard lock(deviceMutex_);
-    
-    if (deviceIndex >= MAX_TMC9660_DEVICES || !deviceActive_[deviceIndex] || !tmcHandlers_[deviceIndex]) {
-        return nullptr; // Invalid or inactive device
-    }
-    
-    if (!deviceInitialized_[deviceIndex]) {
-        return nullptr; // Device not initialized
-    }
-    
-    return tmcHandlers_[deviceIndex]->driver();
-}
+// ---------------------------------------------------------------------------
+// Device Initialization
+// ---------------------------------------------------------------------------
 
 std::vector<bool> MotorController::InitializeAllDevices() {
     MutexLockGuard lock(deviceMutex_);
@@ -309,6 +317,10 @@ std::vector<bool> MotorController::GetInitializationStatus() const {
     
     return status;
 }
+
+// ---------------------------------------------------------------------------
+// Diagnostics
+// ---------------------------------------------------------------------------
 
 void MotorController::DumpStatistics() const noexcept {
     static constexpr const char* TAG = "MotorController";
@@ -354,15 +366,9 @@ void MotorController::DumpStatistics() const noexcept {
             active_devices++;
             if (is_initialized) initialized_devices++;
             
-            // Get driver statistics if available
-            auto driver = driver(i);
-            if (driver) {
-                Logger::GetInstance().Info(TAG, "    Driver: CONNECTED");
-                
-                // Get basic TMC9660 information if available
-                // Note: Add more detailed statistics here based on TMC9660 capabilities
-            } else {
-                Logger::GetInstance().Info(TAG, "    Driver: NOT_AVAILABLE");
+            // Dump handler-level diagnostics
+            if (is_initialized) {
+                tmcHandlers_[i]->DumpDiagnostics();
             }
         } else if (i == ONBOARD_TMC9660_INDEX) {
             Logger::GetInstance().Info(TAG, "  Device %d (Onboard TMC9660): NOT_ACTIVE", i);
@@ -399,7 +405,7 @@ void MotorController::DumpStatistics() const noexcept {
     
     // Hardware Configuration
     Logger::GetInstance().Info(TAG, "Hardware Configuration:");
-    Logger::GetInstance().Info(TAG, "  Communication: SPI via CommChannelsManager");
+    Logger::GetInstance().Info(TAG, "  Communication: SPI/UART via CommChannelsManager");
     Logger::GetInstance().Info(TAG, "  Onboard CS: TMC9660_MOTOR_CONTROLLER");
     Logger::GetInstance().Info(TAG, "  External CS 1: EXTERNAL_DEVICE_1");
     Logger::GetInstance().Info(TAG, "  External CS 2: EXTERNAL_DEVICE_2");

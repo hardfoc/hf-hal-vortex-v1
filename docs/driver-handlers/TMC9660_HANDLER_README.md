@@ -6,636 +6,279 @@
 ![Hardware](https://img.shields.io/badge/hardware-TMC9660-orange.svg)
 ![Interface](https://img.shields.io/badge/interface-SPI%20|%20UART-green.svg)
 
-**Unified handler for TMC9660 motor controller with GPIO and ADC integration**
+**Non-templated HAL handler for TMC9660 motor controller with BaseGpio, BaseAdc, and BaseTemperature integration**
 
 </div>
 
-## 📋 Overview
+## Overview
 
-The `Tmc9660Handler` is a unified handler for TMC9660 motor controller that provides a modern, comprehensive interface for motor control, GPIO expansion, and ADC functionality. It supports both SPI and UART communication interfaces, offers BaseGpio and BaseAdc compatible wrappers, and provides direct access to the TMC9660 driver for advanced motor control operations.
+The `Tmc9660Handler` wraps the templated `tmc9660::TMC9660<CommType>` driver behind a non-templated facade, bridging it into the HardFOC HAL layer. It supports both SPI and UART communication, provides inner-class adapters for `BaseGpio`, `BaseAdc`, and `BaseTemperature`, and exposes convenience methods for common motor control operations.
 
-### ✨ Key Features
+### Key Features
 
-- **🚗 Motor Control**: Advanced motor control with FOC, stepper, and BLDC support
-- **🔌 GPIO Expansion**: 18 internal GPIO pins with BaseGpio compatibility
-- **📊 ADC Integration**: 12 ADC channels with BaseAdc compatibility
-- **🌡️ Temperature Monitoring**: Internal temperature sensor support
-- **📡 Multi-Interface**: SPI and UART communication support
-- **🛡️ Thread-Safe**: Concurrent access from multiple tasks
-- **⚡ High Performance**: Optimized motor control algorithms
-- **🏥 Health Monitoring**: Comprehensive diagnostics and error handling
+- **Dual Communication**: SPI or UART, selected at construction time
+- **Motor Control**: Convenience methods for motor type, commutation, feedback sensors, PID gains, DRV_EN control, and current sensing calibration
+- **Typed Driver Access**: `spiDriver()` / `uartDriver()` for direct access to all 18+ driver subsystems
+- **Visitor Pattern**: `visitDriver()` for generic code that works with either comm mode
+- **BaseGpio Wrappers**: GPIO17/GPIO18 as `BaseGpio` instances (INPUT and OUTPUT supported)
+- **BaseAdc Wrapper**: 15-channel ADC via non-contiguous channel ID scheme
+- **BaseTemperature Wrapper**: Chip temperature sensor via `BaseTemperature`
+- **Telemetry**: Supply voltage, chip temperature, motor current, velocity, position, error flags
+- **Bootloader Integration**: Full bootloader init sequence with hardware reset
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                   Tmc9660Handler                               │
-├─────────────────────────────────────────────────────────────────┤
-│  Motor Control    │ FOC, stepper, BLDC motor control          │
-├─────────────────────────────────────────────────────────────────┤
-│  GPIO Expansion   │ 18 internal GPIO pins with BaseGpio       │
-├─────────────────────────────────────────────────────────────────┤
-│  ADC Integration  │ 12 ADC channels with BaseAdc              │
-├─────────────────────────────────────────────────────────────────┤
-│  TMC9660 Driver   │ Low-level motor controller interface       │
-└─────────────────────────────────────────────────────────────────┘
+Application / Managers
+        |
+        v
+ Tmc9660Handler (non-templated facade)
+   |-- Gpio (BaseGpio)        -- GPIO17, GPIO18 digital I/O
+   |-- Adc (BaseAdc)          -- 15 channels across 5 ranges
+   |-- Temperature (BaseTemp) -- chip temperature sensor
+   |-- spiDriver() / uartDriver()  -- direct typed access
+   |-- visitDriver(lambda)         -- generic typed access
+        |
+        v
+ tmc9660::TMC9660<CommType>  (18 subsystems)
+        |
+        v
+ HalSpiTmc9660Comm / HalUartTmc9660Comm  (CRTP adapters)
+        |
+        v
+ BaseSpi / BaseUart + BaseGpio (control pins)
 ```
 
-## 🚀 Quick Start
+## Construction
 
-### Basic Motor Control
+The handler requires a communication bus **and** four host-side GPIO control pins:
 
 ```cpp
-#include "utils-and-drivers/driver-handlers/Tmc9660Handler.h"
-#include "component-handlers/CommChannelsManager.h"
+// SPI mode
+Tmc9660Handler handler(spi, rst_pin, drv_en_pin, faultn_pin, wake_pin,
+                       address, &bootConfig);
 
-void tmc9660_basic_example() {
-    // Get SPI interface
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) {
-        logger.Info("TMC9660", "SPI interface not available\n");
-        return;
-    }
-    
-    // Create TMC9660 handler
-    Tmc9660Handler handler(*spi);
-    
-    // Initialize handler
-    if (!handler.Initialize()) {
-        logger.Info("TMC9660", "Failed to initialize TMC9660\n");
-        return;
-    }
-    
-    // Access motor control
-    auto& driver = handler.driver();
-    logger.Info("TMC9660", "TMC9660 motor controller ready\n");
-    
-    // Access GPIO
-    auto& gpio = handler.gpio(17);  // GPIO pin 17
-    gpio.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    gpio.SetActive(true);
-    
-    // Access ADC
-    auto& adc = handler.adc();
-    float voltage;
-    if (adc.ReadChannelV(0, voltage) == hf_adc_err_t::HF_ADC_ERR_NONE) {
-        logger.Info("TMC9660", "ADC channel 0: %.2fV\n", voltage);
-    }
+// UART mode
+Tmc9660Handler handler(uart, rst_pin, drv_en_pin, faultn_pin, wake_pin,
+                       address, &bootConfig);
+```
+
+**Parameters:**
+- `spi` / `uart` -- `BaseSpi&` or `BaseUart&` (must outlive handler)
+- `rst` -- `BaseGpio&` for RST pin (output, hardware reset)
+- `drv_en` -- `BaseGpio&` for DRV_EN pin (output, power stage enable)
+- `faultn` -- `BaseGpio&` for FAULTN pin (input, fault status)
+- `wake` -- `BaseGpio&` for WAKE pin (output, hibernate wake)
+- `address` -- 7-bit TMCL device address (default: 0)
+- `bootCfg` -- Bootloader configuration pointer (default: `kDefaultBootConfig`)
+
+## Initialization
+
+```cpp
+if (!handler.Initialize()) {
+    // Bootloader init failed
+}
+
+if (!handler.IsDriverReady()) {
+    // Driver not yet initialized
 }
 ```
 
-## 📖 API Reference
+`Initialize()` creates the typed driver, runs the bootloader sequence (hardware reset, config write, parameter mode entry), and creates GPIO/ADC/Temperature wrappers.
 
-### Core Operations
+## Motor Control Convenience Methods
 
-#### Construction and Initialization
+All require `IsDriverReady() == true`.
+
 ```cpp
-class Tmc9660Handler {
-public:
-    // SPI constructor
-    explicit Tmc9660Handler(BaseSpi& spi_interface,
-                           uint8_t address = 0,
-                           const tmc9660::BootloaderConfig* bootCfg = &kDefaultBootConfig) noexcept;
+// Motor configuration
+handler.SetMotorType(tmc9660::tmcl::MotorType::BLDC_MOTOR, 7);
+handler.SetPWMFrequency(25000);
+handler.SetCommutationMode(tmc9660::tmcl::CommutationMode::FOC_HALL);
 
-    // UART constructor
-    explicit Tmc9660Handler(BaseUart& uart_interface,
-                           uint8_t address = 0,
-                           const tmc9660::BootloaderConfig* bootCfg = &kDefaultBootConfig) noexcept;
+// Feedback sensor setup
+handler.ConfigureHallSensor();           // or:
+handler.ConfigureABNEncoder(4096);       // 4096 counts/rev
 
-    // Initialization
-    bool Initialize();
-    bool IsDriverReady() const noexcept;
-};
+// DRV_EN hardware control (distinct from software enable)
+handler.EnableDriverOutput();            // assert DRV_EN pin
+
+// Current sensing calibration (motor must be stationary)
+handler.CalibrateCurrentSensing(true, 1000);
+
+// PID loop gains
+handler.SetCurrentLoopGains(200, 100);
+handler.SetVelocityLoopGains(500, 10);
+handler.SetPositionLoopGains(50, 5);
+
+// Software motor enable/disable
+handler.EnableMotor();
+handler.DisableMotor();
+
+// Motion control
+handler.SetTargetVelocity(1000);
+handler.SetTargetPosition(50000);
+handler.SetTargetTorque(1500);
 ```
 
-#### Motor Control Access
+### Typical Startup Sequence
+
 ```cpp
-// Direct driver access
-TMC9660& driver() noexcept;
-const TMC9660& driver() const noexcept;
-
-// Communication mode
-CommMode GetCommMode() const noexcept;
-bool HasSpiInterface() const noexcept;
-bool HasUartInterface() const noexcept;
-bool SwitchCommInterface(CommMode mode);
-
-// Bootloader configuration
-const tmc9660::BootloaderConfig& bootConfig() const noexcept;
+handler.Initialize();
+handler.EnableDriverOutput();             // 1. Hardware gate on
+handler.CalibrateCurrentSensing();        // 2. ADC offset calibration
+handler.SetMotorType(MotorType::BLDC_MOTOR, 7);
+handler.ConfigureHallSensor();
+handler.SetCurrentLoopGains(200, 100);
+handler.SetVelocityLoopGains(500, 10);
+handler.SetCommutationMode(CommutationMode::FOC_HALL);
+handler.EnableMotor();                    // 3. Software enable
+handler.SetTargetVelocity(1000);          // 4. Begin control
 ```
 
-#### GPIO Integration
-```cpp
-// GPIO wrapper class
-class Gpio : public BaseGpio {
-public:
-    // BaseGpio interface implementation
-    bool Initialize() noexcept override;
-    bool Deinitialize() noexcept override;
-    bool IsPinAvailable() const noexcept override;
-    hf_u8_t GetMaxPins() const noexcept override;
-    const char* GetDescription() const noexcept override;
-    
-    // Protected implementation methods
-    hf_gpio_err_t SetDirectionImpl(hf_gpio_direction_t direction) noexcept override;
-    hf_gpio_err_t SetOutputModeImpl(hf_gpio_output_mode_t mode) noexcept override;
-    hf_gpio_err_t SetPullModeImpl(hf_gpio_pull_mode_t mode) noexcept override;
-    hf_gpio_err_t SetPinLevelImpl(hf_gpio_level_t level) noexcept override;
-    hf_gpio_err_t GetPinLevelImpl(hf_gpio_level_t& level) noexcept override;
-    hf_gpio_pull_mode_t GetPullModeImpl() const noexcept override;
-    hf_gpio_err_t GetDirectionImpl(hf_gpio_direction_t& direction) const noexcept override;
-    hf_gpio_err_t GetOutputModeImpl(hf_gpio_output_mode_t& mode) const noexcept override;
-};
+## Telemetry
 
-// GPIO access
-Gpio& gpio(uint8_t gpioNumber);
+```cpp
+float supply_v   = handler.GetSupplyVoltage();       // volts
+float chip_temp   = handler.GetChipTemperature();     // celsius
+int16_t current   = handler.GetMotorCurrent();        // milliamps
+int32_t velocity  = handler.GetActualVelocity();      // internal units
+int32_t position  = handler.GetActualPosition();      // encoder counts
+uint16_t ext_temp = handler.GetExternalTemperature(); // raw ADC
+
+uint32_t status_flags, error_flags, gate_errors;
+handler.GetStatusFlags(status_flags);
+handler.GetErrorFlags(error_flags);
+handler.ClearErrorFlags();
+handler.GetGateDriverErrorFlags(gate_errors);
+handler.ClearGateDriverErrorFlags();
 ```
 
-#### ADC Integration
+## Core Parameter Access
+
+For parameters not covered by convenience methods:
+
 ```cpp
-// ADC wrapper class
-class Adc : public BaseAdc {
-public:
-    // BaseAdc interface implementation
-    bool Initialize() noexcept override;
-    bool Deinitialize() noexcept override;
-    hf_u8_t GetMaxChannels() const noexcept override;
-    bool IsChannelAvailable(hf_channel_id_t channel_id) const noexcept override;
-    hf_adc_err_t ReadChannelV(hf_channel_id_t channel_id, float& channel_reading_v,
-                             hf_u8_t numOfSamplesToAvg = 1,
-                             hf_time_t timeBetweenSamples = 0) noexcept override;
-    hf_adc_err_t ReadChannelCount(hf_channel_id_t channel_id, hf_u32_t& channel_reading_count,
-                                 hf_u8_t numOfSamplesToAvg = 1,
-                                 hf_time_t timeBetweenSamples = 0) noexcept override;
-    hf_adc_err_t ReadChannel(hf_channel_id_t channel_id, hf_u32_t& channel_reading_count,
-                            float& channel_reading_v, hf_u8_t numOfSamplesToAvg = 1,
-                            hf_time_t timeBetweenSamples = 0) noexcept override;
-    hf_adc_err_t ReadMultipleChannels(const hf_channel_id_t* channel_ids, hf_u8_t num_channels,
-                                     hf_u32_t* readings, float* voltages) noexcept override;
-    hf_adc_err_t GetStatistics(hf_adc_statistics_t& statistics) noexcept override;
-    hf_adc_err_t GetDiagnostics(hf_adc_diagnostics_t& diagnostics) noexcept override;
-    hf_adc_err_t ResetStatistics() noexcept override;
-    hf_adc_err_t ResetDiagnostics() noexcept override;
-
-    // TMC9660-specific channel reading methods
-    hf_adc_err_t ReadAinChannel(uint8_t ain_channel, hf_u32_t& raw_value, float& voltage) noexcept;
-    hf_adc_err_t ReadCurrentSenseChannel(uint8_t current_channel, hf_u32_t& raw_value, float& voltage) noexcept;
-    hf_adc_err_t ReadVoltageChannel(uint8_t voltage_channel, hf_u32_t& raw_value, float& voltage) noexcept;
-    hf_adc_err_t ReadTemperatureChannel(uint8_t temp_channel, hf_u32_t& raw_value, float& voltage) noexcept;
-    hf_adc_err_t ReadMotorDataChannel(uint8_t motor_channel, hf_u32_t& raw_value, float& voltage) noexcept;
-};
-
-// ADC access
-Adc& adc();
+handler.WriteParameter(tmc9660::tmcl::Parameters::SOME_PARAM, value);
+handler.ReadParameter(tmc9660::tmcl::Parameters::SOME_PARAM, value);
+handler.SendCommand(tmc9660::tmcl::Op::SAP, type, motor, value, &reply);
 ```
 
-#### Temperature Monitoring
-```cpp
-// Temperature wrapper class
-class Temperature : public BaseTemperature {
-public:
-    // BaseTemperature interface implementation
-    bool Initialize() noexcept override;
-    bool Deinitialize() noexcept override;
-    hf_temp_err_t ReadTemperature(float& temperature_celsius) noexcept override;
-    hf_temp_err_t GetStatistics(hf_temp_statistics_t& statistics) noexcept override;
-    hf_temp_err_t GetDiagnostics(hf_temp_diagnostics_t& diagnostics) noexcept override;
-    hf_temp_err_t ResetStatistics() noexcept override;
-    hf_temp_err_t ResetDiagnostics() noexcept override;
-    hf_u32_t GetCapabilities() const noexcept override;
-};
+## Typed Driver Access
 
-// Temperature access
-Temperature& temperature();
+For direct access to all 18+ driver subsystems when the comm mode is known:
+
+```cpp
+// SPI mode -- direct typed access (no lambda needed)
+auto* drv = handler.spiDriver();
+if (drv) {
+    drv->feedbackSense.configureHall();
+    drv->motorConfig.setType(tmcl::MotorType::BLDC_MOTOR, 7);
+    drv->gateDriver.configureBreakBeforeMakeTiming_ns(500, 500);
+    drv->protection.setOvercurrentLimit(5000);
+    drv->velocityControl.setTargetVelocity(1000);
+    float temp = drv->telemetry.getChipTemperature();
+}
+
+// UART mode
+auto* drv = handler.uartDriver();
+if (drv) { /* same API */ }
 ```
 
-## 🎯 Hardware Support
+## Visitor Pattern
 
-### TMC9660 Features
-
-- **Motor Control**: FOC, stepper, and BLDC motor support
-- **GPIO Expansion**: 18 internal GPIO pins (0-17)
-- **ADC Channels**: 12 ADC channels for analog measurements
-- **Communication**: SPI and UART interfaces
-- **Temperature Monitoring**: Internal temperature sensor
-- **Current Sensing**: Multiple current sense channels
-- **Voltage Monitoring**: Supply and driver voltage monitoring
-- **Motor Data**: Current, velocity, and position feedback
-
-### GPIO Pin Mapping
-
-The TMC9660 provides 18 internal GPIO pins (0-17) that can be configured as inputs or outputs with pull-up/pull-down resistors and interrupt support.
-
-### ADC Channel Types
-
-- **AIN Channels (0-3)**: External analog inputs
-- **Current Sense Channels (I0-I3)**: Motor current monitoring
-- **Voltage Channels**: Supply and driver voltage monitoring
-- **Temperature Channels**: Chip and external temperature sensors
-- **Motor Data Channels**: Current, velocity, and position feedback
-
-## 📊 Examples
-
-### Basic Motor Control
+For generic code that must work with either SPI or UART:
 
 ```cpp
-void basic_motor_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    // Access motor driver
-    auto& driver = handler.driver();
-    
-    // Configure motor parameters
-    driver.setMotorType(tmc9660::tmcl::MotorType::BLDC);
-    driver.setCommutationMode(tmc9660::tmcl::CommutationMode::SIX_STEP);
-    
-    // Set motor parameters
-    driver.setMotorPolePairs(4);
-    driver.setMaxCurrent(2.0f);  // 2A
-    driver.setMaxVelocity(1000.0f);  // 1000 RPM
-    
-    // Enable motor
-    driver.enableMotor();
-    
-    // Set target velocity
-    driver.setTargetVelocity(500.0f);  // 500 RPM
-    
-    logger.Info("TMC9660", "Motor control initialized\n");
+handler.visitDriver([](auto& driver) {
+    driver.feedbackSense.configureHall();
+    driver.protection.setOvertemperatureLimit(120);
+});
+
+auto vel = handler.visitDriver([](auto& driver) -> int32_t {
+    return driver.telemetry.getActualVelocity();
+});
+```
+
+## Peripheral Wrappers
+
+### GPIO (BaseGpio)
+
+Wraps TMC9660 internal GPIO pins 17 and 18 as `BaseGpio` instances.
+
+```cpp
+auto& gpio17 = handler.gpio(17);
+auto& gpio18 = handler.gpio(18);
+
+gpio17.Initialize();
+gpio17.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
+gpio17.SetActive(true);
+
+gpio18.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+hf_gpio_level_t level;
+gpio18.GetPinLevel(level);
+```
+
+- **Supported directions**: INPUT and OUTPUT (configures via `driver.gpio.setMode()`)
+- **Output mode**: PUSH_PULL only
+- **Pull mode**: FLOATING only (pull is configured via bootloader config)
+- **Write guard**: `SetPinLevel()` returns `GPIO_ERR_INVALID_CONFIGURATION` if direction is INPUT
+
+### ADC (BaseAdc)
+
+15-channel ADC using a non-contiguous channel ID scheme:
+
+| Channel ID | Type | Description |
+|:----------:|:-----|:------------|
+| 0-3 | AIN | External analog inputs (GPIO5) |
+| 10-13 | Current sense | Phase current ADC (I0-I3) |
+| 20-21 | Voltage | 20=supply, 21=driver voltage |
+| 30-31 | Temperature | 30=chip (Celsius), 31=external NTC |
+| 40-42 | Motor data | 40=current (mA), 41=velocity, 42=position |
+
+```cpp
+auto& adc = handler.adc();
+float voltage;
+adc.ReadChannelV(20, voltage);  // Supply voltage
+
+// Use IsChannelAvailable() to validate sparse channel IDs
+if (adc.IsChannelAvailable(30)) {
+    adc.ReadChannelV(30, voltage);  // Chip temperature in Celsius
 }
 ```
 
-### GPIO Usage
+`GetMaxChannels()` returns 15 (total count). Since channel IDs are sparse, always use `IsChannelAvailable()` for validation.
+
+The `Tmc9660AdcWrapper` class provides a thin delegation wrapper for `AdcManager` ownership without transferring handler ownership.
+
+### Temperature (BaseTemperature)
 
 ```cpp
-void gpio_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    // Configure GPIO pins
-    auto& gpio0 = handler.gpio(0);
-    auto& gpio1 = handler.gpio(1);
-    
-    // Set up outputs
-    gpio0.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    gpio0.SetOutputMode(hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL);
-    gpio0.SetActive(true);
-    
-    // Set up inputs with pull-up
-    gpio1.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-    gpio1.SetPullMode(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_PULLUP);
-    
-    // Read input state
-    hf_gpio_level_t level;
-    if (gpio1.GetPinLevel(level) == hf_gpio_err_t::HF_GPIO_ERR_NONE) {
-        logger.Info("TMC9660", "GPIO 1 level: %s\n", level == hf_gpio_level_t::HF_GPIO_LEVEL_HIGH ? "HIGH" : "LOW");
-    }
-    
-    // Toggle output
-    gpio0.Toggle();
-}
+auto& temp = handler.temperature();
+float celsius;
+temp.ReadCelsius(celsius);
 ```
 
-### ADC Measurements
+## Communication Info
 
 ```cpp
-void adc_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    auto& adc = handler.adc();
-    
-    // Read external analog input
-    float ain_voltage;
-    if (adc.ReadChannelV(0, ain_voltage) == hf_adc_err_t::HF_ADC_ERR_NONE) {
-        logger.Info("TMC9660", "AIN0 voltage: %.2fV\n", ain_voltage);
-    }
-    
-    // Read motor current
-    float current_voltage;
-    if (adc.ReadCurrentSenseChannel(0, current_voltage) == hf_adc_err_t::HF_ADC_ERR_NONE) {
-        logger.Info("TMC9660", "Motor current voltage: %.2fV\n", current_voltage);
-    }
-    
-    // Read supply voltage
-    float supply_voltage;
-    if (adc.ReadVoltageChannel(0, supply_voltage) == hf_adc_err_t::HF_ADC_ERR_NONE) {
-        logger.Info("TMC9660", "Supply voltage: %.2fV\n", supply_voltage);
-    }
-    
-    // Read chip temperature
-    float temp_voltage;
-    if (adc.ReadTemperatureChannel(0, temp_voltage) == hf_adc_err_t::HF_ADC_ERR_NONE) {
-        logger.Info("TMC9660", "Chip temperature voltage: %.2fV\n", temp_voltage);
-    }
-}
+tmc9660::CommMode mode = handler.GetCommMode();
+const auto& cfg = handler.bootConfig();
 ```
 
-### Temperature Monitoring
+## Diagnostics
 
 ```cpp
-void temperature_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    auto& temp = handler.temperature();
-    
-    // Read temperature
-    float temperature;
-    if (temp.ReadTemperature(temperature) == hf_temp_err_t::HF_TEMP_ERR_NONE) {
-        logger.Info("TMC9660", "Chip temperature: %.1f°C\n", temperature);
-    }
-    
-    // Get temperature statistics
-    hf_temp_statistics_t stats;
-    if (temp.GetStatistics(stats) == hf_temp_err_t::HF_TEMP_ERR_NONE) {
-        logger.Info("TMC9660", "Temperature statistics:\n");
-        logger.Info("TMC9660", "  Min: %.1f°C\n", stats.min_temperature_celsius);
-        logger.Info("TMC9660", "  Max: %.1f°C\n", stats.max_temperature_celsius);
-        logger.Info("TMC9660", "  Average: %.1f°C\n", stats.average_temperature_celsius);
-        logger.Info("TMC9660", "  Readings: %u\n", stats.total_readings);
-    }
-}
+handler.DumpDiagnostics();  // Logs to system logger at INFO level
 ```
 
-### Advanced Motor Control
+## See Also
 
-```cpp
-void advanced_motor_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    auto& driver = handler.driver();
-    auto& adc = handler.adc();
-    
-    // Configure for FOC control
-    driver.setMotorType(tmc9660::tmcl::MotorType::BLDC);
-    driver.setCommutationMode(tmc9660::tmcl::CommutationMode::FOC);
-    
-    // Set motor parameters
-    driver.setMotorPolePairs(4);
-    driver.setMaxCurrent(3.0f);
-    driver.setMaxVelocity(2000.0f);
-    
-    // Configure PID parameters
-    driver.setVelocityP(100.0f);
-    driver.setVelocityI(10.0f);
-    driver.setVelocityD(1.0f);
-    
-    // Enable motor
-    driver.enableMotor();
-    
-    // Velocity control loop
-    for (int i = 0; i < 100; i++) {
-        // Set target velocity (ramp up)
-        float target_velocity = 500.0f * (i / 100.0f);
-        driver.setTargetVelocity(target_velocity);
-        
-        // Read motor feedback
-        float current_voltage;
-        if (adc.ReadMotorDataChannel(0, current_voltage) == hf_adc_err_t::HF_ADC_ERR_NONE) {
-            logger.Info("TMC9660", "Target: %.0f RPM, Current: %.2fV\n", target_velocity, current_voltage);
-        }
-        
-        vTaskDelay(pdMS_TO_TICKS(50));  // 20Hz control loop
-    }
-    
-    // Stop motor
-    driver.setTargetVelocity(0.0f);
-    driver.disableMotor();
-}
-```
-
-### Communication Interface Switching
-
-```cpp
-void interface_switching_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    auto* uart = nullptr; // Get UART interface if available
-    
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    logger.Info("TMC9660", "Initial communication mode: %s\n", 
-           handler.GetCommMode() == CommMode::SPI ? "SPI" : "UART");
-    
-    // Check available interfaces
-    if (handler.HasSpiInterface()) {
-        logger.Info("TMC9660", "SPI interface available\n");
-    }
-    
-    if (handler.HasUartInterface()) {
-        logger.Info("TMC9660", "UART interface available\n");
-    }
-    
-    // Switch to UART if available
-    if (handler.HasUartInterface()) {
-        if (handler.SwitchCommInterface(CommMode::UART)) {
-            logger.Info("TMC9660", "Switched to UART communication\n");
-        } else {
-            logger.Info("TMC9660", "Failed to switch to UART\n");
-        }
-    }
-    
-    // Switch back to SPI
-    if (handler.SwitchCommInterface(CommMode::SPI)) {
-        logger.Info("TMC9660", "Switched back to SPI communication\n");
-    }
-}
-```
-
-### Error Handling
-
-```cpp
-void error_handling_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    
-    // Check initialization
-    if (!handler.Initialize()) {
-        logger.Info("TMC9660", "ERROR: Failed to initialize TMC9660\n");
-        return;
-    }
-    
-    // Check driver readiness
-    if (!handler.IsDriverReady()) {
-        logger.Info("TMC9660", "ERROR: TMC9660 driver not ready\n");
-        return;
-    }
-    
-    // Safe GPIO operations
-    auto& gpio = handler.gpio(0);
-    hf_gpio_err_t result = gpio.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    if (result != hf_gpio_err_t::HF_GPIO_ERR_NONE) {
-        logger.Info("TMC9660", "ERROR: Failed to set GPIO direction: %d\n", static_cast<int>(result));
-        return;
-    }
-    
-    // Safe ADC operations
-    auto& adc = handler.adc();
-    float voltage;
-    hf_adc_err_t adc_result = adc.ReadChannelV(0, voltage);
-    if (adc_result != hf_adc_err_t::HF_ADC_ERR_NONE) {
-        logger.Info("TMC9660", "ERROR: Failed to read ADC: %d\n", static_cast<int>(adc_result));
-        return;
-    }
-    
-    // Safe temperature operations
-    auto& temp = handler.temperature();
-    float temperature;
-    hf_temp_err_t temp_result = temp.ReadTemperature(temperature);
-    if (temp_result != hf_temp_err_t::HF_TEMP_ERR_NONE) {
-        logger.Info("TMC9660", "ERROR: Failed to read temperature: %d\n", static_cast<int>(temp_result));
-        return;
-    }
-    
-    logger.Info("TMC9660", "All operations successful\n");
-}
-```
-
-## 🔍 Advanced Usage
-
-### Multi-Interface Configuration
-
-```cpp
-void multi_interface_config() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    auto* uart = nullptr; // Get UART interface if available
-    
-    if (!spi) return;
-    
-    // Create handler with both interfaces
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    // Configure bootloader settings
-    tmc9660::BootloaderConfig custom_config = handler.bootConfig();
-    custom_config.motor_type = tmc9660::tmcl::MotorType::BLDC;
-    custom_config.max_current = 5.0f;
-    custom_config.max_velocity = 3000.0f;
-    
-    // Apply custom configuration
-    auto& driver = handler.driver();
-    driver.setMotorType(custom_config.motor_type);
-    driver.setMaxCurrent(custom_config.max_current);
-    driver.setMaxVelocity(custom_config.max_velocity);
-    
-    logger.Info("TMC9660", "Custom configuration applied\n");
-}
-```
-
-### Integrated System Example
-
-```cpp
-void integrated_system_example() {
-    auto& comm = CommChannelsManager::GetInstance();
-    comm.EnsureInitialized();
-    
-    auto* spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-    if (!spi) return;
-    
-    Tmc9660Handler handler(*spi);
-    if (!handler.Initialize()) return;
-    
-    // Access all subsystems
-    auto& driver = handler.driver();
-    auto& gpio = handler.gpio(0);
-    auto& adc = handler.adc();
-    auto& temp = handler.temperature();
-    
-    // Configure system
-    gpio.SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
-    driver.setMotorType(tmc9660::tmcl::MotorType::BLDC);
-    driver.enableMotor();
-    
-    // System monitoring loop
-    for (int i = 0; i < 100; i++) {
-        // Read all sensors
-        float motor_current, supply_voltage, temperature;
-        
-        adc.ReadCurrentSenseChannel(0, motor_current);
-        adc.ReadVoltageChannel(0, supply_voltage);
-        temp.ReadTemperature(temperature);
-        
-        // Control logic
-        if (temperature > 80.0f) {
-            gpio.SetActive(true);  // Turn on cooling fan
-            driver.setMaxCurrent(1.0f);  // Reduce current
-        } else {
-            gpio.SetActive(false);  // Turn off cooling fan
-            driver.setMaxCurrent(3.0f);  // Normal current
-        }
-        
-        // Monitor supply voltage
-        if (supply_voltage < 10.0f) {
-            driver.disableMotor();  // Low voltage protection
-        }
-        
-        logger.Info("TMC9660", "Temp: %.1f°C, Current: %.2fA, Voltage: %.1fV\n", 
-               temperature, motor_current, supply_voltage);
-        
-        vTaskDelay(pdMS_TO_TICKS(100));
-    }
-    
-    // Cleanup
-    driver.disableMotor();
-    gpio.SetActive(false);
-}
-```
-
-## 📚 See Also
-
-- **[MotorController Documentation](../component-handlers/MOTOR_CONTROLLER_README.md)** - Motor management system
-- **[CommChannelsManager Documentation](../component-handlers/COMM_CHANNELS_MANAGER_README.md)** - Communication interfaces
-- **[GpioManager Documentation](../component-handlers/GPIO_MANAGER_README.md)** - GPIO management system
-- **[AdcManager Documentation](../component-handlers/ADC_MANAGER_README.md)** - ADC management system
+- **[MotorController](../component-handlers/MOTOR_CONTROLLER_README.md)** -- Singleton that owns `Tmc9660Handler` instances
+- **[Tmc9660AdcWrapper](../../lib/handlers/Tmc9660AdcWrapper.h)** -- Delegation wrapper for `AdcManager` ownership
+- **[TMC9660 Temperature README](TMC9660_TEMPERATURE_README.md)** -- Temperature wrapper documentation
+- **[PCAL95555 Handler](PCAL95555_HANDLER_README.md)** -- GPIO expander handler
 
 ---
 
-*This documentation is part of the HardFOC HAL system. For complete system documentation, see [Documentation Index](../../DOCUMENTATION_INDEX.md).*
+*Part of the HardFOC HAL system. For complete system documentation, see [Documentation Index](../../DOCUMENTATION_INDEX.md).*
