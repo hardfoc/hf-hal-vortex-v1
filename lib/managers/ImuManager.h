@@ -8,6 +8,7 @@
 
 // Forward declarations
 class Bno08xHandler;
+class IBno08xDriverOps;  ///< Type-erased BNO08x driver (see Bno08xHandler.h)
 class CommChannelsManager;
 class GpioManager;
 class BaseGpio;
@@ -46,16 +47,15 @@ class BaseGpio;
  *     // Access onboard BNO08x (index 0)
  *     Bno08xHandler* onboard_handler = imu_mgr.GetBno08xHandler(0);
  *     if (onboard_handler) {
- *         // Configure and use onboard IMU
- *         onboard_handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
+ *         // Configure and use onboard IMU (BNO085Sensor from Bno08xHandler/driver)
+ *         onboard_handler->EnableSensor(BNO085Sensor::RotationVector, 50);
  *     }
  *     
  *     // Create external BNO08x device (index 1) with runtime I2C device creation
  *     if (imu_mgr.CreateExternalBno08xDevice(1, 0x48, 400000)) {
  *         Bno08xHandler* external_handler = imu_mgr.GetBno08xHandler(1);
  *         if (external_handler) {
- *             // Configure and use external IMU
- *             external_handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 100);
+ *             external_handler->EnableSensor(BNO085Sensor::Accelerometer, 100);
  *         }
  *     }
  *     
@@ -63,8 +63,7 @@ class BaseGpio;
  *     if (imu_mgr.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1)) {
  *         Bno08xHandler* external_handler = imu_mgr.GetBno08xHandler(2);
  *         if (external_handler) {
- *             // Configure and use external SPI IMU
- *             external_handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
+ *             external_handler->EnableSensor(BNO085Sensor::RotationVector, 50);
  *         }
  *     }
  * }
@@ -124,12 +123,17 @@ public:
     Bno08xHandler* GetBno08xHandler(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcept;
 
     /**
-     * @brief Get access to the underlying BNO085 driver by device index.
+     * @brief Get direct access to the sensor driver for a device (type-erased BNO085 API).
+     *
+     * Use this to call driver methods directly: Update(), EnableSensor(), DisableSensor(),
+     * SetCallback(), HasNewData(), GetLatest(), etc. The pointer is valid while the
+     * handler for that device exists. Include Bno08xHandler.h for IBno08xDriverOps and
+     * BNO085Sensor types.
+     *
      * @param deviceIndex Device index (0=onboard, 1-3=external)
-     * @return Shared pointer to BNO085 driver, nullptr if invalid/not ready
-     * @note Returns nullptr if deviceIndex is invalid, device not active/initialized, or driver unavailable
+     * @return Non-owning pointer to the driver interface, or nullptr if invalid/not ready
      */
-    std::shared_ptr<BNO085> GetBno085Driver(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcept;
+    IBno08xDriverOps* GetSensor(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcept;
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//

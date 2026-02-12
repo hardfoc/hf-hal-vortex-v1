@@ -27,6 +27,8 @@
 
 // Include the Vortex API
 #include "api/Vortex.h"
+// For direct sensor access (IBno08xDriverOps, BNO085Sensor)
+#include "handlers/Bno08xHandler.h"
 
 //==============================================================================
 // GLOBAL VARIABLES
@@ -203,17 +205,14 @@ void DemonstrateImu(Vortex& vortex) {
     
     auto& imu = vortex.imu;
     
-    // Get the onboard IMU handler
+    // Get the onboard IMU handler (high-level API: Update, ReadQuaternion, etc.)
     auto* handler = imu.GetBno08xHandler(0);
     if (handler) {
         printf("✓ Onboard BNO08x handler available\n");
-        
-        // Get the underlying driver
-        auto driver = imu.GetBno085Driver(0);
-        if (driver) {
-            printf("✓ BNO085 driver available\n");
-        } else {
-            printf("✗ BNO085 driver not available\n");
+        // Get direct sensor driver for low-level API (Update, EnableSensor, GetLatest, SetCallback, ...)
+        IBno08xDriverOps* sensor = imu.GetSensor(0);
+        if (sensor && handler->IsInitialized()) {
+            printf("✓ Sensor driver available (e.g. sensor->Update(), sensor->GetLatest(...))\n");
         }
     } else {
         printf("✗ Onboard BNO08x handler not available\n");

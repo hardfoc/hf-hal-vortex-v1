@@ -142,18 +142,9 @@ Bno08xHandler* ImuManager::GetBno08xHandler(uint8_t deviceIndex) noexcept {
     return bno08x_handlers_[deviceIndex].get();
 }
 
-std::shared_ptr<BNO085> ImuManager::GetBno085Driver(uint8_t deviceIndex) noexcept {
-    MutexLockGuard lock(manager_mutex_);
-    
-    if (deviceIndex >= MAX_IMU_DEVICES || !device_active_[deviceIndex] || !bno08x_handlers_[deviceIndex]) {
-        return nullptr;
-    }
-    
-    if (!device_initialized_[deviceIndex]) {
-        return nullptr;
-    }
-    
-    return bno08x_handlers_[deviceIndex]->GetSensor();
+IBno08xDriverOps* ImuManager::GetSensor(uint8_t deviceIndex) noexcept {
+    Bno08xHandler* handler = GetBno08xHandler(deviceIndex);
+    return handler ? handler->GetSensor() : nullptr;
 }
 
 //**************************************************************************//
@@ -850,7 +841,7 @@ void ImuManager::DumpStatistics() const noexcept {
     int initialized_devices = 0;
     
     Logger::GetInstance().Info(TAG, "Device Status Summary:");
-    for (uint8_t i = 0; i < MAX_DEVICES; ++i) {
+    for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (bno08x_handlers_[i] != nullptr) {
             bool is_active = device_active_[i];
             bool is_initialized = device_initialized_[i];
@@ -878,7 +869,7 @@ void ImuManager::DumpStatistics() const noexcept {
     
     // Interrupt Statistics
     uint32_t total_interrupts = 0;
-    for (uint8_t i = 0; i < MAX_DEVICES; ++i) {
+    for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         total_interrupts += GetInterruptCount(i);
     }
     Logger::GetInstance().Info(TAG, "  Total Interrupts Processed: %d", total_interrupts);
@@ -891,13 +882,13 @@ void ImuManager::DumpStatistics() const noexcept {
     // Memory Usage
     Logger::GetInstance().Info(TAG, "Memory Usage:");
     size_t handler_memory = 0;
-    for (uint8_t i = 0; i < MAX_DEVICES; ++i) {
+    for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (bno08x_handlers_[i] != nullptr) {
             handler_memory += sizeof(Bno08xHandler);
         }
     }
     Logger::GetInstance().Info(TAG, "  Handler Memory: %d bytes", static_cast<int>(handler_memory));
-    Logger::GetInstance().Info(TAG, "  Max Possible Devices: %d", MAX_DEVICES);
+    Logger::GetInstance().Info(TAG, "  Max Possible Devices: %d", MAX_IMU_DEVICES);
     
     // Hardware Configuration
     Logger::GetInstance().Info(TAG, "Hardware Configuration:");
