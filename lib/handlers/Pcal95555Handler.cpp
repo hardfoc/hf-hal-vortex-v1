@@ -31,7 +31,7 @@
 HalI2cPcal95555Comm::HalI2cPcal95555Comm(BaseI2c& i2c_device) noexcept
     : i2c_device_(i2c_device) {}
 
-bool HalI2cPcal95555Comm::write(uint8_t addr, uint8_t reg,
+bool HalI2cPcal95555Comm::Write(uint8_t addr, uint8_t reg,
                                 const uint8_t* data, size_t len) noexcept {
     MutexLockGuard lock(i2c_mutex_);
 
@@ -53,7 +53,7 @@ bool HalI2cPcal95555Comm::write(uint8_t addr, uint8_t reg,
     return i2c_device_.Write(command, len + 1) == hf_i2c_err_t::I2C_SUCCESS;
 }
 
-bool HalI2cPcal95555Comm::read(uint8_t addr, uint8_t reg,
+bool HalI2cPcal95555Comm::Read(uint8_t addr, uint8_t reg,
                                uint8_t* data, size_t len) noexcept {
     MutexLockGuard lock(i2c_mutex_);
 
@@ -154,7 +154,7 @@ hf_gpio_err_t Pcal95555Handler::Initialize() noexcept {
     }
 
     // Seed previous input state for edge detection on first interrupt.
-    prev_input_state_ = pcal95555_driver_->ReadPinStates();
+    prev_input_state_ = pcal95555_driver_->ReadAllInputs();
 
     // Seed pull_mode_cache_ from hardware registers via driver API (PCAL9555A only).
     if (pcal95555_driver_->HasAgileIO()) {
@@ -510,7 +510,7 @@ void Pcal95555Handler::ProcessInterrupts() noexcept {
     if (status == 0) return;
 
     // Read current pin input levels for edge detection.
-    uint16_t current_state = pcal95555_driver_->ReadPinStates();
+    uint16_t current_state = pcal95555_driver_->ReadAllInputs();
 
     // Determine which pins transitioned high (rising) and low (falling).
     uint16_t rising  = current_state & ~prev_input_state_;  // was 0, now 1

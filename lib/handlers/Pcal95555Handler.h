@@ -147,7 +147,7 @@ public:
      * @param len  Number of bytes to write.
      * @return true if write succeeded, false on address mismatch or I2C error.
      */
-    bool write(uint8_t addr, uint8_t reg, const uint8_t* data, size_t len) noexcept;
+    bool Write(uint8_t addr, uint8_t reg, const uint8_t* data, size_t len) noexcept;
 
     /**
      * @brief Read data from a device register.
@@ -160,7 +160,7 @@ public:
      * @param len  Number of bytes to read.
      * @return true if read succeeded, false on address mismatch or I2C error.
      */
-    bool read(uint8_t addr, uint8_t reg, uint8_t* data, size_t len) noexcept;
+    bool Read(uint8_t addr, uint8_t reg, uint8_t* data, size_t len) noexcept;
 
     /**
      * @brief Ensure the I2C bus is initialized and ready.
@@ -261,8 +261,10 @@ public:
     /** @brief Returns a description string like "PCAL95555_PIN_5". */
     const char* GetDescription() const noexcept override;
 
-    /** @brief Returns true (PCAL9555A supports interrupts). */
-    bool SupportsInterrupts() const noexcept override { return true; }
+    /** @brief Returns GPIO_SUCCESS (PCAL9555A supports interrupts). */
+    hf_gpio_err_t SupportsInterrupts() const noexcept override {
+        return hf_gpio_err_t::GPIO_SUCCESS;
+    }
 
     /**
      * @brief Configure interrupt for this pin.
