@@ -275,7 +275,7 @@ handler.DumpDiagnostics();  // Logs to system logger at INFO level
 ## See Also
 
 - **[MotorController](../component-handlers/MOTOR_CONTROLLER_README.md)** -- Singleton that owns `Tmc9660Handler` instances
-- **[Tmc9660AdcWrapper](../../lib/handlers/Tmc9660AdcWrapper.h)** -- Delegation wrapper for `AdcManager` ownership
+- **[Tmc9660AdcWrapper](../../lib/core/handlers/Tmc9660AdcWrapper.h)** -- Delegation wrapper for `AdcManager` ownership
 - **[TMC9660 Temperature README](TMC9660_TEMPERATURE_README.md)** -- Temperature wrapper documentation
 - **[PCAL95555 Handler](PCAL95555_HANDLER_README.md)** -- GPIO expander handler
 

@@ -30,7 +30,7 @@ if(NOT DEFINED ENV{IDF_PATH})
         ../include/base
         ../include/mcu
         ../include/drivers
-        ../../hf-core-utils/hf-utils-general/include
+        ../../lib/core/hf-core-utils/hf-utils-general/include
     )
     
     # Add the test executable

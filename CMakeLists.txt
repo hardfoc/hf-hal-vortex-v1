@@ -39,15 +39,15 @@ set(MANAGER_SOURCES
     "${HF_HAL_ROOT}/lib/managers/TemperatureManager.cpp"
 )
 
-# Handler Sources (6 handlers + 1 wrapper, formerly driver-handlers)
+# Handler Sources (from hf-core submodule: lib/core/handlers)
 set(HANDLER_SOURCES
-    "${HF_HAL_ROOT}/lib/handlers/Tmc9660Handler.cpp"
-    "${HF_HAL_ROOT}/lib/handlers/Pcal95555Handler.cpp"
-    "${HF_HAL_ROOT}/lib/handlers/As5047uHandler.cpp"
-    "${HF_HAL_ROOT}/lib/handlers/Bno08xHandler.cpp"
-    "${HF_HAL_ROOT}/lib/handlers/NtcTemperatureHandler.cpp"
-    "${HF_HAL_ROOT}/lib/handlers/Logger.cpp"
-    "${HF_HAL_ROOT}/lib/handlers/Tmc9660AdcWrapper.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/Tmc9660Handler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/Pcal95555Handler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/As5047uHandler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/Bno08xHandler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/NtcTemperatureHandler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/Logger.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/Tmc9660AdcWrapper.cpp"
 )
 
 # Core Drivers Sources (Interface Wrappers)
@@ -120,9 +120,9 @@ set(MANAGER_INCLUDE_DIRS
     "${HF_HAL_ROOT}/lib/managers"
 )
 
-# Handler include directories
+# Handler include directories (handlers in hf-core: lib/core/handlers)
 set(HANDLER_INCLUDE_DIRS
-    "${HF_HAL_ROOT}/lib/handlers"
+    "${HF_HAL_ROOT}/lib/core"
 )
 
 # Core drivers include directories

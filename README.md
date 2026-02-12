@@ -221,6 +221,22 @@ All API methods return error codes that should be checked:
 
 ## 🚀 Quick Start
 
+### Cloning the repository (submodules)
+
+This repo uses **hf-core** as a submodule (`lib/core`), which itself contains **hf-core-drivers** and **hf-core-utils** and their nested submodules. Clone with deep recursion so everything is initialized:
+
+```bash
+git clone --recurse-submodules https://github.com/hardfoc/hf-hal-vortex-v1.git
+```
+
+If you already cloned without `--recurse-submodules`, run:
+
+```bash
+git submodule update --init --recursive
+```
+
+Use `--recursive` so nested submodules (hf-core-drivers, hf-core-utils, and their externals) are all initialized.
+
 ### 1. Include the Vortex API
 
 ```cpp

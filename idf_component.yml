@@ -105,7 +105,6 @@ files:
   include:
     - "lib/api/**/*"
     - "lib/managers/**/*"
-    - "lib/handlers/**/*"
     - "lib/core/**/*"
     - "CMakeLists.txt"
     - "idf_component.yml"
