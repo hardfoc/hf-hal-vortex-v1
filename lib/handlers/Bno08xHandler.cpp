@@ -2,997 +2,904 @@
  * @file Bno08xHandler.cpp
  * @brief Implementation of unified BNO08x IMU sensor handler.
  *
- * This implementation provides complete BNO08x sensor management with:
- * - Bridge pattern adapters for I2C/SPI integration
- * - Lazy initialization with shared pointer management
- * - Exception-free design for embedded reliability
- * - Thread-safe operations with RtosMutex protection
- * - Comprehensive IMU data processing and calibration
- * - Advanced gesture and activity detection
- * - Hardware control and interface management
+ * This implementation provides:
+ * - CRTP communication adapters bridging BaseI2c/BaseSpi to bno08x::CommInterface
+ * - Complete handler lifecycle (Initialize/Deinitialize)
+ * - SH-2 sensor data reading for all IMU axes, quaternions, Euler angles
+ * - Activity/gesture detection (tap, step, shake, pickup, stability)
+ * - Calibration status monitoring
+ * - Sensor enable/disable with configurable intervals
+ * - Hardware control (reset, boot, wake pins)
+ * - Thread-safe operations with recursive mutex
+ * - Comprehensive diagnostics
  *
  * @author HardFOC Team
- * @version 1.0
  * @date 2025
  * @copyright HardFOC
  */
 
 #include "Bno08xHandler.h"
 #include <cmath>
-#include <algorithm>
-#include "utils/RtosTask.h"
+#include <cstdio>
+#include <cstring>
 #include "handlers/Logger.h"
 
-// Include SH2 error codes for proper error handling
+// SH-2 error codes for mapping
 extern "C" {
-#include "sh2_err.h"
+#include "core/hf-core-drivers/external/hf-bno08x-driver/src/sh2/sh2_err.h"
 }
 
-//======================================================//
-// BNO08X I2C ADAPTER IMPLEMENTATION
-//======================================================//
+// ============================================================================
+//  I2C CRTP ADAPTER IMPLEMENTATION
+// ============================================================================
 
-Bno08xI2cAdapter::Bno08xI2cAdapter(BaseI2c& i2c_interface, 
-                                   BaseGpio* reset_gpio,
-                                   BaseGpio* int_gpio) noexcept
-    : i2c_interface_(i2c_interface)
-    , reset_gpio_(reset_gpio)
-    , int_gpio_(int_gpio)
-    , is_open_(false) {
-}
-
-bool Bno08xI2cAdapter::open() {
-    if (is_open_) return true;
-    
+bool HalI2cBno08xComm::Open() noexcept {
     // Initialize GPIO pins if provided
     if (reset_gpio_) {
-        reset_gpio_->SetDirection(BaseGpio::Direction::OUTPUT);
-        reset_gpio_->SetValue(BaseGpio::Value::HIGH); // Keep out of reset
+        reset_gpio_->SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
+        // RSTN is active-low: ACTIVE = assert reset (drive LOW)
+        reset_gpio_->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+        reset_gpio_->EnsureInitialized();
+        // Start with reset released (INACTIVE = HIGH)
+        reset_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_INACTIVE);
     }
-    
+
     if (int_gpio_) {
-        int_gpio_->SetDirection(BaseGpio::Direction::INPUT);
-        int_gpio_->SetPullMode(BaseGpio::PullMode::PULL_UP);
+        int_gpio_->SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+        int_gpio_->SetPullMode(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP);
+        // INT is active-low: ACTIVE = data available (pin LOW)
+        int_gpio_->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+        int_gpio_->EnsureInitialized();
     }
-    
-    // Initialize I2C interface
-    if (i2c_interface_.Initialize() == BaseI2c::Result::SUCCESS) {
-        is_open_ = true;
-        return true;
-    }
-    
-    return false;
+
+    // Ensure the I2C bus is initialized
+    return i2c_.EnsureInitialized();
 }
 
-void Bno08xI2cAdapter::close() {
-    if (!is_open_) return;
-    
-    i2c_interface_.Deinitialize();
-    is_open_ = false;
+void HalI2cBno08xComm::Close() noexcept {
+    // Don't deinitialize the I2C bus - it may be shared with other devices
 }
 
-int Bno08xI2cAdapter::write(const uint8_t* data, uint32_t length) {
-    if (!is_open_ || !data || length == 0) return -1;
-    
-    BaseI2c::TransferData transfer_data;
-    transfer_data.buffer = const_cast<uint8_t*>(data);
-    transfer_data.length = static_cast<uint16_t>(length);
-    transfer_data.slave_address = 0x4A; // Default BNO08x I2C address
-    
-    if (i2c_interface_.Write(transfer_data) == BaseI2c::Result::SUCCESS) {
+int HalI2cBno08xComm::Write(const uint8_t* data, uint32_t length) noexcept {
+    if (!data || length == 0) return -1;
+
+    hf_i2c_err_t result = i2c_.Write(data, static_cast<hf_u16_t>(length));
+    if (result == hf_i2c_err_t::I2C_SUCCESS) {
         return static_cast<int>(length);
     }
-    
     return -1;
 }
 
-int Bno08xI2cAdapter::read(uint8_t* data, uint32_t length) {
-    if (!is_open_ || !data || length == 0) return -1;
-    
-    BaseI2c::TransferData transfer_data;
-    transfer_data.buffer = data;
-    transfer_data.length = static_cast<uint16_t>(length);
-    transfer_data.slave_address = 0x4A; // Default BNO08x I2C address
-    
-    if (i2c_interface_.Read(transfer_data) == BaseI2c::Result::SUCCESS) {
-        return static_cast<int>(length);
-    }
-    
-    return -1;
-}
+int HalI2cBno08xComm::Read(uint8_t* data, uint32_t length) noexcept {
+    if (!data || length == 0) return -1;
 
-bool Bno08xI2cAdapter::dataAvailable() {
-    if (!int_gpio_) return true; // Always assume data available if no interrupt pin
-    
-    // Check interrupt pin - active low for BNO08x
-    return int_gpio_->GetValue() == BaseGpio::Value::LOW;
-}
-
-void Bno08xI2cAdapter::delay(uint32_t ms) {
-    RtosTask::Delay(ms);
-}
-
-uint32_t Bno08xI2cAdapter::getTimeUs() {
-    return static_cast<uint32_t>(RtosTask::GetTickCount() * 1000); // Convert ticks to microseconds
-}
-
-void Bno08xI2cAdapter::setReset(bool state) {
-    if (reset_gpio_) {
-        reset_gpio_->SetValue(state ? BaseGpio::Value::LOW : BaseGpio::Value::HIGH);
-    }
-}
-
-void Bno08xI2cAdapter::setBoot(bool state) {
-    // Boot mode control not typically used with I2C interface
-    (void)state;
-}
-
-//======================================================//
-// BNO08X SPI ADAPTER IMPLEMENTATION
-//======================================================//
-
-Bno08xSpiAdapter::Bno08xSpiAdapter(BaseSpi& spi_interface,
-                                   BaseGpio* wake_gpio,
-                                   BaseGpio* reset_gpio,
-                                   BaseGpio* int_gpio) noexcept
-    : spi_interface_(spi_interface)
-    , wake_gpio_(wake_gpio)
-    , reset_gpio_(reset_gpio)
-    , int_gpio_(int_gpio)
-    , is_open_(false) {
-}
-
-bool Bno08xSpiAdapter::open() {
-    if (is_open_) return true;
-    
-    // Initialize GPIO pins
-    if (wake_gpio_) {
-        wake_gpio_->SetDirection(BaseGpio::Direction::OUTPUT);
-        wake_gpio_->SetValue(BaseGpio::Value::HIGH); // Wake pin high for SPI
-    }
-    
-    if (reset_gpio_) {
-        reset_gpio_->SetDirection(BaseGpio::Direction::OUTPUT);
-        reset_gpio_->SetValue(BaseGpio::Value::HIGH); // Keep out of reset
-    }
-    
+    // Check INT pin first if available (configured active-low: IsActive() = data ready)
     if (int_gpio_) {
-        int_gpio_->SetDirection(BaseGpio::Direction::INPUT);
-        int_gpio_->SetPullMode(BaseGpio::PullMode::PULL_UP);
+        bool is_active = false;
+        if (int_gpio_->IsActive(is_active) == hf_gpio_err_t::GPIO_SUCCESS) {
+            if (!is_active) {
+                return 0;  // No data ready
+            }
+        }
     }
-    
-    // Configure SPI settings for BNO08x
-    BaseSpi::Config spi_config;
-    spi_config.clock_frequency = 3000000; // 3 MHz max for BNO08x
-    spi_config.data_width = BaseSpi::DataWidth::BITS_8;
-    spi_config.mode = BaseSpi::Mode::MODE_3; // CPOL=1, CPHA=1
-    spi_config.bit_order = BaseSpi::BitOrder::MSB_FIRST;
-    
-    if (spi_interface_.Configure(spi_config) == BaseSpi::Result::SUCCESS &&
-        spi_interface_.Initialize() == BaseSpi::Result::SUCCESS) {
-        is_open_ = true;
-        return true;
-    }
-    
-    return false;
-}
 
-void Bno08xSpiAdapter::close() {
-    if (!is_open_) return;
-    
-    spi_interface_.Deinitialize();
-    is_open_ = false;
-}
-
-int Bno08xSpiAdapter::write(const uint8_t* data, uint32_t length) {
-    if (!is_open_ || !data || length == 0) return -1;
-    
-    BaseSpi::TransferData transfer_data;
-    transfer_data.tx_buffer = const_cast<uint8_t*>(data);
-    transfer_data.tx_length = static_cast<uint16_t>(length);
-    transfer_data.rx_buffer = nullptr;
-    transfer_data.rx_length = 0;
-    
-    if (spi_interface_.Transfer(transfer_data) == BaseSpi::Result::SUCCESS) {
+    hf_i2c_err_t result = i2c_.Read(data, static_cast<hf_u16_t>(length));
+    if (result == hf_i2c_err_t::I2C_SUCCESS) {
         return static_cast<int>(length);
     }
-    
     return -1;
 }
 
-int Bno08xSpiAdapter::read(uint8_t* data, uint32_t length) {
-    if (!is_open_ || !data || length == 0) return -1;
-    
-    BaseSpi::TransferData transfer_data;
-    transfer_data.tx_buffer = nullptr;
-    transfer_data.tx_length = 0;
-    transfer_data.rx_buffer = data;
-    transfer_data.rx_length = static_cast<uint16_t>(length);
-    
-    if (spi_interface_.Transfer(transfer_data) == BaseSpi::Result::SUCCESS) {
-        return static_cast<int>(length);
+bool HalI2cBno08xComm::DataAvailable() noexcept {
+    if (!int_gpio_) return true;  // Assume data available if no INT pin
+
+    // INT is active-low, configured as such: IsActive() = data available
+    bool is_active = false;
+    if (int_gpio_->IsActive(is_active) == hf_gpio_err_t::GPIO_SUCCESS) {
+        return is_active;
     }
-    
-    return -1;
+    return true;  // Assume available on read error
 }
 
-bool Bno08xSpiAdapter::dataAvailable() {
-    if (!int_gpio_) return true; // Always assume data available if no interrupt pin
-    
-    // Check interrupt pin - active low for BNO08x
-    return int_gpio_->GetValue() == BaseGpio::Value::LOW;
+void HalI2cBno08xComm::Delay(uint32_t ms) noexcept {
+    vTaskDelay(pdMS_TO_TICKS(ms));
 }
 
-void Bno08xSpiAdapter::delay(uint32_t ms) {
-    RtosTask::Delay(ms);
+uint32_t HalI2cBno08xComm::GetTimeUs() noexcept {
+    return static_cast<uint32_t>(RtosTime::GetCurrentTimeUs());
 }
 
-uint32_t Bno08xSpiAdapter::getTimeUs() {
-    return static_cast<uint32_t>(RtosTask::GetTickCount() * 1000); // Convert ticks to microseconds
+void HalI2cBno08xComm::SetReset(bool state) noexcept {
+    if (!reset_gpio_) return;
+    // RSTN is active-low: state=true means assert reset (drive LOW)
+    // Using active-low GPIO: ACTIVE = LOW, INACTIVE = HIGH
+    if (state) {
+        reset_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_ACTIVE);
+    } else {
+        reset_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_INACTIVE);
+    }
 }
 
-void Bno08xSpiAdapter::setReset(bool state) {
+void HalI2cBno08xComm::SetBoot(bool /*state*/) noexcept {
+    // Boot pin control not typically wired for I2C
+}
+
+void HalI2cBno08xComm::SetWake(bool /*state*/) noexcept {
+    // Wake pin not used for I2C
+}
+
+void HalI2cBno08xComm::SetPS0(bool /*state*/) noexcept {
+    // PS pins are typically hard-wired
+}
+
+void HalI2cBno08xComm::SetPS1(bool /*state*/) noexcept {
+    // PS pins are typically hard-wired
+}
+
+// ============================================================================
+//  SPI CRTP ADAPTER IMPLEMENTATION
+// ============================================================================
+
+bool HalSpiBno08xComm::Open() noexcept {
+    // Initialize GPIO pins if provided
     if (reset_gpio_) {
-        reset_gpio_->SetValue(state ? BaseGpio::Value::LOW : BaseGpio::Value::HIGH);
+        reset_gpio_->SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
+        reset_gpio_->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+        reset_gpio_->EnsureInitialized();
+        reset_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_INACTIVE);
     }
-}
 
-void Bno08xSpiAdapter::setBoot(bool state) {
-    // Boot mode control - implementation depends on hardware design
-    (void)state;
-}
+    if (int_gpio_) {
+        int_gpio_->SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+        int_gpio_->SetPullMode(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP);
+        int_gpio_->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+        int_gpio_->EnsureInitialized();
+    }
 
-void Bno08xSpiAdapter::setWake(bool state) {
     if (wake_gpio_) {
-        wake_gpio_->SetValue(state ? BaseGpio::Value::HIGH : BaseGpio::Value::LOW);
+        wake_gpio_->SetDirection(hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
+        // WAKE is active-low: ACTIVE = assert wake (drive LOW)
+        wake_gpio_->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+        wake_gpio_->EnsureInitialized();
+        // Start with wake released (INACTIVE = HIGH)
+        wake_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_INACTIVE);
+    }
+
+    // Ensure the SPI bus is initialized
+    return spi_.EnsureInitialized();
+}
+
+void HalSpiBno08xComm::Close() noexcept {
+    // Don't deinitialize the SPI bus - it may be shared
+}
+
+int HalSpiBno08xComm::Write(const uint8_t* data, uint32_t length) noexcept {
+    if (!data || length == 0) return -1;
+
+    hf_spi_err_t result = spi_.Write(data, static_cast<hf_u16_t>(length), 100);
+    if (result == hf_spi_err_t::SPI_SUCCESS) {
+        return static_cast<int>(length);
+    }
+    return -1;
+}
+
+int HalSpiBno08xComm::Read(uint8_t* data, uint32_t length) noexcept {
+    if (!data || length == 0) return -1;
+
+    // Check INT pin first if available
+    if (int_gpio_) {
+        bool is_active = false;
+        if (int_gpio_->IsActive(is_active) == hf_gpio_err_t::GPIO_SUCCESS) {
+            if (!is_active) {
+                return 0;
+            }
+        }
+    }
+
+    hf_spi_err_t result = spi_.Read(data, static_cast<hf_u16_t>(length), 100);
+    if (result == hf_spi_err_t::SPI_SUCCESS) {
+        return static_cast<int>(length);
+    }
+    return -1;
+}
+
+bool HalSpiBno08xComm::DataAvailable() noexcept {
+    if (!int_gpio_) return true;
+
+    bool is_active = false;
+    if (int_gpio_->IsActive(is_active) == hf_gpio_err_t::GPIO_SUCCESS) {
+        return is_active;
+    }
+    return true;
+}
+
+void HalSpiBno08xComm::Delay(uint32_t ms) noexcept {
+    vTaskDelay(pdMS_TO_TICKS(ms));
+}
+
+uint32_t HalSpiBno08xComm::GetTimeUs() noexcept {
+    return static_cast<uint32_t>(RtosTime::GetCurrentTimeUs());
+}
+
+void HalSpiBno08xComm::SetReset(bool state) noexcept {
+    if (!reset_gpio_) return;
+    if (state) {
+        reset_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_ACTIVE);
+    } else {
+        reset_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_INACTIVE);
     }
 }
 
-//======================================================//
-// BNO08X HANDLER IMPLEMENTATION
-//======================================================//
-
-Bno08xHandler::Bno08xHandler(BaseI2c& i2c_interface,
-                            const Bno08xConfig& config,
-                            BaseGpio* reset_gpio,
-                            BaseGpio* int_gpio) noexcept
-    : transport_adapter_(std::make_unique<Bno08xI2cAdapter>(i2c_interface, reset_gpio, int_gpio))
-    , bno08x_sensor_(nullptr)
-    , config_(config)
-    , handler_mutex_()
-    , initialized_(false)
-    , last_error_(Bno08xError::SUCCESS)
-    , sensor_callback_(nullptr)
-    , interface_type_(BNO085Interface::I2C)
-    , reset_gpio_(reset_gpio)
-    , wake_gpio_(nullptr)
-    , int_gpio_(int_gpio) {
-    
-    snprintf(description_, sizeof(description_), 
-             "BNO08x IMU Handler (I2C) - 9-DOF Sensor Fusion");
+void HalSpiBno08xComm::SetBoot(bool /*state*/) noexcept {
+    // Boot pin not typically wired
 }
 
-Bno08xHandler::Bno08xHandler(BaseSpi& spi_interface,
-                            const Bno08xConfig& config,
-                            BaseGpio* wake_gpio,
-                            BaseGpio* reset_gpio,
-                            BaseGpio* int_gpio) noexcept
-    : transport_adapter_(std::make_unique<Bno08xSpiAdapter>(spi_interface, wake_gpio, reset_gpio, int_gpio))
-    , bno08x_sensor_(nullptr)
-    , config_(config)
-    , handler_mutex_()
-    , initialized_(false)
-    , last_error_(Bno08xError::SUCCESS)
-    , sensor_callback_(nullptr)
-    , interface_type_(BNO085Interface::SPI)
-    , reset_gpio_(reset_gpio)
-    , wake_gpio_(wake_gpio)
-    , int_gpio_(int_gpio) {
-    
-    snprintf(description_, sizeof(description_), 
-             "BNO08x IMU Handler (SPI) - 9-DOF Sensor Fusion");
+void HalSpiBno08xComm::SetWake(bool state) noexcept {
+    if (!wake_gpio_) return;
+    // WAKE is active-low: state=true means assert (drive LOW)
+    if (state) {
+        wake_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_ACTIVE);
+    } else {
+        wake_gpio_->SetState(hf_gpio_state_t::HF_GPIO_STATE_INACTIVE);
+    }
 }
+
+void HalSpiBno08xComm::SetPS0(bool /*state*/) noexcept {
+    // PS pins typically hard-wired
+}
+
+void HalSpiBno08xComm::SetPS1(bool /*state*/) noexcept {
+    // PS pins typically hard-wired
+}
+
+// ============================================================================
+//  BNO08X HANDLER IMPLEMENTATION
+// ============================================================================
+
+// --- Constructors ---
+
+Bno08xHandler::Bno08xHandler(BaseI2c& i2c_device,
+                             const Bno08xConfig& config,
+                             BaseGpio* reset_gpio,
+                             BaseGpio* int_gpio) noexcept
+    : driver_ops_(std::make_unique<Bno08xDriverImpl<HalI2cBno08xComm>>(
+          HalI2cBno08xComm(i2c_device, reset_gpio, int_gpio)))
+    , config_(config)
+    , interface_type_(BNO085Interface::I2C) {
+    std::snprintf(description_, sizeof(description_),
+                  "BNO08x IMU (I2C @0x%02X)",
+                  static_cast<unsigned>(i2c_device.GetDeviceAddress()));
+}
+
+Bno08xHandler::Bno08xHandler(BaseSpi& spi_device,
+                             const Bno08xConfig& config,
+                             BaseGpio* reset_gpio,
+                             BaseGpio* int_gpio,
+                             BaseGpio* wake_gpio) noexcept
+    : driver_ops_(std::make_unique<Bno08xDriverImpl<HalSpiBno08xComm>>(
+          HalSpiBno08xComm(spi_device, reset_gpio, int_gpio, wake_gpio)))
+    , config_(config)
+    , interface_type_(BNO085Interface::SPI) {
+    std::snprintf(description_, sizeof(description_),
+                  "BNO08x IMU (SPI)");
+}
+
+// --- Initialization ---
 
 Bno08xError Bno08xHandler::Initialize() noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     if (!lock.IsLocked()) {
         last_error_ = Bno08xError::MUTEX_LOCK_FAILED;
         return last_error_;
     }
-    
+
     if (initialized_) {
         last_error_ = Bno08xError::SUCCESS;
         return last_error_;
     }
-    
-    // Open transport interface
-    if (!transport_adapter_->open()) {
-        last_error_ = Bno08xError::COMMUNICATION_FAILED;
-        return last_error_;
-    }
-    
-    // Create BNO08x sensor instance with transport
-    bno08x_sensor_ = std::make_shared<BNO085>(*transport_adapter_);
-    
-    if (!bno08x_sensor_) {
-        transport_adapter_->close();
+
+    if (!driver_ops_) {
         last_error_ = Bno08xError::INITIALIZATION_FAILED;
         return last_error_;
     }
-    
-    // Perform hardware reset if GPIO available
-    if (reset_gpio_) {
-        HardwareReset(10);
-        RtosTask::Delay(100); // Wait for reset to complete
-    }
-    
-    // Initialize sensor (driver returns true on success, false on failure)
-    if (!bno08x_sensor_->begin()) {
-        bno08x_sensor_.reset();
-        transport_adapter_->close();
+
+    // Perform hardware reset via the driver (uses RSTN pin if wired)
+    driver_ops_->HardwareReset(10);
+
+    // Initialize the SH-2 protocol
+    if (!driver_ops_->Begin()) {
         last_error_ = Bno08xError::SENSOR_NOT_RESPONDING;
         return last_error_;
     }
-    
-    // Apply initial configuration
-    if (!ApplyConfiguration(config_)) {
-        bno08x_sensor_.reset();
-        transport_adapter_->close();
-        last_error_ = Bno08xError::INITIALIZATION_FAILED;
+
+    // Set internal callback that forwards to user callback
+    driver_ops_->SetCallback([this](const SensorEvent& event) {
+        // Forward to user callback (no extra lock needed - called from Update()
+        // which already holds the mutex, and the recursive mutex allows re-entry)
+        if (user_callback_) {
+            user_callback_(event);
+        }
+    });
+
+    // Apply initial sensor configuration
+    if (!applyConfigLocked(config_)) {
+        // Non-fatal: sensor is still initialized, some sensors may have failed
+        last_error_ = Bno08xError::COMMUNICATION_FAILED;
+        initialized_ = true;
         return last_error_;
     }
-    
-    // Set internal callback for sensor events
-    bno08x_sensor_->setCallback([this](const SensorEvent& event) {
-        this->HandleSensorEvent(event);
-    });
-    
+
     initialized_ = true;
     last_error_ = Bno08xError::SUCCESS;
-    
     return last_error_;
 }
 
 Bno08xError Bno08xHandler::Deinitialize() noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     if (!lock.IsLocked()) {
         last_error_ = Bno08xError::MUTEX_LOCK_FAILED;
         return last_error_;
     }
-    
+
     if (!initialized_) {
         last_error_ = Bno08xError::SUCCESS;
         return last_error_;
     }
-    
-    // Clear callback
-    if (bno08x_sensor_) {
-        bno08x_sensor_->setCallback(nullptr);
+
+    // Clear the driver callback
+    if (driver_ops_) {
+        driver_ops_->SetCallback(nullptr);
     }
-    
-    // Reset sensor instance
-    bno08x_sensor_.reset();
-    
-    // Close transport
-    if (transport_adapter_) {
-        transport_adapter_->close();
-    }
-    
+
+    user_callback_ = nullptr;
     initialized_ = false;
     last_error_ = Bno08xError::SUCCESS;
-    
     return last_error_;
 }
 
 bool Bno08xHandler::IsInitialized() const noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     return lock.IsLocked() && initialized_;
 }
 
-bool Bno08xHandler::IsSensorReady() const noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
-    return lock.IsLocked() && initialized_ && bno08x_sensor_ && ValidateSensor();
-}
-
-std::shared_ptr<BNO085> Bno08xHandler::GetSensor() noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
-    if (!lock.IsLocked() || !initialized_) {
-        return nullptr;
-    }
-    return bno08x_sensor_;
-}
+// --- Update ---
 
 Bno08xError Bno08xHandler::Update() noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     if (!lock.IsLocked()) {
         last_error_ = Bno08xError::MUTEX_LOCK_FAILED;
         return last_error_;
     }
-    
-    if (!initialized_ || !ValidateSensor()) {
+
+    if (!initialized_ || !driver_ops_) {
         last_error_ = Bno08xError::NOT_INITIALIZED;
         return last_error_;
     }
-    
-    // Process any available sensor data (driver handles errors internally)
-    bno08x_sensor_->update();
-    
-    // Check for driver errors after update
-    int driver_error = bno08x_sensor_->getLastError();
-    if (driver_error != SH2_OK) {
-        last_error_ = Bno08xError::COMMUNICATION_FAILED;
+
+    // Pump the SH-2 service loop (dispatches callbacks internally)
+    driver_ops_->Update();
+
+    // Check for driver errors
+    int driver_error = driver_ops_->GetLastError();
+    if (driver_error != 0) {
+        last_error_ = mapDriverError(driver_error);
     } else {
         last_error_ = Bno08xError::SUCCESS;
     }
-    
+
     return last_error_;
 }
 
 bool Bno08xHandler::HasNewData(BNO085Sensor sensor) const noexcept {
-    if (!initialized_ || !ValidateSensor()) {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked() || !initialized_ || !driver_ops_) {
         return false;
     }
-    
-    return bno08x_sensor_->hasNewData(sensor);
+    return driver_ops_->HasNewData(sensor);
 }
 
-Bno08xError Bno08xHandler::ReadImuData(Bno08xImuData& imu_data) noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
-    if (!lock.IsLocked()) {
-        return Bno08xError::MUTEX_LOCK_FAILED;
-    }
-    
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Read acceleration
-    ReadAcceleration(imu_data.acceleration);
-    
-    // Read gyroscope
-    ReadGyroscope(imu_data.gyroscope);
-    
-    // Read magnetometer
-    ReadMagnetometer(imu_data.magnetometer);
-    
-    // Read linear acceleration
-    ReadLinearAcceleration(imu_data.linear_acceleration);
-    
-    // Read gravity
-    ReadGravity(imu_data.gravity);
-    
-    // Read rotation quaternion
-    ReadQuaternion(imu_data.rotation);
-    
-    // Convert to Euler angles
-    QuaternionToEuler(imu_data.rotation, imu_data.euler);
-    
-    // Set overall timestamp
-    imu_data.timestamp_us = this->getTimeUs();
-    imu_data.valid = true;
-    
+// ============================================================================
+//  SENSOR DATA READING
+// ============================================================================
+
+Bno08xError Bno08xHandler::readVectorSensor(BNO085Sensor sensor,
+                                             Bno08xVector3& out) const noexcept {
+    SensorEvent event = driver_ops_->GetLatest(sensor);
+    out.x = event.vector.x;
+    out.y = event.vector.y;
+    out.z = event.vector.z;
+    out.accuracy = event.vector.accuracy;
+    out.timestamp_us = event.timestamp;
+    out.valid = true;
     return Bno08xError::SUCCESS;
 }
 
 Bno08xError Bno08xHandler::ReadAcceleration(Bno08xVector3& acceleration) noexcept {
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Check if new data is available before reading
-    if (!bno08x_sensor_->hasNewData(BNO085Sensor::Accelerometer)) {
-        acceleration.valid = false;
-        return Bno08xError::DATA_NOT_AVAILABLE;
-    }
-    
-    // The driver uses getLatest() to retrieve sensor data
-    SensorEvent event = bno08x_sensor_->getLatest(BNO085Sensor::Accelerometer);
-    acceleration.x = event.vector.x;
-    acceleration.y = event.vector.y;
-    acceleration.z = event.vector.z;
-    acceleration.accuracy = event.vector.accuracy;
-    acceleration.timestamp_us = event.timestamp;
-    acceleration.valid = true;  // Data is valid if we got here
-    
-    return Bno08xError::SUCCESS;
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+    return readVectorSensor(BNO085Sensor::Accelerometer, acceleration);
 }
 
 Bno08xError Bno08xHandler::ReadGyroscope(Bno08xVector3& gyroscope) noexcept {
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Check if new data is available before reading
-    if (!bno08x_sensor_->hasNewData(BNO085Sensor::Gyroscope)) {
-        gyroscope.valid = false;
-        return Bno08xError::DATA_NOT_AVAILABLE;
-    }
-    
-    // The driver uses getLatest() to retrieve sensor data
-    SensorEvent event = bno08x_sensor_->getLatest(BNO085Sensor::Gyroscope);
-    gyroscope.x = event.vector.x;
-    gyroscope.y = event.vector.y;
-    gyroscope.z = event.vector.z;
-    gyroscope.accuracy = event.vector.accuracy;
-    gyroscope.timestamp_us = event.timestamp;
-    gyroscope.valid = true;  // Data is valid if we got here
-    
-    return Bno08xError::SUCCESS;
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+    return readVectorSensor(BNO085Sensor::Gyroscope, gyroscope);
 }
 
 Bno08xError Bno08xHandler::ReadMagnetometer(Bno08xVector3& magnetometer) noexcept {
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Check if new data is available before reading
-    if (!bno08x_sensor_->hasNewData(BNO085Sensor::Magnetometer)) {
-        magnetometer.valid = false;
-        return Bno08xError::DATA_NOT_AVAILABLE;
-    }
-    
-    // The driver uses getLatest() to retrieve sensor data
-    SensorEvent event = bno08x_sensor_->getLatest(BNO085Sensor::Magnetometer);
-    magnetometer.x = event.vector.x;
-    magnetometer.y = event.vector.y;
-    magnetometer.z = event.vector.z;
-    magnetometer.accuracy = event.vector.accuracy;
-    magnetometer.timestamp_us = event.timestamp;
-    magnetometer.valid = true;  // Data is valid if we got here
-    
-    return Bno08xError::SUCCESS;
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+    return readVectorSensor(BNO085Sensor::Magnetometer, magnetometer);
+}
+
+Bno08xError Bno08xHandler::ReadLinearAcceleration(Bno08xVector3& linear_accel) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+    return readVectorSensor(BNO085Sensor::LinearAcceleration, linear_accel);
+}
+
+Bno08xError Bno08xHandler::ReadGravity(Bno08xVector3& gravity) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+    return readVectorSensor(BNO085Sensor::Gravity, gravity);
 }
 
 Bno08xError Bno08xHandler::ReadQuaternion(Bno08xQuaternion& quaternion) noexcept {
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Check if new data is available before reading
-    if (!bno08x_sensor_->hasNewData(BNO085Sensor::RotationVector)) {
-        quaternion.valid = false;
-        return Bno08xError::DATA_NOT_AVAILABLE;
-    }
-    
-    // The driver uses getLatest() to retrieve sensor data
-    SensorEvent event = bno08x_sensor_->getLatest(BNO085Sensor::RotationVector);
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    SensorEvent event = driver_ops_->GetLatest(BNO085Sensor::RotationVector);
     quaternion.w = event.rotation.w;
     quaternion.x = event.rotation.x;
     quaternion.y = event.rotation.y;
     quaternion.z = event.rotation.z;
     quaternion.accuracy = event.rotation.accuracy;
     quaternion.timestamp_us = event.timestamp;
-    quaternion.valid = true;  // Data is valid if we got here
-    
+    quaternion.valid = true;
+
     return Bno08xError::SUCCESS;
 }
 
 Bno08xError Bno08xHandler::ReadEulerAngles(Bno08xEulerAngles& euler_angles) noexcept {
     Bno08xQuaternion quat;
     Bno08xError result = ReadQuaternion(quat);
-    
+
     if (result == Bno08xError::SUCCESS && quat.valid) {
         QuaternionToEuler(quat, euler_angles);
         return Bno08xError::SUCCESS;
     }
-    
+
     euler_angles.valid = false;
     return result;
 }
 
-Bno08xError Bno08xHandler::ReadLinearAcceleration(Bno08xVector3& linear_accel) noexcept {
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Check if new data is available before reading
-    if (!bno08x_sensor_->hasNewData(BNO085Sensor::LinearAcceleration)) {
-        linear_accel.valid = false;
-        return Bno08xError::DATA_NOT_AVAILABLE;
-    }
-    
-    // The driver uses getLatest() to retrieve sensor data
-    SensorEvent event = bno08x_sensor_->getLatest(BNO085Sensor::LinearAcceleration);
-    linear_accel.x = event.vector.x;
-    linear_accel.y = event.vector.y;
-    linear_accel.z = event.vector.z;
-    linear_accel.accuracy = event.vector.accuracy;
-    linear_accel.timestamp_us = event.timestamp;
-    linear_accel.valid = true;  // Data is valid if we got here
-    
+Bno08xError Bno08xHandler::ReadImuData(Bno08xImuData& imu_data) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    // Read all available sensor data (no extra mutex needed, already locked)
+    readVectorSensor(BNO085Sensor::Accelerometer, imu_data.acceleration);
+    readVectorSensor(BNO085Sensor::Gyroscope, imu_data.gyroscope);
+    readVectorSensor(BNO085Sensor::Magnetometer, imu_data.magnetometer);
+    readVectorSensor(BNO085Sensor::LinearAcceleration, imu_data.linear_acceleration);
+    readVectorSensor(BNO085Sensor::Gravity, imu_data.gravity);
+
+    // Read rotation quaternion
+    SensorEvent rv_event = driver_ops_->GetLatest(BNO085Sensor::RotationVector);
+    imu_data.rotation.w = rv_event.rotation.w;
+    imu_data.rotation.x = rv_event.rotation.x;
+    imu_data.rotation.y = rv_event.rotation.y;
+    imu_data.rotation.z = rv_event.rotation.z;
+    imu_data.rotation.accuracy = rv_event.rotation.accuracy;
+    imu_data.rotation.timestamp_us = rv_event.timestamp;
+    imu_data.rotation.valid = true;
+
+    // Derive Euler angles from quaternion
+    QuaternionToEuler(imu_data.rotation, imu_data.euler);
+
+    imu_data.timestamp_us = rv_event.timestamp;
+    imu_data.valid = true;
+
     return Bno08xError::SUCCESS;
 }
 
-Bno08xError Bno08xHandler::ReadGravity(Bno08xVector3& gravity) noexcept {
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // Check if new data is available before reading
-    if (!bno08x_sensor_->hasNewData(BNO085Sensor::Gravity)) {
-        gravity.valid = false;
-        return Bno08xError::DATA_NOT_AVAILABLE;
-    }
-    
-    // The driver uses getLatest() to retrieve sensor data
-    SensorEvent event = bno08x_sensor_->getLatest(BNO085Sensor::Gravity);
-    gravity.x = event.vector.x;
-    gravity.y = event.vector.y;
-    gravity.z = event.vector.z;
-    gravity.accuracy = event.vector.accuracy;
-    gravity.timestamp_us = event.timestamp;
-    gravity.valid = true;  // Data is valid if we got here
-    
+// ============================================================================
+//  ACTIVITY AND GESTURE DETECTION
+// ============================================================================
+
+Bno08xError Bno08xHandler::ReadActivityData(Bno08xActivityData& activity_data) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    // Read tap detector
+    SensorEvent tap_event = driver_ops_->GetLatest(BNO085Sensor::TapDetector);
+    activity_data.tap_detected = tap_event.detected;
+    activity_data.double_tap = tap_event.tap.doubleTap;
+    activity_data.tap_direction = tap_event.tap.direction;
+
+    // Read step counter
+    SensorEvent step_event = driver_ops_->GetLatest(BNO085Sensor::StepCounter);
+    activity_data.step_count = step_event.stepCount;
+
+    // Read step detector
+    SensorEvent step_det = driver_ops_->GetLatest(BNO085Sensor::StepDetector);
+    activity_data.step_detected = step_det.detected;
+
+    // Read shake detector
+    SensorEvent shake_event = driver_ops_->GetLatest(BNO085Sensor::ShakeDetector);
+    activity_data.shake_detected = shake_event.detected;
+
+    // Read pickup detector
+    SensorEvent pickup_event = driver_ops_->GetLatest(BNO085Sensor::PickupDetector);
+    activity_data.pickup_detected = pickup_event.detected;
+
+    // Read significant motion
+    SensorEvent motion_event = driver_ops_->GetLatest(BNO085Sensor::SignificantMotion);
+    activity_data.significant_motion = motion_event.detected;
+
+    // Read stability classifier
+    SensorEvent stability_event = driver_ops_->GetLatest(BNO085Sensor::StabilityClassifier);
+    activity_data.stability_class = static_cast<uint8_t>(stability_event.vector.x);
+
+    activity_data.timestamp_us = tap_event.timestamp;
+    activity_data.valid = true;
+
     return Bno08xError::SUCCESS;
 }
 
-Bno08xError Bno08xHandler::EnableSensor(BNO085Sensor sensor, uint32_t interval_ms, float sensitivity) noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
-    if (!lock.IsLocked()) {
-        return Bno08xError::MUTEX_LOCK_FAILED;
-    }
-    
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // The driver returns true on success, false on failure
-    if (bno08x_sensor_->enableSensor(sensor, interval_ms, sensitivity)) {
+// ============================================================================
+//  CALIBRATION STATUS
+// ============================================================================
+
+Bno08xError Bno08xHandler::ReadCalibrationStatus(Bno08xCalibrationStatus& status) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    // Accuracy is embedded in each sensor report's accuracy field
+    SensorEvent accel = driver_ops_->GetLatest(BNO085Sensor::Accelerometer);
+    SensorEvent gyro = driver_ops_->GetLatest(BNO085Sensor::Gyroscope);
+    SensorEvent mag = driver_ops_->GetLatest(BNO085Sensor::Magnetometer);
+    SensorEvent rv = driver_ops_->GetLatest(BNO085Sensor::RotationVector);
+
+    status.accelerometer_accuracy = accel.vector.accuracy;
+    status.gyroscope_accuracy = gyro.vector.accuracy;
+    status.magnetometer_accuracy = mag.vector.accuracy;
+    status.rotation_accuracy = rv.rotation.accuracy;
+
+    // Consider fully calibrated if all core sensors have accuracy >= 2
+    status.fully_calibrated =
+        (status.accelerometer_accuracy >= 2) &&
+        (status.gyroscope_accuracy >= 2) &&
+        (status.magnetometer_accuracy >= 2);
+
+    return Bno08xError::SUCCESS;
+}
+
+// ============================================================================
+//  SENSOR CONFIGURATION
+// ============================================================================
+
+Bno08xError Bno08xHandler::EnableSensor(BNO085Sensor sensor, uint32_t interval_ms,
+                                         float sensitivity) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    if (driver_ops_->EnableSensor(sensor, interval_ms, sensitivity)) {
         return Bno08xError::SUCCESS;
-    } else {
-        // Check driver's last error for more specific error information
-        int driver_error = bno08x_sensor_->getLastError();
-        if (driver_error == SH2_ERR_BAD_PARAM) {
-            return Bno08xError::INVALID_PARAMETER;
-        } else if (driver_error == SH2_ERR_HUB) {
-            return Bno08xError::SENSOR_NOT_RESPONDING;
-        } else {
-            return Bno08xError::COMMUNICATION_FAILED;
-        }
     }
+
+    int driver_error = driver_ops_->GetLastError();
+    last_error_ = mapDriverError(driver_error);
+    return last_error_;
 }
 
 Bno08xError Bno08xHandler::DisableSensor(BNO085Sensor sensor) noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
-    if (!lock.IsLocked()) {
-        return Bno08xError::MUTEX_LOCK_FAILED;
-    }
-    
-    if (!initialized_ || !ValidateSensor()) {
-        return Bno08xError::NOT_INITIALIZED;
-    }
-    
-    // The driver returns true on success, false on failure
-    if (bno08x_sensor_->disableSensor(sensor)) {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    if (driver_ops_->DisableSensor(sensor)) {
         return Bno08xError::SUCCESS;
-    } else {
-        // Check driver's last error for more specific error information
-        int driver_error = bno08x_sensor_->getLastError();
-        if (driver_error == SH2_ERR_BAD_PARAM) {
-            return Bno08xError::INVALID_PARAMETER;
-        } else if (driver_error == SH2_ERR_HUB) {
-            return Bno08xError::SENSOR_NOT_RESPONDING;
-        } else {
-            return Bno08xError::COMMUNICATION_FAILED;
-        }
     }
+
+    int driver_error = driver_ops_->GetLastError();
+    last_error_ = mapDriverError(driver_error);
+    return last_error_;
 }
 
-Bno08xError Bno08xHandler::HardwareReset(uint32_t reset_duration_ms) noexcept {
-    if (!reset_gpio_) {
-        return Bno08xError::HARDWARE_ERROR;
+Bno08xError Bno08xHandler::ApplyConfiguration(const Bno08xConfig& config) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!initialized_ || !driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    config_ = config;
+    if (applyConfigLocked(config)) {
+        return Bno08xError::SUCCESS;
     }
-    
-    // Hold reset low
-    reset_gpio_->SetValue(BaseGpio::Value::LOW);
-    RtosTask::Delay(reset_duration_ms);
-    
-    // Release reset
-    reset_gpio_->SetValue(BaseGpio::Value::HIGH);
-    RtosTask::Delay(100); // Allow time for reset to complete
-    
+    return Bno08xError::COMMUNICATION_FAILED;
+}
+
+const Bno08xConfig& Bno08xHandler::GetConfiguration() const noexcept {
+    return config_;
+}
+
+bool Bno08xHandler::applyConfigLocked(const Bno08xConfig& config) noexcept {
+    bool all_ok = true;
+
+    // Helper lambda: enable sensor if flag is true, disable otherwise
+    auto configureSensor = [&](bool enable, BNO085Sensor sensor,
+                               uint32_t interval_ms, float sensitivity = 0.0f) {
+        if (enable) {
+            if (!driver_ops_->EnableSensor(sensor, interval_ms, sensitivity)) {
+                all_ok = false;
+            }
+        }
+    };
+
+    // Core sensors
+    configureSensor(config.enable_accelerometer,
+                    BNO085Sensor::Accelerometer, config.accelerometer_interval_ms);
+    configureSensor(config.enable_gyroscope,
+                    BNO085Sensor::Gyroscope, config.gyroscope_interval_ms);
+    configureSensor(config.enable_magnetometer,
+                    BNO085Sensor::Magnetometer, config.magnetometer_interval_ms);
+    configureSensor(config.enable_rotation_vector,
+                    BNO085Sensor::RotationVector, config.rotation_interval_ms);
+    configureSensor(config.enable_linear_acceleration,
+                    BNO085Sensor::LinearAcceleration, config.linear_accel_interval_ms);
+    configureSensor(config.enable_gravity,
+                    BNO085Sensor::Gravity, config.gravity_interval_ms);
+    configureSensor(config.enable_game_rotation,
+                    BNO085Sensor::GameRotationVector, config.game_rotation_interval_ms);
+
+    // Event/activity sensors (interval 0 = on-change)
+    configureSensor(config.enable_tap_detector,
+                    BNO085Sensor::TapDetector, 0);
+    configureSensor(config.enable_step_counter,
+                    BNO085Sensor::StepCounter, 0);
+    configureSensor(config.enable_step_detector,
+                    BNO085Sensor::StepDetector, 0);
+    configureSensor(config.enable_shake_detector,
+                    BNO085Sensor::ShakeDetector, 0);
+    configureSensor(config.enable_pickup_detector,
+                    BNO085Sensor::PickupDetector, 0);
+    configureSensor(config.enable_significant_motion,
+                    BNO085Sensor::SignificantMotion, 0);
+    configureSensor(config.enable_stability_classifier,
+                    BNO085Sensor::StabilityClassifier, 0);
+
+    return all_ok;
+}
+
+// ============================================================================
+//  HARDWARE CONTROL
+// ============================================================================
+
+Bno08xError Bno08xHandler::HardwareReset(uint32_t reset_duration_ms) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    driver_ops_->HardwareReset(reset_duration_ms);
     return Bno08xError::SUCCESS;
 }
 
+Bno08xError Bno08xHandler::SetBootPin(bool boot_state) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    driver_ops_->SetBootPin(boot_state);
+    return Bno08xError::SUCCESS;
+}
+
+Bno08xError Bno08xHandler::SetWakePin(bool wake_state) noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) return Bno08xError::MUTEX_LOCK_FAILED;
+    if (!driver_ops_) return Bno08xError::NOT_INITIALIZED;
+
+    driver_ops_->SetWakePin(wake_state);
+    return Bno08xError::SUCCESS;
+}
+
+// ============================================================================
+//  CALLBACK MANAGEMENT
+// ============================================================================
+
 void Bno08xHandler::SetSensorCallback(SensorCallback callback) noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     if (lock.IsLocked()) {
-        sensor_callback_ = callback;
+        user_callback_ = std::move(callback);
     }
 }
 
 void Bno08xHandler::ClearSensorCallback() noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
+    MutexLockGuard lock(handler_mutex_);
     if (lock.IsLocked()) {
-        sensor_callback_ = nullptr;
+        user_callback_ = nullptr;
     }
 }
 
-void Bno08xHandler::QuaternionToEuler(const Bno08xQuaternion& quaternion, Bno08xEulerAngles& euler_angles) noexcept {
+// ============================================================================
+//  UTILITY METHODS
+// ============================================================================
+
+void Bno08xHandler::QuaternionToEuler(const Bno08xQuaternion& quaternion,
+                                       Bno08xEulerAngles& euler_angles) noexcept {
     if (!quaternion.valid) {
         euler_angles.valid = false;
         return;
     }
-    
-    // Convert quaternion to Euler angles (roll, pitch, yaw)
+
     float w = quaternion.w;
     float x = quaternion.x;
     float y = quaternion.y;
     float z = quaternion.z;
-    
+
     // Roll (x-axis rotation)
-    float sinr_cosp = 2 * (w * x + y * z);
-    float cosr_cosp = 1 - 2 * (x * x + y * y);
+    float sinr_cosp = 2.0f * (w * x + y * z);
+    float cosr_cosp = 1.0f - 2.0f * (x * x + y * y);
     euler_angles.roll = std::atan2(sinr_cosp, cosr_cosp);
-    
+
     // Pitch (y-axis rotation)
-    float sinp = 2 * (w * y - z * x);
-    if (std::abs(sinp) >= 1) {
-        euler_angles.pitch = std::copysign(M_PI / 2, sinp); // Use 90 degrees if out of range
+    float sinp = 2.0f * (w * y - z * x);
+    if (std::abs(sinp) >= 1.0f) {
+        euler_angles.pitch = std::copysign(static_cast<float>(M_PI) / 2.0f, sinp);
     } else {
         euler_angles.pitch = std::asin(sinp);
     }
-    
+
     // Yaw (z-axis rotation)
-    float siny_cosp = 2 * (w * z + x * y);
-    float cosy_cosp = 1 - 2 * (y * y + z * z);
+    float siny_cosp = 2.0f * (w * z + x * y);
+    float cosy_cosp = 1.0f - 2.0f * (y * y + z * z);
     euler_angles.yaw = std::atan2(siny_cosp, cosy_cosp);
-    
+
     euler_angles.accuracy = quaternion.accuracy;
     euler_angles.timestamp_us = quaternion.timestamp_us;
     euler_angles.valid = true;
-}
-
-Bno08xConfig Bno08xHandler::GetDefaultConfig() noexcept {
-    Bno08xConfig config;
-    
-    // Enable basic sensors
-    config.enable_accelerometer = true;
-    config.enable_gyroscope = true;
-    config.enable_magnetometer = true;
-    config.enable_rotation_vector = true;
-    config.enable_linear_acceleration = false;
-    config.enable_gravity = false;
-    config.enable_game_rotation = false;
-    
-    // Disable activity detection by default
-    config.enable_tap_detector = false;
-    config.enable_step_counter = false;
-    config.enable_shake_detector = false;
-    config.enable_pickup_detector = false;
-    config.enable_significant_motion = false;
-    config.enable_activity_classifier = false;
-    
-    // Set reasonable intervals
-    config.accelerometer_interval_ms = 50;   // 20 Hz
-    config.gyroscope_interval_ms = 50;       // 20 Hz
-    config.magnetometer_interval_ms = 100;   // 10 Hz
-    config.rotation_interval_ms = 50;        // 20 Hz
-    config.linear_accel_interval_ms = 50;    // 20 Hz
-    config.gravity_interval_ms = 100;        // 10 Hz
-    
-    // Default interface
-    config.interface_type = BNO085Interface::I2C;
-    
-    // Calibration settings
-    config.auto_calibration = true;
-    config.calibration_timeout_s = 60.0f;
-    
-    return config;
-}
-
-const char* Bno08xHandler::GetDescription() const noexcept {
-    return description_;
-}
-
-Bno08xError Bno08xHandler::GetLastError() const noexcept {
-    RtosMutex::LockGuard lock(handler_mutex_);
-    return lock.IsLocked() ? last_error_ : Bno08xError::MUTEX_LOCK_FAILED;
 }
 
 BNO085Interface Bno08xHandler::GetInterfaceType() const noexcept {
     return interface_type_;
 }
 
-//======================================================//
-// PRIVATE HELPER METHODS
-//======================================================//
-
-bool Bno08xHandler::ValidateSensor() const noexcept {
-    return bno08x_sensor_ != nullptr && transport_adapter_ != nullptr;
+Bno08xError Bno08xHandler::GetLastError() const noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    return lock.IsLocked() ? last_error_ : Bno08xError::MUTEX_LOCK_FAILED;
 }
 
-bool Bno08xHandler::ApplyConfiguration(const Bno08xConfig& config) noexcept {
-    if (!ValidateSensor()) return false;
-    
-    // Enable sensors based on configuration
-    if (config.enable_accelerometer) {
-        EnableSensor(BNO085Sensor::Accelerometer, config.accelerometer_interval_ms);
-    }
-    
-    if (config.enable_gyroscope) {
-        EnableSensor(BNO085Sensor::Gyroscope, config.gyroscope_interval_ms);
-    }
-    
-    if (config.enable_magnetometer) {
-        EnableSensor(BNO085Sensor::Magnetometer, config.magnetometer_interval_ms);
-    }
-    
-    if (config.enable_rotation_vector) {
-        EnableSensor(BNO085Sensor::RotationVector, config.rotation_interval_ms);
-    }
-    
-    if (config.enable_linear_acceleration) {
-        EnableSensor(BNO085Sensor::LinearAcceleration, config.linear_accel_interval_ms);
-    }
-    
-    if (config.enable_gravity) {
-        EnableSensor(BNO085Sensor::Gravity, config.gravity_interval_ms);
-    }
-    
-    // Enable activity detection
-    if (config.enable_tap_detector) {
-        EnableSensor(BNO085Sensor::TapDetector, 0);
-    }
-    
-    if (config.enable_step_counter) {
-        EnableSensor(BNO085Sensor::StepCounter, 0);
-    }
-    
-    if (config.enable_shake_detector) {
-        EnableSensor(BNO085Sensor::ShakeDetector, 0);
-    }
-    
-    return true;
+int Bno08xHandler::GetLastDriverError() const noexcept {
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked() || !driver_ops_) return -1;
+    return driver_ops_->GetLastError();
 }
 
-void Bno08xHandler::HandleSensorEvent(const SensorEvent& event) noexcept {
-    // Forward to user callback if set
-    if (sensor_callback_) {
-        sensor_callback_(event);
+const char* Bno08xHandler::GetDescription() const noexcept {
+    return description_;
+}
+
+Bno08xError Bno08xHandler::mapDriverError(int sh2_error) noexcept {
+    switch (sh2_error) {
+        case 0:  return Bno08xError::SUCCESS;            // SH2_OK
+        case -2: return Bno08xError::INVALID_PARAMETER;  // SH2_ERR_BAD_PARAM
+        case -4: return Bno08xError::COMMUNICATION_FAILED; // SH2_ERR_IO
+        case -5: return Bno08xError::SENSOR_NOT_RESPONDING; // SH2_ERR_HUB
+        case -6: return Bno08xError::TIMEOUT;            // SH2_ERR_TIMEOUT
+        default: return Bno08xError::COMMUNICATION_FAILED; // SH2_ERR
     }
-    
-    // Internal event processing can be added here
 }
 
-uint32_t Bno08xHandler::getTimeUs() const noexcept {
-    return transport_adapter_ ? transport_adapter_->getTimeUs() : 0;
-}
-
-//======================================================//
-// FACTORY METHODS
-//======================================================//
-
-std::unique_ptr<Bno08xHandler> CreateBno08xHandlerI2c(
-    BaseI2c& i2c_interface,
-    const Bno08xConfig& config,
-    BaseGpio* reset_gpio,
-    BaseGpio* int_gpio) noexcept {
-    
-    return std::make_unique<Bno08xHandler>(i2c_interface, config, reset_gpio, int_gpio);
-}
-
-std::unique_ptr<Bno08xHandler> CreateBno08xHandlerSpi(
-    BaseSpi& spi_interface,
-    const Bno08xConfig& config,
-    BaseGpio* wake_gpio,
-    BaseGpio* reset_gpio,
-    BaseGpio* int_gpio) noexcept {
-    
-    return std::make_unique<Bno08xHandler>(spi_interface, config, wake_gpio, reset_gpio, int_gpio);
-}
+// ============================================================================
+//  DIAGNOSTICS
+// ============================================================================
 
 void Bno08xHandler::DumpDiagnostics() const noexcept {
     static constexpr const char* TAG = "Bno08xHandler";
-    
+
     Logger::GetInstance().Info(TAG, "=== BNO08X HANDLER DIAGNOSTICS ===");
-    
-    RtosMutex::LockGuard lock(handler_mutex_);
-    
+
+    MutexLockGuard lock(handler_mutex_);
+    if (!lock.IsLocked()) {
+        Logger::GetInstance().Info(TAG, "  Failed to acquire mutex for diagnostics");
+        return;
+    }
+
     // System Health
     Logger::GetInstance().Info(TAG, "System Health:");
     Logger::GetInstance().Info(TAG, "  Initialized: %s", initialized_ ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Last Error: %s", 
-        last_error_ == Bno08xError::SUCCESS ? "SUCCESS" :
-        last_error_ == Bno08xError::NOT_INITIALIZED ? "NOT_INITIALIZED" :
-        last_error_ == Bno08xError::COMMUNICATION_ERROR ? "COMMUNICATION_ERROR" :
-        last_error_ == Bno08xError::SENSOR_ERROR ? "SENSOR_ERROR" :
-        last_error_ == Bno08xError::INVALID_PARAMETER ? "INVALID_PARAMETER" :
-        last_error_ == Bno08xError::TIMEOUT ? "TIMEOUT" : "UNKNOWN");
-    
-    // Interface Type
-    Logger::GetInstance().Info(TAG, "Communication Interface:");
-    if (i2c_adapter_) {
-        Logger::GetInstance().Info(TAG, "  Type: I2C");
-        Logger::GetInstance().Info(TAG, "  I2C Adapter: ACTIVE");
-    } else if (spi_adapter_) {
-        Logger::GetInstance().Info(TAG, "  Type: SPI");
-        Logger::GetInstance().Info(TAG, "  SPI Adapter: ACTIVE");
-    } else {
-        Logger::GetInstance().Info(TAG, "  Type: NONE");
+    Logger::GetInstance().Info(TAG, "  Last Error: %s", Bno08xErrorToString(last_error_));
+    Logger::GetInstance().Info(TAG, "  Description: %s", description_);
+
+    // Interface
+    const char* iface_str = "UNKNOWN";
+    switch (interface_type_) {
+        case BNO085Interface::I2C:     iface_str = "I2C"; break;
+        case BNO085Interface::SPI:     iface_str = "SPI"; break;
+        case BNO085Interface::UART:    iface_str = "UART"; break;
+        case BNO085Interface::UARTRVC: iface_str = "UART-RVC"; break;
     }
-    
-    // GPIO Status
-    Logger::GetInstance().Info(TAG, "GPIO Configuration:");
-    Logger::GetInstance().Info(TAG, "  Reset GPIO: %s", reset_gpio_ ? "CONFIGURED" : "NOT_CONFIGURED");
-    Logger::GetInstance().Info(TAG, "  Interrupt GPIO: %s", int_gpio_ ? "CONFIGURED" : "NOT_CONFIGURED");
-    Logger::GetInstance().Info(TAG, "  Wake GPIO: %s", wake_gpio_ ? "CONFIGURED" : "NOT_CONFIGURED");
-    
+    Logger::GetInstance().Info(TAG, "  Interface: %s", iface_str);
+
+    // Driver status
+    Logger::GetInstance().Info(TAG, "Driver:");
+    if (driver_ops_) {
+        Logger::GetInstance().Info(TAG, "  Instance: ACTIVE");
+        Logger::GetInstance().Info(TAG, "  Last SH2 Error: %d", driver_ops_->GetLastError());
+    } else {
+        Logger::GetInstance().Info(TAG, "  Instance: NOT_CREATED");
+    }
+
     // Sensor Configuration
     Logger::GetInstance().Info(TAG, "Sensor Configuration:");
-    Logger::GetInstance().Info(TAG, "  Description: %s", description_);
-    Logger::GetInstance().Info(TAG, "  Sample Rate: %d Hz", config_.sample_rate_hz);
-    Logger::GetInstance().Info(TAG, "  Enable Game Rotation: %s", config_.enable_game_rotation ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Accelerometer: %s", config_.enable_accelerometer ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Gyroscope: %s", config_.enable_gyroscope ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Magnetometer: %s", config_.enable_magnetometer ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Linear Accel: %s", config_.enable_linear_acceleration ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Gravity: %s", config_.enable_gravity ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Rotation Vector: %s", config_.enable_rotation_vector ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Step Counter: %s", config_.enable_step_counter ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Tap Detection: %s", config_.enable_tap_detection ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Shake Detection: %s", config_.enable_shake_detection ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Stability: %s", config_.enable_stability_detection ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Enable Activity: %s", config_.enable_activity_classification ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Auto Calibrate: %s", config_.auto_calibrate ? "YES" : "NO");
-    
-    // Driver Status
-    Logger::GetInstance().Info(TAG, "BNO08x Driver:");
-    if (bno08x_sensor_) {
-        Logger::GetInstance().Info(TAG, "  Driver Instance: ACTIVE");
-        
-        // Try to get sensor information if available
-        // Note: Add more BNO08x-specific diagnostics here based on driver capabilities
-    } else {
-        Logger::GetInstance().Info(TAG, "  Driver Instance: NOT_INITIALIZED");
+    Logger::GetInstance().Info(TAG, "  Accelerometer: %s (%lu ms)",
+        config_.enable_accelerometer ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.accelerometer_interval_ms));
+    Logger::GetInstance().Info(TAG, "  Gyroscope: %s (%lu ms)",
+        config_.enable_gyroscope ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.gyroscope_interval_ms));
+    Logger::GetInstance().Info(TAG, "  Magnetometer: %s (%lu ms)",
+        config_.enable_magnetometer ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.magnetometer_interval_ms));
+    Logger::GetInstance().Info(TAG, "  Rotation Vector: %s (%lu ms)",
+        config_.enable_rotation_vector ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.rotation_interval_ms));
+    Logger::GetInstance().Info(TAG, "  Linear Accel: %s (%lu ms)",
+        config_.enable_linear_acceleration ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.linear_accel_interval_ms));
+    Logger::GetInstance().Info(TAG, "  Gravity: %s (%lu ms)",
+        config_.enable_gravity ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.gravity_interval_ms));
+    Logger::GetInstance().Info(TAG, "  Game Rotation: %s (%lu ms)",
+        config_.enable_game_rotation ? "ON" : "OFF",
+        static_cast<unsigned long>(config_.game_rotation_interval_ms));
+
+    // Activity sensors
+    Logger::GetInstance().Info(TAG, "Activity Sensors:");
+    Logger::GetInstance().Info(TAG, "  Tap Detector: %s",
+        config_.enable_tap_detector ? "ON" : "OFF");
+    Logger::GetInstance().Info(TAG, "  Step Counter: %s",
+        config_.enable_step_counter ? "ON" : "OFF");
+    Logger::GetInstance().Info(TAG, "  Shake Detector: %s",
+        config_.enable_shake_detector ? "ON" : "OFF");
+    Logger::GetInstance().Info(TAG, "  Pickup Detector: %s",
+        config_.enable_pickup_detector ? "ON" : "OFF");
+    Logger::GetInstance().Info(TAG, "  Significant Motion: %s",
+        config_.enable_significant_motion ? "ON" : "OFF");
+    Logger::GetInstance().Info(TAG, "  Stability Classifier: %s",
+        config_.enable_stability_classifier ? "ON" : "OFF");
+
+    // Calibration status (if initialized)
+    if (initialized_ && driver_ops_) {
+        SensorEvent accel = driver_ops_->GetLatest(BNO085Sensor::Accelerometer);
+        SensorEvent gyro = driver_ops_->GetLatest(BNO085Sensor::Gyroscope);
+        SensorEvent mag = driver_ops_->GetLatest(BNO085Sensor::Magnetometer);
+        SensorEvent rv = driver_ops_->GetLatest(BNO085Sensor::RotationVector);
+
+        Logger::GetInstance().Info(TAG, "Calibration Accuracy:");
+        Logger::GetInstance().Info(TAG, "  Accelerometer: %u/3", accel.vector.accuracy);
+        Logger::GetInstance().Info(TAG, "  Gyroscope: %u/3", gyro.vector.accuracy);
+        Logger::GetInstance().Info(TAG, "  Magnetometer: %u/3", mag.vector.accuracy);
+        Logger::GetInstance().Info(TAG, "  Rotation Vector: %u/3", rv.rotation.accuracy);
     }
-    
-    // Diagnostics Information
-    Logger::GetInstance().Info(TAG, "Sensor Diagnostics:");
-    Logger::GetInstance().Info(TAG, "  Sensor Healthy: %s", diagnostics_.sensor_healthy ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Communication OK: %s", diagnostics_.communication_ok ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Calibration OK: %s", diagnostics_.calibration_ok ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Data Available: %s", diagnostics_.data_available ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Communication Errors: %d", diagnostics_.communication_errors);
-    Logger::GetInstance().Info(TAG, "  Sensor Errors: %d", diagnostics_.sensor_errors);
-    Logger::GetInstance().Info(TAG, "  Total Measurements: %d", diagnostics_.total_measurements);
-    Logger::GetInstance().Info(TAG, "  Last Error Code: 0x%04X", diagnostics_.last_error_code);
-    
-    // Calibration Status
-    Logger::GetInstance().Info(TAG, "Calibration Status:");
-    Logger::GetInstance().Info(TAG, "  Accel Calibrated: %s", calibration_status_.accelerometer_calibrated ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Gyro Calibrated: %s", calibration_status_.gyroscope_calibrated ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Mag Calibrated: %s", calibration_status_.magnetometer_calibrated ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  System Calibrated: %s", calibration_status_.system_calibrated ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Accel Accuracy: %d", calibration_status_.accelerometer_accuracy);
-    Logger::GetInstance().Info(TAG, "  Gyro Accuracy: %d", calibration_status_.gyroscope_accuracy);
-    Logger::GetInstance().Info(TAG, "  Mag Accuracy: %d", calibration_status_.magnetometer_accuracy);
-    Logger::GetInstance().Info(TAG, "  System Accuracy: %d", calibration_status_.system_accuracy);
-    
-    // Performance Metrics
-    if (diagnostics_.total_measurements > 0) {
-        float error_rate = (float)(diagnostics_.communication_errors + diagnostics_.sensor_errors) / 
-                          diagnostics_.total_measurements * 100.0f;
-        Logger::GetInstance().Info(TAG, "Performance Metrics:");
-        Logger::GetInstance().Info(TAG, "  Error Rate: %.2f%%", error_rate);
-        Logger::GetInstance().Info(TAG, "  Success Rate: %.2f%%", 100.0f - error_rate);
-    }
-    
-    // Memory Usage
-    Logger::GetInstance().Info(TAG, "Memory Usage:");
+
+    // Callback status
+    Logger::GetInstance().Info(TAG, "Callback: %s",
+        user_callback_ ? "REGISTERED" : "NONE");
+
+    // Memory estimate
     size_t estimated_memory = sizeof(*this);
-    if (bno08x_sensor_) estimated_memory += sizeof(BNO085);
-    if (i2c_adapter_) estimated_memory += sizeof(Bno08xI2cAdapter);
-    if (spi_adapter_) estimated_memory += sizeof(Bno08xSpiAdapter);
-    Logger::GetInstance().Info(TAG, "  Estimated Total: %d bytes", static_cast<int>(estimated_memory));
-    
-    // System Status Summary
-    bool system_healthy = initialized_ && 
-                         (last_error_ == Bno08xError::SUCCESS) &&
-                         diagnostics_.sensor_healthy &&
-                         diagnostics_.communication_ok;
-    
-    Logger::GetInstance().Info(TAG, "System Status: %s", system_healthy ? "HEALTHY" : "DEGRADED");
-    
+    Logger::GetInstance().Info(TAG, "Estimated Memory: %u bytes",
+        static_cast<unsigned>(estimated_memory));
+
     Logger::GetInstance().Info(TAG, "=== END BNO08X HANDLER DIAGNOSTICS ===");
 }
