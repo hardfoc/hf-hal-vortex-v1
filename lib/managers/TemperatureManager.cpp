@@ -14,7 +14,7 @@
 #include "TemperatureManager.h"
 #include "AdcManager.h"
 #include "MotorController.h"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 static const char* TAG = "TempManager";

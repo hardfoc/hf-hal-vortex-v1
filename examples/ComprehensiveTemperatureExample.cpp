@@ -18,8 +18,8 @@
 
 #include "managers/TemperatureManager.h"
 #include "managers/AdcManager.h"
-#include "handlers/Logger.h"
-#include "handlers/Tmc9660Handler.h"
+#include "handlers/logger/Logger.h"
+#include "handlers/tmc9660/Tmc9660Handler.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>

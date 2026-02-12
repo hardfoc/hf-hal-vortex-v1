@@ -29,7 +29,7 @@
 
 #include "AdcManager.h"
 #include "MotorController.h"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/ConsolePort.h"
 

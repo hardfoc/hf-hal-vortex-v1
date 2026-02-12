@@ -7,7 +7,7 @@
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspCan.h"
 
 // Logger for unified logging
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 
 // Board mapping includes (already included in header)
 

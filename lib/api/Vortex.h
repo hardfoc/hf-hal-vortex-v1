@@ -104,7 +104,7 @@ class LedManager;
 class TemperatureManager;
 
 // Include the unified Logger
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 
 //==============================================================================
 // VORTEX SYSTEM DIAGNOSTICS

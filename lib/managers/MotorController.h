@@ -1,7 +1,7 @@
 #ifndef COMPONENT_HANDLER_MOTOR_CONTROLLER_H_
 #define COMPONENT_HANDLER_MOTOR_CONTROLLER_H_
 
-#include "Tmc9660Handler.h"
+#include "handlers/tmc9660/Tmc9660Handler.h"
 #include "CommChannelsManager.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 #include <memory>

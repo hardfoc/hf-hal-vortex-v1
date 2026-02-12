@@ -23,7 +23,7 @@
 
 #include "managers/GpioManager.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 //==============================================================================

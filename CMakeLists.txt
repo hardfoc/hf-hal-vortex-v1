@@ -39,15 +39,15 @@ set(MANAGER_SOURCES
     "${HF_HAL_ROOT}/lib/managers/TemperatureManager.cpp"
 )
 
-# Handler Sources (from hf-core submodule: lib/core/handlers)
+# Handler Sources (from hf-core submodule: lib/core/handlers/<driver>/)
 set(HANDLER_SOURCES
-    "${HF_HAL_ROOT}/lib/core/handlers/Tmc9660Handler.cpp"
-    "${HF_HAL_ROOT}/lib/core/handlers/Pcal95555Handler.cpp"
-    "${HF_HAL_ROOT}/lib/core/handlers/As5047uHandler.cpp"
-    "${HF_HAL_ROOT}/lib/core/handlers/Bno08xHandler.cpp"
-    "${HF_HAL_ROOT}/lib/core/handlers/NtcTemperatureHandler.cpp"
-    "${HF_HAL_ROOT}/lib/core/handlers/Logger.cpp"
-    "${HF_HAL_ROOT}/lib/core/handlers/Tmc9660AdcWrapper.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/tmc9660/Tmc9660Handler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/tmc9660/Tmc9660AdcWrapper.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/pcal95555/Pcal95555Handler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/as5047u/As5047uHandler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/bno08x/Bno08xHandler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/ntc/NtcTemperatureHandler.cpp"
+    "${HF_HAL_ROOT}/lib/core/handlers/logger/Logger.cpp"
 )
 
 # Core Drivers Sources (Interface Wrappers)

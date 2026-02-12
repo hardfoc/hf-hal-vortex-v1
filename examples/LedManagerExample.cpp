@@ -13,7 +13,7 @@
  */
 
 #include "managers/LedManager.h"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "utils/RtosMutex.h"
 #include "utils/OsAbstraction.h"
 

@@ -35,7 +35,7 @@
 
 #include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_cpp.hpp"
 #include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_effects.hpp"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "utils/RtosMutex.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 

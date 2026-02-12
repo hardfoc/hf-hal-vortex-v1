@@ -28,7 +28,7 @@
 // Include the Vortex API
 #include "api/Vortex.h"
 // For direct sensor access (IBno08xDriverOps, BNO085Sensor)
-#include "handlers/Bno08xHandler.h"
+#include "handlers/bno08x/Bno08xHandler.h"
 
 //==============================================================================
 // GLOBAL VARIABLES

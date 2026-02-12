@@ -18,8 +18,7 @@
 
 #include "managers/TemperatureManager.h"
 #include "managers/AdcManager.h"
-#include "handlers/Logger.h"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>

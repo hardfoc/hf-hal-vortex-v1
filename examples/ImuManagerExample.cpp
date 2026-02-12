@@ -22,7 +22,7 @@
 #include "ImuManager.h"
 
 // BNO08x handler and types
-#include "handlers/Bno08xHandler.h"
+#include "handlers/bno08x/Bno08xHandler.h"
 
 // Communication manager for device IDs
 #include "CommChannelsManager.h"
@@ -32,7 +32,7 @@
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 // Unified Logger
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 
 static const char* TAG = "ImuManagerExample";
 

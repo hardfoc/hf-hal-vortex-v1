@@ -19,11 +19,11 @@
 #include "managers/ImuManager.h"
 #include "managers/EncoderManager.h"
 #include "managers/MotorController.h"
-#include "handlers/Logger.h"
-#include "handlers/Tmc9660Handler.h"
-#include "handlers/As5047uHandler.h"
-#include "handlers/Bno08xHandler.h"
-#include "handlers/Pcal95555Handler.h"
+#include "handlers/logger/Logger.h"
+#include "handlers/tmc9660/Tmc9660Handler.h"
+#include "handlers/as5047u/As5047uHandler.h"
+#include "handlers/bno08x/Bno08xHandler.h"
+#include "handlers/pcal95555/Pcal95555Handler.h"
 #include "utils/OsAbstraction.h"
 
 #include <cstdio>

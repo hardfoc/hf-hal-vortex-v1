@@ -42,12 +42,12 @@
 #include "ThingsToString.h"
 #include "base/BaseTemperature.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspTemperature.h"
-#include "handlers/NtcTemperatureHandler.h"
-#include "handlers/Tmc9660Handler.h"
+#include "handlers/ntc/NtcTemperatureHandler.h"
+#include "handlers/tmc9660/Tmc9660Handler.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseAdc.h"
 #include "managers/AdcManager.h"
 #include "managers/MotorController.h"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 #include <array>

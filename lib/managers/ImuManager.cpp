@@ -1,7 +1,7 @@
 #include "ImuManager.h"
 
 // Bno08x handler for unified IMU interface
-#include "handlers/Bno08xHandler.h"
+#include "handlers/bno08x/Bno08xHandler.h"
 
 // Communication manager for I2C/SPI access
 #include "CommChannelsManager.h"
@@ -10,7 +10,7 @@
 #include "GpioManager.h"
 
 // Logger for unified logging
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 
 // Base interfaces
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseI2c.h"

@@ -38,7 +38,7 @@
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 
 // Logger for unified logging
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 
 #include <algorithm>
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"

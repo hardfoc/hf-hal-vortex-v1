@@ -30,7 +30,7 @@
 
 #include "managers/EncoderManager.h"
 #include "managers/CommChannelsManager.h"
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 // Example configuration

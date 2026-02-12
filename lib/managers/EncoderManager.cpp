@@ -1,7 +1,7 @@
 #include "EncoderManager.h"
 
 // As5047u handler for unified encoder interface
-#include "handlers/As5047uHandler.h"
+#include "handlers/as5047u/As5047uHandler.h"
 
 // Communication manager for SPI access
 #include "CommChannelsManager.h"
@@ -10,7 +10,7 @@
 #include "GpioManager.h"
 
 // Logger for unified logging
-#include "handlers/Logger.h"
+#include "handlers/logger/Logger.h"
 
 // Base interfaces
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"

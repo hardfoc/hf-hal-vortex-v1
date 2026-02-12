@@ -44,7 +44,7 @@
 #include "base/BaseGpio.h"
 #include "SfI2cBus.h"
 #include "Tmc9660MotorController.h"
-#include "Pcal95555Handler.h"
+#include "handlers/pcal95555/Pcal95555Handler.h"
 #include "MotorController.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspGpio.h"
