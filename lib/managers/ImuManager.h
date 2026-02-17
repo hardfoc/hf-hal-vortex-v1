@@ -44,26 +44,26 @@ class BaseGpio;
  * @code
  * auto& imu_mgr = ImuManager::GetInstance();
  * if (imu_mgr.EnsureInitialized()) {
- *     // Access onboard BNO08x (index 0)
- *     Bno08xHandler* onboard_handler = imu_mgr.GetBno08xHandler(0);
- *     if (onboard_handler) {
- *         // Configure and use onboard IMU (BNO085Sensor from Bno08xHandler/driver)
- *         onboard_handler->EnableSensor(BNO085Sensor::RotationVector, 50);
+ *     // Access onboard BNO08x sensor driver (index 0)
+ *     IBno08xDriverOps* sensor = imu_mgr.GetSensor(0);
+ *     if (sensor) {
+ *         // Configure sensors via driver interface
+ *         sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
  *     }
  *     
  *     // Create external BNO08x device (index 1) with runtime I2C device creation
  *     if (imu_mgr.CreateExternalBno08xDevice(1, 0x48, 400000)) {
- *         Bno08xHandler* external_handler = imu_mgr.GetBno08xHandler(1);
- *         if (external_handler) {
- *             external_handler->EnableSensor(BNO085Sensor::Accelerometer, 100);
+ *         IBno08xDriverOps* ext_sensor = imu_mgr.GetSensor(1);
+ *         if (ext_sensor) {
+ *             ext_sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
  *         }
  *     }
  *     
  *     // Create external BNO08x device (index 2) with SPI interface
  *     if (imu_mgr.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1)) {
- *         Bno08xHandler* external_handler = imu_mgr.GetBno08xHandler(2);
- *         if (external_handler) {
- *             external_handler->EnableSensor(BNO085Sensor::RotationVector, 50);
+ *         IBno08xDriverOps* ext_sensor = imu_mgr.GetSensor(2);
+ *         if (ext_sensor) {
+ *             ext_sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
  *         }
  *     }
  * }

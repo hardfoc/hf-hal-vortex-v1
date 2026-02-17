@@ -54,42 +54,36 @@ void BasicEncoderExample() {
     Logger::GetInstance().Info("EncoderExample", "EncoderManager initialized successfully");
     Logger::GetInstance().Info("EncoderExample", "Active encoders: %d", static_cast<int>(encoder_mgr.GetDeviceCount()));
     
-    // Access onboard AS5047U (device 0) - auto-created like onboard BNO08x
-    As5047uHandler* onboard_handler = encoder_mgr.GetAs5047uHandler(0);
-    if (onboard_handler) {
-        Logger::GetInstance().Info("EncoderExample", "Onboard AS5047U Handler (Device 0):");
+    // Read angle via manager high-level API (device 0 = onboard)
+    Logger::GetInstance().Info("EncoderExample", "Onboard AS5047U (Device 0):");
+    
+    uint16_t angle_lsb;
+    As5047uError result = encoder_mgr.ReadAngle(0, angle_lsb);
+    
+    if (result == As5047uError::SUCCESS) {
+        double angle_deg = As5047uHandler::LSBToDegrees(angle_lsb);
+        Logger::GetInstance().Info("EncoderExample", "  Raw Angle: %u LSB", angle_lsb);
+        Logger::GetInstance().Info("EncoderExample", "  Angle: %.2f°", angle_deg);
         
-        // Read angle using handler directly
-        uint16_t angle_lsb;
-        As5047uError result = onboard_handler->ReadAngle(angle_lsb);
+        // Read velocity via manager
+        double velocity_rpm;
+        if (encoder_mgr.ReadVelocityRPM(0, velocity_rpm) == As5047uError::SUCCESS) {
+            Logger::GetInstance().Info("EncoderExample", "  Velocity: %.1f RPM", velocity_rpm);
+        }
         
-        if (result == As5047uError::SUCCESS) {
-            double angle_deg = As5047uHandler::LSBToDegrees(angle_lsb);
-            Logger::GetInstance().Info("EncoderExample", "  Raw Angle: %u LSB", angle_lsb);
-            Logger::GetInstance().Info("EncoderExample", "  Angle: %.2f°", angle_deg);
-            
-            // Read velocity
-            double velocity_rpm;
-            if (onboard_handler->ReadVelocityRPM(velocity_rpm) == As5047uError::SUCCESS) {
-                Logger::GetInstance().Info("EncoderExample", "  Velocity: %.1f RPM", velocity_rpm);
-            }
-            
-            // Read diagnostics
-            As5047uDiagnostics diagnostics;
-            if (onboard_handler->ReadDiagnostics(diagnostics) == As5047uError::SUCCESS) {
-                Logger::GetInstance().Info("EncoderExample", "  Health Status:");
-                Logger::GetInstance().Info("EncoderExample", "    Magnetic Field: %s", diagnostics.magnetic_field_ok ? "OK" : "ERROR");
-                Logger::GetInstance().Info("EncoderExample", "    Communication: %s", diagnostics.communication_ok ? "OK" : "ERROR");
-                Logger::GetInstance().Info("EncoderExample", "    AGC Warning: %s", diagnostics.agc_warning ? "YES" : "NO");
-            }
-        } else {
-            Logger::GetInstance().Error("EncoderExample", "Failed to read onboard encoder: %s", As5047uErrorToString(result));
+        // Read diagnostics via manager
+        As5047uDiagnostics diagnostics;
+        if (encoder_mgr.ReadDiagnostics(0, diagnostics) == As5047uError::SUCCESS) {
+            Logger::GetInstance().Info("EncoderExample", "  Health Status:");
+            Logger::GetInstance().Info("EncoderExample", "    Magnetic Field: %s", diagnostics.magnetic_field_ok ? "OK" : "ERROR");
+            Logger::GetInstance().Info("EncoderExample", "    Communication: %s", diagnostics.communication_ok ? "OK" : "ERROR");
+            Logger::GetInstance().Info("EncoderExample", "    AGC Warning: %s", diagnostics.agc_warning ? "YES" : "NO");
         }
     } else {
-        Logger::GetInstance().Warn("EncoderExample", "Onboard AS5047U handler not available");
+        Logger::GetInstance().Error("EncoderExample", "Failed to read onboard encoder: %s", As5047uErrorToString(result));
     }
     
-    // Access driver directly (like GetBno085Driver)
+    // Access driver directly for advanced operations
     auto sensor_driver = encoder_mgr.GetAs5047uDriver(0);
     if (sensor_driver) {
         Logger::GetInstance().Info("EncoderExample", "  Direct AS5047U driver access: Available");
@@ -121,12 +115,9 @@ void ExternalDeviceExample() {
         Logger::GetInstance().Info("EncoderExample", "External AS5047U device 1 created successfully");
         
         // Access the external handler
-        As5047uHandler* ext_handler = encoder_mgr.GetAs5047uHandler(1);
-        if (ext_handler) {
-            // Configure external encoder
-            ext_handler->SetZeroPosition(0);  // Set zero reference
-            Logger::GetInstance().Info("EncoderExample", "External encoder 1 configured");
-        }
+        // Set zero position via manager
+        encoder_mgr.SetZeroPosition(1, 0);  // Set zero reference
+        Logger::GetInstance().Info("EncoderExample", "External encoder 1 configured");
     } else {
         Logger::GetInstance().Error("EncoderExample", "Failed to create external AS5047U device 1");
     }
@@ -497,14 +488,10 @@ void QuickUsageExample() {
         return;
     }
     
-    // Access onboard encoder handler (device 0)
-    As5047uHandler* handler = encoder_mgr.GetAs5047uHandler(0);
-    if (handler) {
-        // Read encoder angle
-        uint16_t angle;
-        if (handler->ReadAngle(angle) == As5047uError::SUCCESS) {
-            Logger::GetInstance().Info("EncoderExample", "Encoder angle: %u LSB", angle);
-        }
+    // Read encoder angle via manager (device 0 = onboard)
+    uint16_t angle;
+    if (encoder_mgr.ReadAngle(0, angle) == As5047uError::SUCCESS) {
+        Logger::GetInstance().Info("EncoderExample", "Encoder angle: %u LSB", angle);
     }
     
     // Or use high-level convenience methods

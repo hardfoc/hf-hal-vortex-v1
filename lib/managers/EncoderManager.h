@@ -11,6 +11,7 @@ class As5047uHandler;
 class CommChannelsManager;
 class GpioManager;
 class BaseGpio;
+enum class AS5047U_Error : uint16_t;
 
 /**
  * @class EncoderManager
@@ -44,23 +45,20 @@ class BaseGpio;
  * @code
  * auto& encoder_mgr = EncoderManager::GetInstance();
  * if (encoder_mgr.EnsureInitialized()) {
- *     // Access onboard AS5047U (index 0)
- *     As5047uHandler* onboard_handler = encoder_mgr.GetAs5047uHandler(0);
- *     if (onboard_handler) {
- *         // Read encoder angle
- *         uint16_t angle;
- *         if (onboard_handler->ReadAngle(angle) == As5047uError::SUCCESS) {
- *             printf("Angle: %u LSB\n", angle);
- *         }
+ *     // Read encoder angle via manager (index 0 = onboard)
+ *     uint16_t angle;
+ *     if (encoder_mgr.ReadAngle(0, angle) == As5047uError::SUCCESS) {
+ *         printf("Angle: %u LSB (%.2f deg)\n", angle, As5047uHandler::LSBToDegrees(angle));
  *     }
+ *     
+ *     // Set zero position via manager
+ *     encoder_mgr.SetZeroPosition(0, 0);
  *     
  *     // Create external AS5047U device (index 1) with SPI interface
  *     if (encoder_mgr.CreateExternalAs5047uDevice(1, SpiDeviceId::EXTERNAL_DEVICE_1)) {
- *         As5047uHandler* external_handler = encoder_mgr.GetAs5047uHandler(1);
- *         if (external_handler) {
- *             // Configure and use external encoder
- *             external_handler->SetZeroPosition(0);
- *         }
+ *         // Read angle from external encoder
+ *         uint16_t ext_angle;
+ *         encoder_mgr.ReadAngle(1, ext_angle);
  *     }
  * }
  * @endcode
@@ -346,6 +344,13 @@ private:
      * @return true if index is for external device (1, 2, or 3), false otherwise
      */
     bool IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept;
+
+    /**
+     * @brief Map AS5047U driver sticky error flags to As5047uError.
+     * @param sticky_flags Sticky error flags from AS5047U driver
+     * @return Corresponding As5047uError error code
+     */
+    static As5047uError mapDriverError(AS5047U_Error sticky_flags) noexcept;
 
     // ===============================
     // SYSTEM STATE

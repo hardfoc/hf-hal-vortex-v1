@@ -191,8 +191,10 @@ void controlSpecificDevices() {
                     "SUCCESS: ADC Channel 0 on onboard TMC9660: %.3fV", voltage);
             }
             
-            // Use handler convenience methods for motor control
-            onboardHandler->SetTargetVelocity(1000);
+            // Set motor velocity through visitDriver() for direct subsystem access
+            motorController.visitDriver([](auto& driver) {
+                driver.velocityControl.setTargetVelocity(1000);
+            }, MotorController::ONBOARD_TMC9660_INDEX);
             Logger::GetInstance().Info("BoardAwareTmc9660Example", 
                 "Set target velocity to 1000 on onboard TMC9660");
         }

@@ -100,19 +100,24 @@ void DemonstrateOnboardImu() {
         return;
     }
     
-    // Enable sensors
-    Bno08xError result = onboard_handler->EnableSensor(BNO085Sensor::Accelerometer, 50);
-    if (result == Bno08xError::SUCCESS) {
-        Logger::GetInstance().Info(TAG, "Accelerometer enabled");
-    } else {
-        Logger::GetInstance().Error(TAG, "Failed to enable accelerometer: %s", Bno08xErrorToString(result));
+    // Get direct sensor driver access for configuration
+    auto* sensor = onboard_handler->GetSensor();
+    if (!sensor) {
+        Logger::GetInstance().Error(TAG, "Sensor driver not available");
+        return;
     }
     
-    result = onboard_handler->EnableSensor(BNO085Sensor::Gyroscope, 50);
-    if (result == Bno08xError::SUCCESS) {
+    // Enable sensors via driver interface
+    if (sensor->EnableSensor(BNO085Sensor::Accelerometer, 50, 0.0f)) {
+        Logger::GetInstance().Info(TAG, "Accelerometer enabled");
+    } else {
+        Logger::GetInstance().Error(TAG, "Failed to enable accelerometer (SH2 error: %d)", sensor->GetLastError());
+    }
+    
+    if (sensor->EnableSensor(BNO085Sensor::Gyroscope, 50, 0.0f)) {
         Logger::GetInstance().Info(TAG, "Gyroscope enabled");
     } else {
-        Logger::GetInstance().Error(TAG, "Failed to enable gyroscope: %s", Bno08xErrorToString(result));
+        Logger::GetInstance().Error(TAG, "Failed to enable gyroscope (SH2 error: %d)", sensor->GetLastError());
     }
     
     // Read sensor data for 3 seconds
@@ -123,18 +128,16 @@ void DemonstrateOnboardImu() {
     while (os_get_elapsed_time_msec() < end_time_ms) {
         onboard_handler->Update();
         
-        Bno08xVector3 accelerometer;
-        result = onboard_handler->ReadAcceleration(accelerometer);
-        if (result == Bno08xError::SUCCESS && accelerometer.valid) {
+        if (sensor->HasNewData(BNO085Sensor::Accelerometer)) {
+            SensorEvent event = sensor->GetLatest(BNO085Sensor::Accelerometer);
             Logger::GetInstance().Info(TAG, "Accel: x=%.3f, y=%.3f, z=%.3f", 
-                     accelerometer.x, accelerometer.y, accelerometer.z);
+                     event.vector.x, event.vector.y, event.vector.z);
         }
         
-        Bno08xVector3 gyroscope;
-        result = onboard_handler->ReadGyroscope(gyroscope);
-        if (result == Bno08xError::SUCCESS && gyroscope.valid) {
+        if (sensor->HasNewData(BNO085Sensor::Gyroscope)) {
+            SensorEvent event = sensor->GetLatest(BNO085Sensor::Gyroscope);
             Logger::GetInstance().Info(TAG, "Gyro: x=%.3f, y=%.3f, z=%.3f", 
-                     gyroscope.x, gyroscope.y, gyroscope.z);
+                     event.vector.x, event.vector.y, event.vector.z);
         }
         
         os_delay_msec(50); // 50ms delay
@@ -183,12 +186,17 @@ void DemonstrateExternalImu() {
         return;
     }
     
-    // Configure external device
-    Bno08xError result = external_handler->EnableSensor(BNO085Sensor::Gyroscope, 50);
-    if (result == Bno08xError::SUCCESS) {
+    // Configure external device via driver interface
+    auto* ext_sensor = external_handler->GetSensor();
+    if (!ext_sensor) {
+        Logger::GetInstance().Error(TAG, "External sensor driver not available");
+        return;
+    }
+    
+    if (ext_sensor->EnableSensor(BNO085Sensor::Gyroscope, 50, 0.0f)) {
         Logger::GetInstance().Info(TAG, "External gyroscope enabled");
     } else {
-        Logger::GetInstance().Error(TAG, "Failed to enable external gyroscope: %s", Bno08xErrorToString(result));
+        Logger::GetInstance().Error(TAG, "Failed to enable external gyroscope (SH2 error: %d)", ext_sensor->GetLastError());
     }
     
     // Read data from external device
@@ -199,11 +207,10 @@ void DemonstrateExternalImu() {
     while (os_get_elapsed_time_msec() < end_time_ms) {
         external_handler->Update();
         
-        Bno08xVector3 gyroscope;
-        result = external_handler->ReadGyroscope(gyroscope);
-        if (result == Bno08xError::SUCCESS && gyroscope.valid) {
+        if (ext_sensor->HasNewData(BNO085Sensor::Gyroscope)) {
+            SensorEvent event = ext_sensor->GetLatest(BNO085Sensor::Gyroscope);
             Logger::GetInstance().Info(TAG, "External Gyro: x=%.3f, y=%.3f, z=%.3f", 
-                     gyroscope.x, gyroscope.y, gyroscope.z);
+                     event.vector.x, event.vector.y, event.vector.z);
         }
         
         os_delay_msec(50); // 50ms delay
@@ -270,11 +277,11 @@ void DemonstrateInterruptMode() {
             if (handler) {
                 handler->Update();
                 
-                Bno08xVector3 accelerometer;
-                Bno08xError result = handler->ReadAcceleration(accelerometer);
-                if (result == Bno08xError::SUCCESS && accelerometer.valid) {
+                auto* int_sensor = handler->GetSensor();
+                if (int_sensor && int_sensor->HasNewData(BNO085Sensor::Accelerometer)) {
+                    SensorEvent event = int_sensor->GetLatest(BNO085Sensor::Accelerometer);
                     Logger::GetInstance().Info(TAG, "Interrupt data - Accel: x=%.3f, y=%.3f, z=%.3f", 
-                             accelerometer.x, accelerometer.y, accelerometer.z);
+                             event.vector.x, event.vector.y, event.vector.z);
                 }
             }
         } else {
@@ -375,12 +382,17 @@ void DemonstrateSpiImu() {
         return;
     }
     
-    // Configure external device
-    Bno08xError result = external_handler->EnableSensor(BNO085Sensor::Accelerometer, 100);
-    if (result == Bno08xError::SUCCESS) {
+    // Configure external device via driver interface
+    auto* spi_sensor = external_handler->GetSensor();
+    if (!spi_sensor) {
+        Logger::GetInstance().Error(TAG, "External SPI sensor driver not available");
+        return;
+    }
+    
+    if (spi_sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f)) {
         Logger::GetInstance().Info(TAG, "External SPI accelerometer enabled");
     } else {
-        Logger::GetInstance().Error(TAG, "Failed to enable external SPI accelerometer: %s", Bno08xErrorToString(result));
+        Logger::GetInstance().Error(TAG, "Failed to enable external SPI accelerometer (SH2 error: %d)", spi_sensor->GetLastError());
     }
     
     // Read data from external device
@@ -391,11 +403,10 @@ void DemonstrateSpiImu() {
     while (os_get_elapsed_time_msec() < end_time) {
         external_handler->Update();
         
-        Bno08xVector3 accelerometer;
-        result = external_handler->ReadAcceleration(accelerometer);
-        if (result == Bno08xError::SUCCESS && accelerometer.valid) {
+        if (spi_sensor->HasNewData(BNO085Sensor::Accelerometer)) {
+            SensorEvent event = spi_sensor->GetLatest(BNO085Sensor::Accelerometer);
             Logger::GetInstance().Info(TAG, "External SPI Accel: x=%.3f, y=%.3f, z=%.3f", 
-                     accelerometer.x, accelerometer.y, accelerometer.z);
+                     event.vector.x, event.vector.y, event.vector.z);
         }
         
         os_delay_msec(100)); // 100ms delay
@@ -603,8 +614,8 @@ void DemonstrateFlexibleExternalBuses() {
     // Get and use external I2C device 1
     Bno08xHandler* external_i2c_handler1 = imu_mgr.GetBno08xHandler(1);
     if (external_i2c_handler1) {
-        Bno08xError result = external_i2c_handler1->EnableSensor(BNO085Sensor::Accelerometer, 50);
-        if (result == Bno08xError::SUCCESS) {
+        auto* i2c_sensor1 = external_i2c_handler1->GetSensor();
+        if (i2c_sensor1 && i2c_sensor1->EnableSensor(BNO085Sensor::Accelerometer, 50, 0.0f)) {
             Logger::GetInstance().Info(TAG, "External I2C BNO08x 1 accelerometer enabled");
         }
     }
@@ -612,8 +623,8 @@ void DemonstrateFlexibleExternalBuses() {
     // Get and use external I2C device 2
     Bno08xHandler* external_i2c_handler2 = imu_mgr.GetBno08xHandler(2);
     if (external_i2c_handler2) {
-        Bno08xError result = external_i2c_handler2->EnableSensor(BNO085Sensor::Gyroscope, 50);
-        if (result == Bno08xError::SUCCESS) {
+        auto* i2c_sensor2 = external_i2c_handler2->GetSensor();
+        if (i2c_sensor2 && i2c_sensor2->EnableSensor(BNO085Sensor::Gyroscope, 50, 0.0f)) {
             Logger::GetInstance().Info(TAG, "External I2C BNO08x 2 gyroscope enabled");
         }
     }
@@ -621,8 +632,8 @@ void DemonstrateFlexibleExternalBuses() {
     // Get and use external SPI device
     Bno08xHandler* external_spi_handler = imu_mgr.GetBno08xHandler(3);
     if (external_spi_handler) {
-        Bno08xError result = external_spi_handler->EnableSensor(BNO085Sensor::Magnetometer, 100);
-        if (result == Bno08xError::SUCCESS) {
+        auto* spi_sensor = external_spi_handler->GetSensor();
+        if (spi_sensor && spi_sensor->EnableSensor(BNO085Sensor::Magnetometer, 100, 0.0f)) {
             Logger::GetInstance().Info(TAG, "External SPI BNO08x magnetometer enabled");
         }
     }
