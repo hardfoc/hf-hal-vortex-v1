@@ -181,14 +181,13 @@ bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex,
     
     // Initialize if manager is already initialized
     if (initialized_.load(std::memory_order_acquire)) {
-        As5047uError init_result = as5047u_handlers_[deviceIndex]->Initialize();
-        device_initialized_[deviceIndex] = (init_result == As5047uError::SUCCESS);
+        device_initialized_[deviceIndex] = as5047u_handlers_[deviceIndex]->Initialize();
         
         if (device_initialized_[deviceIndex]) {
             Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u created and initialized successfully", deviceIndex);
         } else {
-            Logger::GetInstance().Error("EncoderManager", "External AS5047U device %u created but initialization failed: %s", 
-                                      deviceIndex, As5047uErrorToString(init_result));
+            Logger::GetInstance().Error("EncoderManager", "External AS5047U device %u created but initialization failed (driver_flags=0x%04X)", 
+                                      deviceIndex, static_cast<uint16_t>(as5047u_handlers_[deviceIndex]->GetLastError()));
         }
     } else {
         Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u created (will be initialized later)", deviceIndex);
@@ -226,14 +225,13 @@ bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex,
     
     // Initialize if manager is already initialized
     if (initialized_.load(std::memory_order_acquire)) {
-        As5047uError init_result = as5047u_handlers_[deviceIndex]->Initialize();
-        device_initialized_[deviceIndex] = (init_result == As5047uError::SUCCESS);
+        device_initialized_[deviceIndex] = as5047u_handlers_[deviceIndex]->Initialize();
         
         if (device_initialized_[deviceIndex]) {
             Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u (direct SPI) created and initialized successfully", deviceIndex);
         } else {
-            Logger::GetInstance().Error("EncoderManager", "External AS5047U device %u (direct SPI) created but initialization failed: %s", 
-                                      deviceIndex, As5047uErrorToString(init_result));
+            Logger::GetInstance().Error("EncoderManager", "External AS5047U device %u (direct SPI) created but initialization failed (driver_flags=0x%04X)", 
+                                      deviceIndex, static_cast<uint16_t>(as5047u_handlers_[deviceIndex]->GetLastError()));
         }
     } else {
         Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u (direct SPI) created (will be initialized later)", deviceIndex);
@@ -314,15 +312,14 @@ std::vector<bool> EncoderManager::InitializeAllDevices() {
     
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && as5047u_handlers_[i]) {
-            As5047uError init_result = as5047u_handlers_[i]->Initialize();
-            device_initialized_[i] = (init_result == As5047uError::SUCCESS);
+            device_initialized_[i] = as5047u_handlers_[i]->Initialize();
             results.push_back(device_initialized_[i]);
             
             if (device_initialized_[i]) {
                 Logger::GetInstance().Info("EncoderManager", "AS5047U device %u initialized successfully", i);
             } else {
-                Logger::GetInstance().Error("EncoderManager", "AS5047U device %u initialization failed: %s", 
-                                          i, As5047uErrorToString(init_result));
+                Logger::GetInstance().Error("EncoderManager", "AS5047U device %u initialization failed (driver_flags=0x%04X)", 
+                                          i, static_cast<uint16_t>(as5047u_handlers_[i]->GetLastError()));
             }
         }
     }
@@ -378,51 +375,51 @@ std::string EncoderManager::GetDeviceType(uint8_t deviceIndex) const noexcept {
 //**                  DRIVER ERROR MAPPING                                **//
 //**************************************************************************//
 
-As5047uError EncoderManager::mapDriverError(AS5047U_Error sticky_flags) noexcept {
+EncoderError EncoderManager::mapDriverError(AS5047U_Error sticky_flags) noexcept {
     auto flags = static_cast<uint16_t>(sticky_flags);
     
     // Communication errors (highest severity)
     if (flags & static_cast<uint16_t>(AS5047U_Error::CrcError)) {
-        return As5047uError::CRC_ERROR;
+        return EncoderError::CRC_ERROR;
     }
     if (flags & static_cast<uint16_t>(AS5047U_Error::FramingError)) {
-        return As5047uError::FRAMING_ERROR;
+        return EncoderError::FRAMING_ERROR;
     }
     if (flags & static_cast<uint16_t>(AS5047U_Error::CommandError)) {
-        return As5047uError::SPI_COMMUNICATION_FAILED;
+        return EncoderError::SPI_COMMUNICATION_FAILED;
     }
     
     // Sensor errors
     if (flags & static_cast<uint16_t>(AS5047U_Error::CordicOverflow)) {
-        return As5047uError::SENSOR_ERROR;
+        return EncoderError::SENSOR_ERROR;
     }
     if (flags & static_cast<uint16_t>(AS5047U_Error::OffCompError)) {
-        return As5047uError::SENSOR_ERROR;
+        return EncoderError::SENSOR_ERROR;
     }
     if (flags & static_cast<uint16_t>(AS5047U_Error::WatchdogError)) {
-        return As5047uError::SENSOR_ERROR;
+        return EncoderError::SENSOR_ERROR;
     }
     if (flags & static_cast<uint16_t>(AS5047U_Error::P2ramError)) {
-        return As5047uError::SENSOR_ERROR;
+        return EncoderError::SENSOR_ERROR;
     }
     
     // Warnings (P2RAM warning, AGC warning, MagHalf are non-fatal)
-    return As5047uError::SENSOR_ERROR;
+    return EncoderError::SENSOR_ERROR;
 }
 
 //**************************************************************************//
 //**                  HIGH-LEVEL ENCODER OPERATIONS                       **//
 //**************************************************************************//
 
-As5047uError EncoderManager::ReadAngle(uint8_t deviceIndex, uint16_t& angle) noexcept {
+EncoderError EncoderManager::ReadAngle(uint8_t deviceIndex, uint16_t& angle) noexcept {
     As5047uHandler* handler = GetAs5047uHandler(deviceIndex);
     if (!handler) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
     auto* sensor = handler->GetSensor();
     if (!sensor) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
     angle = sensor->GetAngle();
@@ -435,30 +432,44 @@ As5047uError EncoderManager::ReadAngle(uint8_t deviceIndex, uint16_t& angle) noe
     }
     
     measurement_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
-    return As5047uError::SUCCESS;
+    return EncoderError::SUCCESS;
 }
 
-As5047uError EncoderManager::ReadAngleDegrees(uint8_t deviceIndex, double& angle_degrees) noexcept {
-    uint16_t angle_lsb;
-    As5047uError result = ReadAngle(deviceIndex, angle_lsb);
-    if (result == As5047uError::SUCCESS) {
-        angle_degrees = As5047uHandler::LSBToDegrees(angle_lsb);
-    }
-    return result;
-}
-
-As5047uError EncoderManager::ReadVelocityRPM(uint8_t deviceIndex, double& velocity_rpm) noexcept {
+EncoderError EncoderManager::ReadAngleDegrees(uint8_t deviceIndex, double& angle_degrees) noexcept {
     As5047uHandler* handler = GetAs5047uHandler(deviceIndex);
     if (!handler) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
+    }
+
+    auto* sensor = handler->GetSensor();
+    if (!sensor) {
+        return EncoderError::NOT_INITIALIZED;
+    }
+
+    angle_degrees = static_cast<double>(sensor->GetAngle(as5047u::AngleUnit::Degrees));
+
+    AS5047U_Error sticky = sensor->GetStickyErrorFlags();
+    if (sticky != AS5047U_Error::None) {
+        communication_error_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
+        return mapDriverError(sticky);
+    }
+
+    measurement_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
+    return EncoderError::SUCCESS;
+}
+
+EncoderError EncoderManager::ReadVelocityRPM(uint8_t deviceIndex, double& velocity_rpm) noexcept {
+    As5047uHandler* handler = GetAs5047uHandler(deviceIndex);
+    if (!handler) {
+        return EncoderError::NOT_INITIALIZED;
     }
     
     auto* sensor = handler->GetSensor();
     if (!sensor) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
-    velocity_rpm = static_cast<double>(sensor->GetVelocityRPM());
+    velocity_rpm = static_cast<double>(sensor->GetVelocity(as5047u::VelocityUnit::Rpm));
     
     // Check sticky errors accumulated during the SPI transaction
     AS5047U_Error sticky = sensor->GetStickyErrorFlags();
@@ -468,18 +479,18 @@ As5047uError EncoderManager::ReadVelocityRPM(uint8_t deviceIndex, double& veloci
     }
     
     measurement_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
-    return As5047uError::SUCCESS;
+    return EncoderError::SUCCESS;
 }
 
-As5047uError EncoderManager::ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnostics& diagnostics) noexcept {
+EncoderError EncoderManager::ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnostics& diagnostics) noexcept {
     As5047uHandler* handler = GetAs5047uHandler(deviceIndex);
     if (!handler) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
     auto* sensor = handler->GetSensor();
     if (!sensor) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
     // Read diagnostic data directly from the driver
@@ -502,18 +513,18 @@ As5047uError EncoderManager::ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnos
     // Clear any sticky errors accumulated during diagnostic reads
     sensor->GetStickyErrorFlags();
     
-    return As5047uError::SUCCESS;
+    return EncoderError::SUCCESS;
 }
 
-As5047uError EncoderManager::SetZeroPosition(uint8_t deviceIndex, uint16_t zero_position) noexcept {
+EncoderError EncoderManager::SetZeroPosition(uint8_t deviceIndex, uint16_t zero_position) noexcept {
     As5047uHandler* handler = GetAs5047uHandler(deviceIndex);
     if (!handler) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
     auto* sensor = handler->GetSensor();
     if (!sensor) {
-        return As5047uError::NOT_INITIALIZED;
+        return EncoderError::NOT_INITIALIZED;
     }
     
     if (!sensor->SetZeroPosition(zero_position)) {
@@ -522,26 +533,26 @@ As5047uError EncoderManager::SetZeroPosition(uint8_t deviceIndex, uint16_t zero_
         if (sticky != AS5047U_Error::None) {
             return mapDriverError(sticky);
         }
-        return As5047uError::SPI_COMMUNICATION_FAILED;
+        return EncoderError::SPI_COMMUNICATION_FAILED;
     }
     
     // Clear any transient sticky errors
     sensor->GetStickyErrorFlags();
-    return As5047uError::SUCCESS;
+    return EncoderError::SUCCESS;
 }
 
-std::vector<As5047uError> EncoderManager::ReadAllAngles(std::vector<uint16_t>& angles, 
+std::vector<EncoderError> EncoderManager::ReadAllAngles(std::vector<uint16_t>& angles, 
                                                        std::vector<uint8_t>& device_indices) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     angles.clear();
     device_indices.clear();
-    std::vector<As5047uError> errors;
+    std::vector<EncoderError> errors;
     
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && device_initialized_[i] && as5047u_handlers_[i]) {
             uint16_t angle = 0;
-            As5047uError error = ReadAngle(i, angle);
+            EncoderError error = ReadAngle(i, angle);
             
             angles.push_back(angle);
             device_indices.push_back(i);
@@ -552,18 +563,18 @@ std::vector<As5047uError> EncoderManager::ReadAllAngles(std::vector<uint16_t>& a
     return errors;
 }
 
-std::vector<As5047uError> EncoderManager::ReadAllVelocities(std::vector<double>& velocities_rpm, 
+std::vector<EncoderError> EncoderManager::ReadAllVelocities(std::vector<double>& velocities_rpm, 
                                                            std::vector<uint8_t>& device_indices) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     velocities_rpm.clear();
     device_indices.clear();
-    std::vector<As5047uError> errors;
+    std::vector<EncoderError> errors;
     
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && device_initialized_[i] && as5047u_handlers_[i]) {
             double velocity = 0.0;
-            As5047uError error = ReadVelocityRPM(i, velocity);
+            EncoderError error = ReadVelocityRPM(i, velocity);
             
             velocities_rpm.push_back(velocity);
             device_indices.push_back(i);
@@ -580,9 +591,9 @@ bool EncoderManager::CheckAllDevicesHealth() noexcept {
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && device_initialized_[i] && as5047u_handlers_[i]) {
             As5047uDiagnostics diagnostics{};
-            As5047uError error = ReadDiagnostics(i, diagnostics);
+            EncoderError error = ReadDiagnostics(i, diagnostics);
             
-            if (error != As5047uError::SUCCESS || !diagnostics.communication_ok || !diagnostics.magnetic_field_ok) {
+            if (error != EncoderError::SUCCESS || !diagnostics.communication_ok || !diagnostics.magnetic_field_ok) {
                 return false;
             }
         }

@@ -14,6 +14,51 @@ class BaseGpio;
 enum class AS5047U_Error : uint16_t;
 
 /**
+ * @brief Generic encoder manager error codes.
+ *
+ * These are manager-layer errors and are intentionally encoder-family agnostic.
+ * Handler/driver internals keep native driver error flags and are translated
+ * into this common manager error domain.
+ */
+enum class EncoderError : uint8_t {
+    SUCCESS = 0,
+    NOT_INITIALIZED,
+    INITIALIZATION_FAILED,
+    INVALID_PARAMETER,
+    SPI_COMMUNICATION_FAILED,
+    CRC_ERROR,
+    FRAMING_ERROR,
+    SENSOR_ERROR,
+    TIMEOUT,
+    MUTEX_LOCK_FAILED
+};
+
+// Backward-compatible alias for existing call sites.
+using As5047uError = EncoderError;
+
+/** @brief Convert generic EncoderError to string for debugging. */
+constexpr const char* EncoderErrorToString(EncoderError error) noexcept {
+    switch (error) {
+        case EncoderError::SUCCESS: return "Success";
+        case EncoderError::NOT_INITIALIZED: return "Not initialized";
+        case EncoderError::INITIALIZATION_FAILED: return "Initialization failed";
+        case EncoderError::INVALID_PARAMETER: return "Invalid parameter";
+        case EncoderError::SPI_COMMUNICATION_FAILED: return "SPI communication failed";
+        case EncoderError::CRC_ERROR: return "CRC error";
+        case EncoderError::FRAMING_ERROR: return "Framing error";
+        case EncoderError::SENSOR_ERROR: return "Sensor error";
+        case EncoderError::TIMEOUT: return "Timeout";
+        case EncoderError::MUTEX_LOCK_FAILED: return "Mutex lock failed";
+        default: return "Unknown error";
+    }
+}
+
+/** @brief Backward-compatible alias helper. */
+constexpr const char* As5047uErrorToString(As5047uError error) noexcept {
+    return EncoderErrorToString(error);
+}
+
+/**
  * @class EncoderManager
  * @brief Singleton for managing multiple AS5047U encoder devices with indexed access and flexible device management.
  *
@@ -47,8 +92,8 @@ enum class AS5047U_Error : uint16_t;
  * if (encoder_mgr.EnsureInitialized()) {
  *     // Read encoder angle via manager (index 0 = onboard)
  *     uint16_t angle;
- *     if (encoder_mgr.ReadAngle(0, angle) == As5047uError::SUCCESS) {
- *         printf("Angle: %u LSB (%.2f deg)\n", angle, As5047uHandler::LSBToDegrees(angle));
+ *     if (encoder_mgr.ReadAngle(0, angle) == EncoderError::SUCCESS) {
+ *         printf("Angle: %u LSB (%.2f deg)\n", angle, static_cast<double>(angle) * (360.0 / 16384.0));
  *     }
  *     
  *     // Set zero position via manager
@@ -224,41 +269,41 @@ public:
      * @brief Read angle from specific encoder device.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
      * @param angle Output angle value (0-16383 LSB, 14-bit)
-     * @return As5047uError::SUCCESS if successful
+    * @return EncoderError::SUCCESS if successful
      */
-    As5047uError ReadAngle(uint8_t deviceIndex, uint16_t& angle) noexcept;
+    EncoderError ReadAngle(uint8_t deviceIndex, uint16_t& angle) noexcept;
 
     /**
      * @brief Read angle in degrees from specific encoder device.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
      * @param angle_degrees Output angle in degrees (0.0-359.978°)
-     * @return As5047uError::SUCCESS if successful
+    * @return EncoderError::SUCCESS if successful
      */
-    As5047uError ReadAngleDegrees(uint8_t deviceIndex, double& angle_degrees) noexcept;
+    EncoderError ReadAngleDegrees(uint8_t deviceIndex, double& angle_degrees) noexcept;
 
     /**
      * @brief Read velocity from specific encoder device.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
      * @param velocity_rpm Output velocity in RPM
-     * @return As5047uError::SUCCESS if successful
+    * @return EncoderError::SUCCESS if successful
      */
-    As5047uError ReadVelocityRPM(uint8_t deviceIndex, double& velocity_rpm) noexcept;
+    EncoderError ReadVelocityRPM(uint8_t deviceIndex, double& velocity_rpm) noexcept;
 
     /**
      * @brief Read diagnostics from specific encoder device.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
      * @param diagnostics Output diagnostic information
-     * @return As5047uError::SUCCESS if successful
+    * @return EncoderError::SUCCESS if successful
      */
-    As5047uError ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnostics& diagnostics) noexcept;
+    EncoderError ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnostics& diagnostics) noexcept;
 
     /**
      * @brief Set zero position for specific encoder device.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
      * @param zero_position Zero position in LSB (0-16383)
-     * @return As5047uError::SUCCESS if successful
+    * @return EncoderError::SUCCESS if successful
      */
-    As5047uError SetZeroPosition(uint8_t deviceIndex, uint16_t zero_position) noexcept;
+    EncoderError SetZeroPosition(uint8_t deviceIndex, uint16_t zero_position) noexcept;
 
     /**
      * @brief Read angles from all active encoder devices.
@@ -266,7 +311,7 @@ public:
      * @param device_indices Output vector of corresponding device indices
      * @return Vector of error codes (one per device)
      */
-    std::vector<As5047uError> ReadAllAngles(std::vector<uint16_t>& angles, 
+    std::vector<EncoderError> ReadAllAngles(std::vector<uint16_t>& angles, 
                                           std::vector<uint8_t>& device_indices) noexcept;
 
     /**
@@ -275,7 +320,7 @@ public:
      * @param device_indices Output vector of corresponding device indices
      * @return Vector of error codes (one per device)
      */
-    std::vector<As5047uError> ReadAllVelocities(std::vector<double>& velocities_rpm, 
+    std::vector<EncoderError> ReadAllVelocities(std::vector<double>& velocities_rpm, 
                                               std::vector<uint8_t>& device_indices) noexcept;
 
     /**
@@ -346,11 +391,11 @@ private:
     bool IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept;
 
     /**
-     * @brief Map AS5047U driver sticky error flags to As5047uError.
+    * @brief Map AS5047U driver sticky error flags to generic EncoderError.
      * @param sticky_flags Sticky error flags from AS5047U driver
-     * @return Corresponding As5047uError error code
+    * @return Corresponding EncoderError code
      */
-    static As5047uError mapDriverError(AS5047U_Error sticky_flags) noexcept;
+    static EncoderError mapDriverError(AS5047U_Error sticky_flags) noexcept;
 
     // ===============================
     // SYSTEM STATE

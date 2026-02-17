@@ -70,12 +70,12 @@ void imu_example() {
     // Get onboard BNO08x handler
     auto* handler = imu.GetBno08xHandler(0);  // Index 0 = onboard device
     if (handler && handler->Initialize()) {
-        auto bno085 = imu.GetBno085Driver(0);  // Get BNO085 driver
+        auto* sensor = handler->GetSensor();  // Get IBno08xDriverOps*
         
-        if (bno085) {
+        if (sensor) {
             // Enable sensors
-            handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
-            handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 100);
+            sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
+            sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
             
             logger.Info("IMU", "IMU ready\n");
         }
@@ -182,32 +182,38 @@ void basic_imu_example() {
     // Get onboard IMU
     auto* handler = imu.GetBno08xHandler(0);
     if (handler && handler->Initialize()) {
-        auto bno085 = imu.GetBno085Driver(0);
-        if (bno085) {
+        auto* sensor = handler->GetSensor();
+        if (sensor) {
             // Enable sensors
-            handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
-            handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 100);
-            handler->EnableSensor(Bno08xSensorType::GYROSCOPE, 100);
+            sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
+            sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
+            sensor->EnableSensor(BNO085Sensor::Gyroscope, 100, 0.0f);
             
             logger.Info("IMU", "IMU sensors enabled\n");
             
             // Read sensor data
             for (int i = 0; i < 100; i++) {
-                if (handler->IsDataReady()) {
+                handler->Update();
+                
+                if (sensor->HasNewData(BNO085Sensor::RotationVector)) {
                     // Get rotation vector (quaternion)
-                    auto rotation = handler->GetRotationVector();
+                    auto rotation = sensor->GetLatest(BNO085Sensor::RotationVector);
                     logger.Info("IMU", "Quaternion: w=%.3f, x=%.3f, y=%.3f, z=%.3f\n",
-                           rotation.w, rotation.x, rotation.y, rotation.z);
-                    
+                           rotation.rotation.w, rotation.rotation.x, rotation.rotation.y, rotation.rotation.z);
+                }
+                
+                if (sensor->HasNewData(BNO085Sensor::Accelerometer)) {
                     // Get acceleration
-                    auto accel = handler->GetAccelerometer();
+                    auto accel = sensor->GetLatest(BNO085Sensor::Accelerometer);
                     logger.Info("IMU", "Acceleration: x=%.2f, y=%.2f, z=%.2f m/s²\n",
-                           accel.x, accel.y, accel.z);
-                    
+                           accel.vector.x, accel.vector.y, accel.vector.z);
+                }
+                
+                if (sensor->HasNewData(BNO085Sensor::Gyroscope)) {
                     // Get gyroscope
-                    auto gyro = handler->GetGyroscope();
+                    auto gyro = sensor->GetLatest(BNO085Sensor::Gyroscope);
                     logger.Info("IMU", "Gyroscope: x=%.2f, y=%.2f, z=%.2f rad/s\n",
-                           gyro.x, gyro.y, gyro.z);
+                           gyro.vector.x, gyro.vector.y, gyro.vector.z);
                 }
                 
                 vTaskDelay(pdMS_TO_TICKS(100));
@@ -231,11 +237,11 @@ void multi_device_example() {
         // Initialize external device
         auto* ext_handler = imu.GetBno08xHandler(1);
         if (ext_handler && ext_handler->Initialize()) {
-            auto ext_bno085 = imu.GetBno085Driver(1);
-            if (ext_bno085) {
+            auto* ext_sensor = ext_handler->GetSensor();
+            if (ext_sensor) {
                 // Configure external IMU
-                ext_handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 25);
-                ext_handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 50);
+                ext_sensor->EnableSensor(BNO085Sensor::RotationVector, 25, 0.0f);
+                ext_sensor->EnableSensor(BNO085Sensor::Accelerometer, 50, 0.0f);
                 
                 logger.Info("IMU", "External IMU enabled\n");
             }
@@ -248,8 +254,11 @@ void multi_device_example() {
         
         auto* spi_handler = imu.GetBno08xHandler(2);
         if (spi_handler && spi_handler->Initialize()) {
-            spi_handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
-            logger.Info("IMU", "External SPI IMU enabled\n");
+            auto* spi_sensor = spi_handler->GetSensor();
+            if (spi_sensor) {
+                spi_sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
+                logger.Info("IMU", "External SPI IMU enabled\n");
+            }
         }
     }
     
@@ -257,10 +266,14 @@ void multi_device_example() {
     for (int i = 0; i < 50; i++) {
         for (uint8_t device = 0; device < 3; device++) {
             auto* handler = imu.GetBno08xHandler(device);
-            if (handler && handler->IsDataReady()) {
-                auto rotation = handler->GetRotationVector();
-                logger.Info("IMU", "Device %u: w=%.3f, x=%.3f, y=%.3f, z=%.3f\n",
-                       device, rotation.w, rotation.x, rotation.y, rotation.z);
+            if (handler) {
+                handler->Update();
+                auto* sensor = handler->GetSensor();
+                if (sensor && sensor->HasNewData(BNO085Sensor::RotationVector)) {
+                    auto rotation = sensor->GetLatest(BNO085Sensor::RotationVector);
+                    logger.Info("IMU", "Device %u: w=%.3f, x=%.3f, y=%.3f, z=%.3f\n",
+                           device, rotation.rotation.w, rotation.rotation.x, rotation.rotation.y, rotation.rotation.z);
+                }
             }
         }
         
@@ -299,13 +312,12 @@ void device_info_example() {
             if (handler) {
                 logger.Info("IMU", "  Handler available\n");
                 
-                auto bno085 = imu.GetBno085Driver(i);
-                if (bno085) {
-                    logger.Info("IMU", "  Driver available\n");
-                    
-                    // Get sensor status
-                    bool data_ready = handler->IsDataReady();
-                    logger.Info("IMU", "  Data ready: %s\n", data_ready ? "YES" : "NO");
+                // Get sensor interface status
+                auto* sensor = handler->GetSensor();
+                if (sensor) {
+                    logger.Info("IMU", "  Sensor interface: AVAILABLE\n");
+                } else {
+                    logger.Info("IMU", "  Sensor interface: NOT AVAILABLE\n");
                 }
             }
         }
@@ -335,10 +347,10 @@ void external_device_example() {
             // Use the external device
             auto* handler = imu.GetBno08xHandler(1);
             if (handler && handler->Initialize()) {
-                auto bno085 = imu.GetBno085Driver(1);
-                if (bno085) {
-                    handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 25);
-                    handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 50);
+                auto* sensor = handler->GetSensor();
+                if (sensor) {
+                    sensor->EnableSensor(BNO085Sensor::RotationVector, 25, 0.0f);
+                    sensor->EnableSensor(BNO085Sensor::Accelerometer, 50, 0.0f);
                     logger.Info("IMU", "External IMU running\n");
                 }
             }
@@ -373,8 +385,11 @@ void interrupt_example() {
             if (imu.EnableInterrupt(0)) {
                 logger.Info("IMU", "Interrupt enabled\n");
                 
+                auto* sensor = handler->GetSensor();
+                if (!sensor) return;
+                
                 // Enable sensors
-                handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
+                sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
                 
                 // Wait for interrupts
                 for (int i = 0; i < 10; i++) {
@@ -382,10 +397,11 @@ void interrupt_example() {
                         logger.Info("IMU", "Interrupt received\n");
                         
                         // Read data
-                        if (handler->IsDataReady()) {
-                            auto rotation = handler->GetRotationVector();
+                        handler->Update();
+                        if (sensor->HasNewData(BNO085Sensor::RotationVector)) {
+                            auto rotation = sensor->GetLatest(BNO085Sensor::RotationVector);
                             logger.Info("IMU", "Rotation: w=%.3f, x=%.3f, y=%.3f, z=%.3f\n",
-                                   rotation.w, rotation.x, rotation.y, rotation.z);
+                                   rotation.rotation.w, rotation.rotation.x, rotation.rotation.y, rotation.rotation.z);
                         }
                     } else {
                         logger.Info("IMU", "Interrupt timeout\n");
@@ -447,10 +463,13 @@ auto& imu = vortex.imu;
 // IMU configuration and calibration
 auto* handler = imu.GetBno08xHandler(0);
 if (handler) {
-    // Configuration operations (one-time setup)
-    handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 100);  // 100Hz
-    handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 200);    // 200Hz
-    handler->CalibrateAll();  // Calibration process
+    // Get sensor interface for configuration
+    auto* sensor = handler->GetSensor();
+    if (sensor) {
+        // Configuration operations (one-time setup)
+        sensor->EnableSensor(BNO085Sensor::RotationVector, 100, 0.0f);  // 100Hz
+        sensor->EnableSensor(BNO085Sensor::Accelerometer, 200, 0.0f);    // 200Hz
+    }
 }
 ```
 
@@ -460,25 +479,26 @@ For high-frequency motion control loops (>1kHz):
 ```cpp
 auto& imu = vortex.imu;
 
-// Cache IMU handler and driver for motion control
+// Cache IMU handler and sensor interface for motion control
 auto* imu_handler = imu.GetBno08xHandler(0);
-auto driver = imu_handler ? imu_handler->GetBno085Driver() : nullptr;
+auto* sensor = imu_handler ? imu_handler->GetSensor() : nullptr;
 
-if (!imu_handler || !driver) {
+if (!imu_handler || !sensor) {
     logger.Info("IMU", "ERROR: Failed to cache IMU components\n");
     return;
 }
 
 // High-frequency motion control loop
-Bno08xData sensor_data;
 while (motion_control_active) {
+    imu_handler->Update();
+    
     // Direct driver access for minimal latency (~40-200ns)
-    if (driver->ReadSensorData(sensor_data) == Bno08xError::SUCCESS) {
-        // Process motion data immediately
-        ProcessMotionControl(sensor_data.rotation_vector,
-                           sensor_data.accelerometer,
-                           sensor_data.gyroscope);
-    }
+    auto rotation = sensor->GetLatest(BNO085Sensor::RotationVector);
+    auto accel = sensor->GetLatest(BNO085Sensor::Accelerometer);
+    auto gyro = sensor->GetLatest(BNO085Sensor::Gyroscope);
+    
+    // Process motion data immediately
+    ProcessMotionControl(rotation, accel, gyro);
     
     // Motion control timing (1kHz for balance control)
     vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(1));
@@ -517,18 +537,13 @@ void error_handling_example() {
         return;
     }
     
-    auto bno085 = imu.GetBno085Driver(0);
-    if (!bno085) {
-        logger.Info("IMU", "ERROR: BNO085 driver not available\n");
-        return;
-    }
-    
     // Safe sensor operations
-    try {
-        handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
+    auto* sensor = handler->GetSensor();
+    if (sensor) {
+        sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
         logger.Info("IMU", "Sensor operations successful\n");
-    } catch (const std::exception& e) {
-        logger.Info("IMU", "ERROR: Sensor operation failed: %s\n", e.what());
+    } else {
+        logger.Info("IMU", "ERROR: Sensor interface not available\n");
     }
 }
 ```
@@ -551,8 +566,8 @@ void integrated_example() {
     // Get IMU controller
     auto* handler = imu.GetBno08xHandler(0);
     if (handler && handler->Initialize()) {
-        auto bno085 = imu.GetBno085Driver(0);
-        if (bno085) {
+        auto* sensor = handler->GetSensor();
+        if (sensor) {
             // Use GPIO for IMU reset/enable
             gpio.SetDirection("BNO08X_RESET", HF_GPIO_DIRECTION_OUTPUT);
             gpio.SetInactive("BNO08X_RESET");  // Reset pulse
@@ -560,17 +575,18 @@ void integrated_example() {
             gpio.SetActive("BNO08X_RESET");
             
             // Enable sensors
-            handler->EnableSensor(Bno08xSensorType::ROTATION_VECTOR, 50);
-            handler->EnableSensor(Bno08xSensorType::ACCELEROMETER, 100);
+            sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
+            sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
             
             // Monitor IMU data
             while (true) {
-                if (handler->IsDataReady()) {
-                    auto rotation = handler->GetRotationVector();
-                    auto accel = handler->GetAccelerometer();
+                handler->Update();
+                if (sensor->HasNewData(BNO085Sensor::RotationVector)) {
+                    auto rotation = sensor->GetLatest(BNO085Sensor::RotationVector);
+                    auto accel = sensor->GetLatest(BNO085Sensor::Accelerometer);
                     
                     logger.Info("IMU", "IMU: qw=%.3f, ax=%.2f, ay=%.2f, az=%.2f\n",
-                           rotation.w, accel.x, accel.y, accel.z);
+                           rotation.rotation.w, accel.vector.x, accel.vector.y, accel.vector.z);
                 }
                 
                 vTaskDelay(pdMS_TO_TICKS(100));
