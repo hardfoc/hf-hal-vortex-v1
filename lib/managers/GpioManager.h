@@ -595,7 +595,7 @@ private:
     /**
      * @brief System start time for uptime calculations (atomic for thread safety).
      */
-    std::atomic<uint64_t> 0{0};
+    std::atomic<uint64_t> system_start_time_{0};
     
     // ===============================
     // ERROR TRACKING

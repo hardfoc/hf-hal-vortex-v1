@@ -6,6 +6,7 @@
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 #include <memory>
 #include <array>
+#include <atomic>
 #include <vector>
 
 /**
@@ -59,13 +60,16 @@ public:
     //**************************************************************************//
 
     bool EnsureInitialized() noexcept {
-        if (!initialized_) {
-            initialized_ = Initialize();
+        if (!initialized_.load(std::memory_order_acquire)) {
+            RtosUniqueLock<RtosMutex> lock(deviceMutex_);
+            if (!initialized_.load(std::memory_order_relaxed)) {
+                initialized_.store(Initialize(), std::memory_order_release);
+            }
         }
-        return initialized_;
+        return initialized_.load(std::memory_order_acquire);
     }
 
-    inline bool IsInitialized() const noexcept { return initialized_; }
+    inline bool IsInitialized() const noexcept { return initialized_.load(std::memory_order_acquire); }
 
     //**************************************************************************//
     //**                  HANDLER AND DRIVER MANAGEMENT                       **//
@@ -260,7 +264,7 @@ private:
     std::array<bool, MAX_TMC9660_DEVICES> deviceActive_;    ///< Track which devices are active
     
     bool onboardDeviceCreated_;         ///< Track if onboard device has been created
-    bool initialized_;                  ///< Track if system has been initialized
+    std::atomic<bool> initialized_;      ///< Track if system has been initialized
     mutable RtosMutex deviceMutex_;     ///< RTOS mutex for thread-safe device access
 };
 

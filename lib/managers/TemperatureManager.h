@@ -48,12 +48,12 @@
 #include "managers/AdcManager.h"
 #include "managers/MotorController.h"
 #include "handlers/logger/Logger.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
 
 #include <array>
 #include <memory>
 #include <atomic>
-#include <mutex>
 #include <vector>
 #include <string_view>
 #include <unordered_map>
@@ -340,12 +340,7 @@ private:
      */
     void RegisterTmc9660InternalSensor() noexcept;
     
-    /**
-     * @brief Automatically register onboard temperature sensors (ESP32 internal and TMC9660 internal).
-     * @return hf_temp_err_t::TEMP_SUCCESS if registration successful, error code otherwise
-     * @note This is called automatically during Initialize() to ensure onboard sensors are always available
-     */
-    [[nodiscard]] hf_temp_err_t RegisterOnboardTemperatureSensors() noexcept;
+    // NOTE: RegisterOnboardTemperatureSensors() declared above as void return type
     
     /**
      * @brief Unregister a temperature sensor.
@@ -758,7 +753,7 @@ private:
     // PRIVATE MEMBER VARIABLES
     //==========================================================================
     
-    mutable std::mutex mutex_;                           ///< Mutex for thread safety
+    mutable RtosMutex mutex_;                            ///< Mutex for thread safety (RTOS-aware)
     std::atomic<bool> initialized_;                      ///< Initialization status
     std::vector<TempSensorInfo> sensors_;                ///< Registered sensors
     std::unordered_map<std::string_view, uint32_t> sensor_map_; ///< Name to index mapping

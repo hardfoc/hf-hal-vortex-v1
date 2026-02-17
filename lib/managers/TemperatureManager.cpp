@@ -58,7 +58,7 @@ hf_temp_err_t TemperatureManager::EnsureInitialized() noexcept {
         return TEMP_SUCCESS;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (initialized_.load()) {
         return TEMP_SUCCESS;
@@ -72,7 +72,7 @@ hf_temp_err_t TemperatureManager::Shutdown() noexcept {
         return TEMP_SUCCESS;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (!initialized_.load()) {
         return TEMP_SUCCESS;
@@ -310,7 +310,7 @@ hf_u32_t Tmc9660TemperatureWrapper::GetCapabilities() const noexcept {
 
 hf_temp_err_t TemperatureManager::RegisterEspTemperatureSensor(std::string_view name, 
                                                               const esp_temp_config_t& config) noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (!initialized_.load()) {
         return TEMP_ERR_NOT_INITIALIZED;
@@ -369,7 +369,7 @@ hf_temp_err_t TemperatureManager::RegisterEspTemperatureSensor(std::string_view 
 hf_temp_err_t TemperatureManager::RegisterNtcTemperatureSensor(std::string_view name, 
                                                               std::string_view adc_channel_name,
                                                               const ntc_temp_handler_config_t& config) noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (!initialized_.load()) {
         return TEMP_ERR_NOT_INITIALIZED;
@@ -441,7 +441,7 @@ hf_temp_err_t TemperatureManager::RegisterNtcTemperatureSensor(std::string_view 
 
 hf_temp_err_t TemperatureManager::RegisterTmc9660TemperatureSensor(std::string_view name, 
                                                                    Tmc9660Handler& tmc9660_handler) noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (!initialized_.load()) {
         return TEMP_ERR_NOT_INITIALIZED;
@@ -554,7 +554,7 @@ hf_temp_err_t TemperatureManager::RegisterOnboardTemperatureSensors() noexcept {
 }
 
 hf_temp_err_t TemperatureManager::UnregisterSensor(std::string_view name) noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (!initialized_.load()) {
         return TEMP_ERR_NOT_INITIALIZED;
@@ -590,28 +590,28 @@ hf_temp_err_t TemperatureManager::UnregisterSensor(std::string_view name) noexce
 }
 
 bool TemperatureManager::IsSensorRegistered(std::string_view name) const noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     return FindSensor(name) != sensors_.end();
 }
 
 uint32_t TemperatureManager::GetSensorCount() const noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     return static_cast<uint32_t>(sensors_.size());
 }
 
 const TempSensorInfo* TemperatureManager::GetSensorInfo(std::string_view name) const noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     auto it = FindSensor(name);
     return (it != sensors_.end()) ? &(*it) : nullptr;
 }
 
 const TempSensorInfo* TemperatureManager::GetSensorInfoByIndex(uint32_t index) const noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     return (index < sensors_.size()) ? &sensors_[index] : nullptr;
 }
 
 std::vector<std::string_view> TemperatureManager::GetSensorNames() const noexcept {
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     std::vector<std::string_view> names;
     names.reserve(sensors_.size());
     for (const auto& sensor : sensors_) {
@@ -629,7 +629,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsius(std::string_view sensor
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     auto it = FindSensor(sensor_name);
     if (it == sensors_.end()) {
@@ -660,7 +660,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheit(std::string_view sen
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     auto it = FindSensor(sensor_name);
     if (it == sensors_.end()) {
@@ -691,7 +691,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureKelvin(std::string_view sensor_
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     auto it = FindSensor(sensor_name);
     if (it == sensors_.end()) {
@@ -722,7 +722,7 @@ hf_temp_err_t TemperatureManager::ReadTemperature(std::string_view sensor_name, 
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     auto it = FindSensor(sensor_name);
     if (it == sensors_.end()) {
@@ -753,7 +753,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureUnit(std::string_view sensor_na
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     auto it = FindSensor(sensor_name);
     if (it == sensors_.end()) {
@@ -804,7 +804,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsiusByIndex(uint32_t index, 
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (index >= sensors_.size()) {
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
@@ -835,7 +835,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheitByIndex(uint32_t inde
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (index >= sensors_.size()) {
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
@@ -866,7 +866,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureKelvinByIndex(uint32_t index, f
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (index >= sensors_.size()) {
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
@@ -897,7 +897,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureByIndex(uint32_t index, hf_temp
         return TEMP_ERR_NULL_POINTER;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     if (index >= sensors_.size()) {
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
