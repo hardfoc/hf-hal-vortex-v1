@@ -88,10 +88,10 @@
 #ifndef VORTEX_API_H_
 #define VORTEX_API_H_
 
+#include <array>
 #include <atomic>
+#include <cstring>
 #include <memory>
-#include <string>
-#include <vector>
 
 // Forward declarations for all component handlers
 class CommChannelsManager;
@@ -131,8 +131,12 @@ struct VortexSystemDiagnostics {
     uint64_t initialization_time_ms;        ///< Total initialization time
     uint64_t system_uptime_ms;              ///< System uptime
     
-    std::vector<std::string> failed_components_list;  ///< List of failed components
-    std::vector<std::string> warnings;                ///< System warnings
+    static constexpr size_t kMaxDiagEntries = 8;     ///< Max diagnostic entries
+
+    const char* failed_components_list[kMaxDiagEntries]{};  ///< Failed component names
+    size_t failed_components_list_count{0};                  ///< Number of failed entries
+    const char* warnings[kMaxDiagEntries]{};                 ///< System warnings
+    size_t warnings_count{0};                                ///< Number of warnings
     
     /**
      * @brief Constructor for VortexSystemDiagnostics
@@ -198,21 +202,25 @@ public:
 
     /**
      * @brief Get initialization status for each component
-     * @return Vector of initialization status (true/false) for each component
+     * @return Array of initialization status (true/false) for each component
      */
-    [[nodiscard]] std::vector<bool> GetComponentInitializationStatus() const noexcept;
+    [[nodiscard]] std::array<bool, 8> GetComponentInitializationStatus() const noexcept;
 
     /**
      * @brief Get list of failed components during initialization
-     * @return Vector of component names that failed to initialize
+     * @param out_names Array to receive failed component name pointers
+     * @param max_entries Maximum entries the array can hold
+     * @return Number of failed components written
      */
-    [[nodiscard]] std::vector<std::string> GetFailedComponents() const noexcept;
+    [[nodiscard]] size_t GetFailedComponents(const char* out_names[], size_t max_entries) const noexcept;
 
     /**
      * @brief Get system warnings and issues
-     * @return Vector of warning messages
+     * @param out_warnings Array to receive warning string pointers
+     * @param max_entries Maximum entries the array can hold
+     * @return Number of warnings written
      */
-    [[nodiscard]] std::vector<std::string> GetSystemWarnings() const noexcept;
+    [[nodiscard]] size_t GetSystemWarnings(const char* out_warnings[], size_t max_entries) const noexcept;
 
     //**************************************************************************//
     //**                  COMPONENT ACCESS                                    **//
@@ -306,7 +314,7 @@ public:
      * @brief Get system version information
      * @return System version string
      */
-    [[nodiscard]] std::string GetSystemVersion() const noexcept;
+    [[nodiscard]] const char* GetSystemVersion() const noexcept;
 
 private:
     //**************************************************************************//
@@ -390,7 +398,7 @@ private:
      * @brief Add warning message to system warnings
      * @param warning Warning message to add
      */
-    void AddSystemWarning(const std::string& warning) noexcept;
+    void AddSystemWarning(const char* warning) noexcept;
 
     //**************************************************************************//
     //**                  PRIVATE MEMBER VARIABLES                            **//
@@ -410,10 +418,15 @@ private:
     std::atomic<bool> leds_initialized_;
     std::atomic<bool> temp_initialized_;
     
-    // System diagnostics
+    // System diagnostics (fixed-size, no heap allocation)
     mutable VortexSystemDiagnostics diagnostics_;
-    mutable std::vector<std::string> system_warnings_;
-    mutable std::vector<std::string> failed_components_;
+
+    static constexpr size_t kMaxWarnings = 8;
+    static constexpr size_t kMaxFailedComponents = 8;
+    mutable const char* system_warnings_[kMaxWarnings]{};
+    mutable size_t system_warnings_count_{0};
+    mutable const char* failed_components_[kMaxFailedComponents]{};
+    mutable size_t failed_components_count_{0};
     
     // Component references (these are references to singletons, not owned)
     CommChannelsManager& comms_ref_;
@@ -440,6 +453,6 @@ private:
  * @brief Global access macro for Vortex API with initialization check
  * @note This ensures initialization before access
  */
-#define VORTEX_API_INIT() (Vortex::GetInstance().EnsureInitialized() ? Vortex::GetInstance() : throw std::runtime_error("Vortex API initialization failed"))
+#define VORTEX_API_INIT() (Vortex::GetInstance().EnsureInitialized(), Vortex::GetInstance())
 
 #endif // VORTEX_API_H_ 

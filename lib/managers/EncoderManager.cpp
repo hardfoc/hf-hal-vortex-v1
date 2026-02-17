@@ -121,7 +121,7 @@ As5047uHandler* EncoderManager::GetAs5047uHandler(uint8_t deviceIndex) noexcept 
     return as5047u_handlers_[deviceIndex].get();
 }
 
-std::shared_ptr<AS5047U> EncoderManager::GetAs5047uDriver(uint8_t deviceIndex) noexcept {
+AS5047U* EncoderManager::GetAs5047uDriver(uint8_t deviceIndex) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (deviceIndex >= MAX_ENCODER_DEVICES || !device_active_[deviceIndex] || !as5047u_handlers_[deviceIndex]) {

@@ -121,10 +121,11 @@ public:
     /**
      * @brief Get access to the underlying AS5047U driver by device index.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
-     * @return Shared pointer to AS5047U driver, nullptr if invalid/not ready
+     * @return Pointer to AS5047U driver, nullptr if invalid/not ready
      * @note Returns nullptr if deviceIndex is invalid, device not active/initialized, or driver unavailable
+     * @note Caller must not delete the returned pointer; lifetime is owned by the handler.
      */
-    std::shared_ptr<AS5047U> GetAs5047uDriver(uint8_t deviceIndex = ONBOARD_ENCODER_INDEX) noexcept;
+    AS5047U* GetAs5047uDriver(uint8_t deviceIndex = ONBOARD_ENCODER_INDEX) noexcept;
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//

@@ -12,6 +12,9 @@
 
 #include "Vortex.h"
 
+#include <array>
+#include <cstring>
+
 // Include all component handler headers
 #include "managers/CommChannelsManager.h"
 #include "managers/GpioManager.h"
@@ -51,8 +54,10 @@ Vortex::Vortex() noexcept
       leds_initialized_(false),
       temp_initialized_(false),
       diagnostics_(),
-      system_warnings_(),
-      failed_components_(),
+      system_warnings_{},
+      system_warnings_count_(0),
+      failed_components_{},
+      failed_components_count_(0),
       // Initialize references to singletons (these are references, not owned)
       comms_ref_(CommChannelsManager::GetInstance()),
       gpio_ref_(GpioManager::GetInstance()),
@@ -119,13 +124,22 @@ bool Vortex::EnsureInitialized() noexcept {
         Logger::GetInstance().Error("Vortex", "Vortex API initialization failed");
         
         // Log failed components
-        if (!failed_components_.empty()) {
-            std::string failed_list;
-            for (const auto& component : failed_components_) {
-                if (!failed_list.empty()) failed_list += ", ";
-                failed_list += component;
+        if (failed_components_count_ > 0) {
+            char failed_list[256] = {};
+            size_t pos = 0;
+            for (size_t i = 0; i < failed_components_count_; ++i) {
+                if (pos > 0 && pos + 2 < sizeof(failed_list)) {
+                    failed_list[pos++] = ',';
+                    failed_list[pos++] = ' ';
+                }
+                size_t len = std::strlen(failed_components_[i]);
+                if (pos + len < sizeof(failed_list) - 1) {
+                    std::memcpy(failed_list + pos, failed_components_[i], len);
+                    pos += len;
+                }
             }
-            Logger::GetInstance().Error("Vortex", "Failed components: %s", failed_list.c_str());
+            failed_list[pos] = '\0';
+            Logger::GetInstance().Error("Vortex", "Failed components: %s", failed_list);
         }
     }
     
@@ -145,25 +159,33 @@ bool Vortex::GetSystemDiagnostics(VortexSystemDiagnostics& diagnostics) const no
     return true;
 }
 
-std::vector<bool> Vortex::GetComponentInitializationStatus() const noexcept {
-    return {
-        comms_initialized_,
-        gpio_initialized_,
-        motors_initialized_,
-        adc_initialized_,
-        imu_initialized_,
-        encoders_initialized_,
-        leds_initialized_,
-        temp_initialized_
-    };
+std::array<bool, 8> Vortex::GetComponentInitializationStatus() const noexcept {
+    return {{
+        comms_initialized_.load(),
+        gpio_initialized_.load(),
+        motors_initialized_.load(),
+        adc_initialized_.load(),
+        imu_initialized_.load(),
+        encoders_initialized_.load(),
+        leds_initialized_.load(),
+        temp_initialized_.load()
+    }};
 }
 
-std::vector<std::string> Vortex::GetFailedComponents() const noexcept {
-    return failed_components_;
+size_t Vortex::GetFailedComponents(const char* out_names[], size_t max_entries) const noexcept {
+    size_t count = (failed_components_count_ < max_entries) ? failed_components_count_ : max_entries;
+    for (size_t i = 0; i < count; ++i) {
+        out_names[i] = failed_components_[i];
+    }
+    return count;
 }
 
-std::vector<std::string> Vortex::GetSystemWarnings() const noexcept {
-    return system_warnings_;
+size_t Vortex::GetSystemWarnings(const char* out_warnings[], size_t max_entries) const noexcept {
+    size_t count = (system_warnings_count_ < max_entries) ? system_warnings_count_ : max_entries;
+    for (size_t i = 0; i < count; ++i) {
+        out_warnings[i] = system_warnings_[i];
+    }
+    return count;
 }
 
 //==============================================================================
@@ -237,7 +259,7 @@ bool Vortex::PerformHealthCheck() noexcept {
     return overall_healthy;
 }
 
-std::string Vortex::GetSystemVersion() const noexcept {
+const char* Vortex::GetSystemVersion() const noexcept {
     return "Vortex API v1.0.0 - HardFOC Platform";
 }
 
@@ -310,7 +332,8 @@ bool Vortex::InitializeComms() noexcept {
         Logger::GetInstance().Info("Vortex", "Communication channels initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "Communication channels initialization failed");
-        failed_components_.push_back("CommChannelsManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "CommChannelsManager";
     }
     
     return success;
@@ -326,7 +349,8 @@ bool Vortex::InitializeGpio() noexcept {
         Logger::GetInstance().Info("Vortex", "GPIO management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "GPIO management initialization failed");
-        failed_components_.push_back("GpioManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "GpioManager";
     }
     
     return success;
@@ -342,7 +366,8 @@ bool Vortex::InitializeMotors() noexcept {
         Logger::GetInstance().Info("Vortex", "Motor controllers initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "Motor controllers initialization failed");
-        failed_components_.push_back("MotorController");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "MotorController";
     }
     
     return success;
@@ -358,7 +383,8 @@ bool Vortex::InitializeAdc() noexcept {
         Logger::GetInstance().LogInfo("ADC management initialized successfully");
     } else {
         Logger::GetInstance().LogError("ADC management initialization failed");
-        failed_components_.push_back("AdcManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "AdcManager";
     }
     
     return success;
@@ -374,7 +400,8 @@ bool Vortex::InitializeImu() noexcept {
         Logger::GetInstance().LogInfo("IMU management initialized successfully");
     } else {
         Logger::GetInstance().LogError("IMU management initialization failed");
-        failed_components_.push_back("ImuManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "ImuManager";
     }
     
     return success;
@@ -390,7 +417,8 @@ bool Vortex::InitializeEncoders() noexcept {
         Logger::GetInstance().LogInfo("Encoder management initialized successfully");
     } else {
         Logger::GetInstance().LogError("Encoder management initialization failed");
-        failed_components_.push_back("EncoderManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "EncoderManager";
     }
     
     return success;
@@ -406,7 +434,8 @@ bool Vortex::InitializeLeds() noexcept {
         Logger::GetInstance().LogInfo("LED management initialized successfully");
     } else {
         Logger::GetInstance().LogError("LED management initialization failed");
-        failed_components_.push_back("LedManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "LedManager";
     }
     
     return success;
@@ -422,7 +451,8 @@ bool Vortex::InitializeTemperature() noexcept {
         Logger::GetInstance().LogInfo("Temperature management initialized successfully");
     } else {
         Logger::GetInstance().LogError("Temperature management initialization failed");
-        failed_components_.push_back("TemperatureManager");
+        if (failed_components_count_ < kMaxFailedComponents)
+            failed_components_[failed_components_count_++] = "TemperatureManager";
     }
     
     return success;
@@ -465,13 +495,21 @@ void Vortex::UpdateSystemDiagnostics() noexcept {
     diagnostics_.system_healthy = (diagnostics_.failed_components == 0) && initialized_;
     
     // Update failed components list
-    diagnostics_.failed_components_list = failed_components_;
+    diagnostics_.failed_components_list_count = failed_components_count_;
+    for (size_t i = 0; i < failed_components_count_ && i < VortexSystemDiagnostics::kMaxDiagEntries; ++i) {
+        diagnostics_.failed_components_list[i] = failed_components_[i];
+    }
     
     // Update warnings
-    diagnostics_.warnings = system_warnings_;
+    diagnostics_.warnings_count = system_warnings_count_;
+    for (size_t i = 0; i < system_warnings_count_ && i < VortexSystemDiagnostics::kMaxDiagEntries; ++i) {
+        diagnostics_.warnings[i] = system_warnings_[i];
+    }
 }
 
-void Vortex::AddSystemWarning(const std::string& warning) noexcept {
-    system_warnings_.push_back(warning);
-    Logger::GetInstance().LogWarning("Vortex API Warning: %s", warning.c_str());
+void Vortex::AddSystemWarning(const char* warning) noexcept {
+    if (system_warnings_count_ < kMaxWarnings) {
+        system_warnings_[system_warnings_count_++] = warning;
+    }
+    Logger::GetInstance().Warn("Vortex", "Vortex API Warning: %s", warning);
 } 
