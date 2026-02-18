@@ -238,9 +238,9 @@ public:
     
     /**
      * @brief Ensure the ADC manager system is initialized.
-     * @return hf_adc_err_t::ADC_SUCCESS if initialization successful, error code otherwise
+     * @return true if initialization successful, false otherwise
      */
-    [[nodiscard]] hf_adc_err_t EnsureInitialized() noexcept;
+    [[nodiscard]] bool EnsureInitialized() noexcept;
     
     /**
      * @brief Shutdown the ADC manager system.

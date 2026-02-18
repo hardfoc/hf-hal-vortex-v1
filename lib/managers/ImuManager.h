@@ -72,6 +72,57 @@ class BaseGpio;
  * @note This manager follows the same architectural excellence as MotorController
  *       for consistent device management across the HardFOC system.
  */
+
+//==============================================================================
+// IMU ERROR CODES
+//==============================================================================
+
+/**
+ * @brief IMU manager error codes for consistent error reporting.
+ *
+ * Manager-layer errors for BNO08x device lifecycle and data operations.
+ * Driver-level BNO08x errors are handled internally by the handler.
+ */
+enum class ImuError : uint8_t {
+    SUCCESS = 0,
+    NOT_INITIALIZED,
+    INITIALIZATION_FAILED,
+    DEVICE_ALREADY_EXISTS,
+    DEVICE_NOT_FOUND,
+    INVALID_DEVICE_INDEX,
+    CANNOT_DELETE_ONBOARD,
+    INVALID_I2C_ADDRESS,
+    DEPENDENCY_NOT_READY,
+    COMMUNICATION_FAILED,
+    I2C_DEVICE_CREATION_FAILED,
+    HANDLER_CREATION_FAILED,
+    INTERRUPT_ERROR,
+    ALREADY_DEINITIALIZED,
+    MUTEX_LOCK_FAILED
+};
+
+/** @brief Convert ImuError to string for debugging. */
+constexpr const char* ImuErrorToString(ImuError error) noexcept {
+    switch (error) {
+        case ImuError::SUCCESS:                    return "Success";
+        case ImuError::NOT_INITIALIZED:            return "Not initialized";
+        case ImuError::INITIALIZATION_FAILED:      return "Initialization failed";
+        case ImuError::DEVICE_ALREADY_EXISTS:      return "Device already exists";
+        case ImuError::DEVICE_NOT_FOUND:           return "Device not found";
+        case ImuError::INVALID_DEVICE_INDEX:       return "Invalid device index";
+        case ImuError::CANNOT_DELETE_ONBOARD:      return "Cannot delete onboard device";
+        case ImuError::INVALID_I2C_ADDRESS:        return "Invalid I2C address";
+        case ImuError::DEPENDENCY_NOT_READY:       return "Dependency not ready";
+        case ImuError::COMMUNICATION_FAILED:       return "Communication failed";
+        case ImuError::I2C_DEVICE_CREATION_FAILED: return "I2C device creation failed";
+        case ImuError::HANDLER_CREATION_FAILED:    return "Handler creation failed";
+        case ImuError::INTERRUPT_ERROR:            return "Interrupt configuration error";
+        case ImuError::ALREADY_DEINITIALIZED:      return "Already deinitialized";
+        case ImuError::MUTEX_LOCK_FAILED:          return "Mutex lock failed";
+        default:                                   return "Unknown error";
+    }
+}
+
 class ImuManager {
 public:
     static constexpr uint8_t MAX_IMU_DEVICES = 4;           ///< Maximum supported IMU devices

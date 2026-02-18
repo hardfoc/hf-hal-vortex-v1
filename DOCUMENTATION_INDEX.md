@@ -248,40 +248,61 @@ uint16_t angle = encoder.ReadAngle(0);
 
 ## 🧪 Testing and Validation
 
-### Test Suite Documentation
-- **[🧪 Complete Test Suite Guide](tests/README.md)** - Comprehensive testing documentation
-- **Component Handler Tests** - Manager class validation and integration testing
-- **Driver Handler Tests** - Hardware driver validation and performance testing  
-- **Integration Tests** - System-level testing and interaction validation
-- **Hardware-in-Loop Tests** - Real hardware validation and stress testing
+### ESP32 On-Target Test Suite
 
-### Test Categories
+All testing has been consolidated into the `examples/esp32/` on-target test framework that runs directly on ESP32-C6 hardware. This replaces the previous host-based `tests/` directory.
 
-#### Component Handler Tests
-```cpp
-// Example test structure
-class GpioManagerTest : public ::testing::Test {
-    void SetUp() override {
-        gpio_manager_ = &GpioManager::GetInstance();
-        gpio_manager_->EnsureInitialized();
-    }
-    
-    void TearDown() override {
-        gpio_manager_->Deinitialize();
-    }
-    
-private:
-    GpioManager* gpio_manager_;
-};
+- **[📦 ESP32 Test Suite](examples/esp32/README.md)** - On-target test framework and build instructions
+- **[🔧 Test Framework Header](examples/esp32/main/TestFramework.h)** - Lightweight `TEST_ASSERT` macros for embedded
+- **[🚀 API Integration Tests](examples/esp32/main/vortex_api_test.cpp)** - Full Vortex API smoke tests
+
+### Running Tests
+
+```bash
+# Build and flash the on-target test suite
+cd examples/esp32
+./scripts/build_app.sh --app-type example --build-type debug \
+    --app-source-file main/vortex_api_test.cpp --target esp32c6
 ```
 
-#### Performance Benchmarks
+### Test Coverage
+- **Manager Initialization**: All 8 managers verify `EnsureInitialized()` → `true`
+- **GPIO Operations**: Pin set/get, batch read/write validation
+- **ADC Readings**: Channel voltage reads, diagnostics dump
+- **Motor Controller**: Handler enumeration, basic register access
+- **Encoder/IMU/LED/Temp**: Instance and health checks
+
+### Performance Benchmarks
 - **GPIO Performance**: Pin toggle rates, batch operation timing
 - **ADC Performance**: Sample rates, multi-channel read timing
 - **Communication Performance**: SPI/I2C/UART throughput and latency
 - **Motor Control Performance**: Acceleration rates, positioning accuracy
 
-## 🛠️ Development and Contributing
+## � Continuous Integration
+
+### CI Pipelines (`.github/workflows/`)
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **🔨 ESP32 Build CI** | push/PR → main | Builds `examples/esp32` on-target test suite |
+| **🧹 C++ Lint** | push/PR → main | clang-format checks against `_config/.clang-format` |
+| **🔍 C++ Analysis** | push/PR → main | clang-tidy static analysis via `_config/.clang-tidy` |
+| **📝 Markdown Lint** | push/PR → main | markdownlint via `_config/.markdownlint.json` |
+| **📋 YAML Lint** | push/PR → main | yamllint via `_config/.yamllint` |
+| **🔗 Docs Link Check** | push/PR → main | lychee link validation via `_config/lychee.toml` |
+| **📖 Docs Publish** | push → main/release/tags | Doxygen + Jekyll → GitHub Pages |
+| **📦 Release** | tag `v*` | Automated release packaging |
+
+### Documentation Generation
+
+Doxygen API docs and Jekyll site are configured under `_config/`:
+- **[Doxyfile](_config/Doxyfile)** — Generates C++ API docs for `lib/api/` and `lib/managers/`
+- **[Jekyll _config.yml](_config/_config.yml)** — Just-the-docs theme with dark mode
+- **[Layouts](_config/_layouts/)** — Custom layouts: minimal, print, workflow
+- **[Includes](_config/_includes/)** — Custom head/footer HTML fragments
+- **[doxygen-awesome-css](_config/doxygen-extensions/doxygen-awesome-css/)** — Doxygen theme submodule
+
+## �🛠️ Development and Contributing
 
 ### Development Guidelines
 - **[📝 Coding Standards](docs/development/CODING_STANDARDS.md)** - Code style and conventions
@@ -392,6 +413,6 @@ This documentation index covers 100% of the HardFOC HAL system. Each component, 
 
 **[⭐ Star the Project](https://github.com/hardfoc/hf-hal)** • **[🐛 Report Issues](https://github.com/hardfoc/hf-hal/issues)** • **[💡 Request Features](https://github.com/hardfoc/hf-hal/issues)**
 
-*Last updated: January 2025 | Version 2.0 | Status: Complete*
+*Last updated: June 2025 | Version 3.0 | Status: Complete*
 
 </div>

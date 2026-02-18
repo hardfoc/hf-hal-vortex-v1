@@ -9,8 +9,8 @@
  */
 
 #include "LedManager.h"
-#include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_cpp.hpp"
-#include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/include/ws2812_effects.hpp"
+#include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/inc/ws2812_cpp.hpp"
+#include "core/hf-core-drivers/external/hf-ws2812-rmt-driver/inc/ws2812_effects.hpp"
 #include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/RtosMutex.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"

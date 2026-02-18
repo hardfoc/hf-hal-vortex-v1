@@ -374,15 +374,15 @@ bool Vortex::InitializeMotors() noexcept {
 }
 
 bool Vortex::InitializeAdc() noexcept {
-    Logger::GetInstance().LogInfo("Initializing ADC management");
+    Logger::GetInstance().Info("Vortex", "Initializing ADC management");
     
     bool success = adc_ref_.EnsureInitialized();
     adc_initialized_ = success;
     
     if (success) {
-        Logger::GetInstance().LogInfo("ADC management initialized successfully");
+        Logger::GetInstance().Info("Vortex", "ADC management initialized successfully");
     } else {
-        Logger::GetInstance().LogError("ADC management initialization failed");
+        Logger::GetInstance().Error("Vortex", "ADC management initialization failed");
         if (failed_components_count_ < kMaxFailedComponents)
             failed_components_[failed_components_count_++] = "AdcManager";
     }
@@ -391,15 +391,15 @@ bool Vortex::InitializeAdc() noexcept {
 }
 
 bool Vortex::InitializeImu() noexcept {
-    Logger::GetInstance().LogInfo("Initializing IMU management");
+    Logger::GetInstance().Info("Vortex", "Initializing IMU management");
     
     bool success = imu_ref_.EnsureInitialized();
     imu_initialized_ = success;
     
     if (success) {
-        Logger::GetInstance().LogInfo("IMU management initialized successfully");
+        Logger::GetInstance().Info("Vortex", "IMU management initialized successfully");
     } else {
-        Logger::GetInstance().LogError("IMU management initialization failed");
+        Logger::GetInstance().Error("Vortex", "IMU management initialization failed");
         if (failed_components_count_ < kMaxFailedComponents)
             failed_components_[failed_components_count_++] = "ImuManager";
     }
@@ -408,15 +408,15 @@ bool Vortex::InitializeImu() noexcept {
 }
 
 bool Vortex::InitializeEncoders() noexcept {
-    Logger::GetInstance().LogInfo("Initializing encoder management");
+    Logger::GetInstance().Info("Vortex", "Initializing encoder management");
     
     bool success = encoders_ref_.EnsureInitialized();
     encoders_initialized_ = success;
     
     if (success) {
-        Logger::GetInstance().LogInfo("Encoder management initialized successfully");
+        Logger::GetInstance().Info("Vortex", "Encoder management initialized successfully");
     } else {
-        Logger::GetInstance().LogError("Encoder management initialization failed");
+        Logger::GetInstance().Error("Vortex", "Encoder management initialization failed");
         if (failed_components_count_ < kMaxFailedComponents)
             failed_components_[failed_components_count_++] = "EncoderManager";
     }
@@ -425,15 +425,15 @@ bool Vortex::InitializeEncoders() noexcept {
 }
 
 bool Vortex::InitializeLeds() noexcept {
-    Logger::GetInstance().LogInfo("Initializing LED management");
+    Logger::GetInstance().Info("Vortex", "Initializing LED management");
     
     bool success = leds_ref_.EnsureInitialized();
     leds_initialized_ = success;
     
     if (success) {
-        Logger::GetInstance().LogInfo("LED management initialized successfully");
+        Logger::GetInstance().Info("Vortex", "LED management initialized successfully");
     } else {
-        Logger::GetInstance().LogError("LED management initialization failed");
+        Logger::GetInstance().Error("Vortex", "LED management initialization failed");
         if (failed_components_count_ < kMaxFailedComponents)
             failed_components_[failed_components_count_++] = "LedManager";
     }
@@ -442,15 +442,15 @@ bool Vortex::InitializeLeds() noexcept {
 }
 
 bool Vortex::InitializeTemperature() noexcept {
-    Logger::GetInstance().LogInfo("Initializing temperature management");
+    Logger::GetInstance().Info("Vortex", "Initializing temperature management");
     
     bool success = temp_ref_.EnsureInitialized();
     temp_initialized_ = success;
     
     if (success) {
-        Logger::GetInstance().LogInfo("Temperature management initialized successfully");
+        Logger::GetInstance().Info("Vortex", "Temperature management initialized successfully");
     } else {
-        Logger::GetInstance().LogError("Temperature management initialization failed");
+        Logger::GetInstance().Error("Vortex", "Temperature management initialization failed");
         if (failed_components_count_ < kMaxFailedComponents)
             failed_components_[failed_components_count_++] = "TemperatureManager";
     }

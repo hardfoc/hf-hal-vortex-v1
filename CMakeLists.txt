@@ -11,9 +11,9 @@ set(HF_HAL_ROOT ${CMAKE_CURRENT_LIST_DIR})
 # SYSTEMATIC FILE COLLECTION - VORTEX API DEPENDENCY ANALYSIS
 #==============================================================================
 
-# Expose external drivers as components for header access
-list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/")
-list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ws2812-rmt-driver")
+# Expose external drivers as components for header access (if they exist in workspace)
+# list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/")
+# list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ws2812-rmt-driver")
 
 # Include the API directory for Vortex API component
 list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/api")
@@ -152,7 +152,7 @@ set(EXTERNAL_DRIVER_INCLUDE_DIRS
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc"
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc/register_mode"
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc/parameter_mode"
-    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ws2812-rmt-driver/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ws2812-rmt-driver/inc"
 )
 
 # Combine all include directories
@@ -174,52 +174,15 @@ idf_component_register(
     SRCS          ${HF_HAL_SRCS}
     INCLUDE_DIRS  ${HF_HAL_INC_DIRS}
     
-    # PUBLIC dependencies: anything the application must also link against
-    REQUIRES      
-        driver 
-        freertos 
-        hf-ws2812-rmt-driver 
+    # PRIV_REQUIRES: Minimal set of verified ESP-IDF 5.5 components
+    PRIV_REQUIRES
+        driver
+        freertos
         nvs_flash
         esp_timer
-        esp_system
-        esp_common
-        esp_rom
-        esp_hw_support
         hal
         soc
         log
-        esp_adc
-        esp_gpio
-        esp_i2c
-        esp_spi
-        esp_can
-        esp_uart
-        esp_pm
-        esp_wifi
-        esp_netif
-        esp_event
-        esp_partition
-        esp_ota
-        esp_http_client
-        esp_https_ota
-        esp_websocket_client
-        esp_http_server
-    
-    # PRIVATE dependencies: used only while building this library
-    PRIV_REQUIRES 
-        hal 
-        esp_timer 
-        esp_adc 
-        esp_driver_spi 
-        esp_driver_i2c 
-        esp_driver_uart 
-        esp_driver_gpio
-        esp_driver_can
-        esp_driver_pwm
-        esp_driver_pio
-        esp_driver_nvs
-        esp_driver_wifi
-        esp_driver_bluetooth
 )
 
 #==============================================================================

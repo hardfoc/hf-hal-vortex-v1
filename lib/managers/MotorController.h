@@ -43,6 +43,50 @@ struct Tmc9660ControlPins {
     BaseGpio& wake;     ///< WAKE pin (output) - wake from hibernation
 };
 
+//==============================================================================
+// MOTOR CONTROLLER ERROR CODES
+//==============================================================================
+
+/**
+ * @brief Motor controller manager error codes for consistent error reporting.
+ *
+ * Manager-layer errors for TMC9660 device lifecycle operations (create, delete,
+ * initialize). Driver-level TMC9660 errors are handled internally by the handler.
+ */
+enum class MotorError : uint8_t {
+    SUCCESS = 0,
+    NOT_INITIALIZED,
+    INITIALIZATION_FAILED,
+    DEVICE_ALREADY_EXISTS,
+    DEVICE_NOT_FOUND,
+    INVALID_DEVICE_INDEX,
+    CANNOT_DELETE_ONBOARD,
+    DEPENDENCY_NOT_READY,
+    COMMUNICATION_FAILED,
+    INVALID_PARAMETER,
+    HANDLER_CREATION_FAILED,
+    MUTEX_LOCK_FAILED
+};
+
+/** @brief Convert MotorError to string for debugging. */
+constexpr const char* MotorErrorToString(MotorError error) noexcept {
+    switch (error) {
+        case MotorError::SUCCESS:                 return "Success";
+        case MotorError::NOT_INITIALIZED:         return "Not initialized";
+        case MotorError::INITIALIZATION_FAILED:   return "Initialization failed";
+        case MotorError::DEVICE_ALREADY_EXISTS:   return "Device already exists";
+        case MotorError::DEVICE_NOT_FOUND:        return "Device not found";
+        case MotorError::INVALID_DEVICE_INDEX:    return "Invalid device index";
+        case MotorError::CANNOT_DELETE_ONBOARD:   return "Cannot delete onboard device";
+        case MotorError::DEPENDENCY_NOT_READY:    return "Dependency not ready";
+        case MotorError::COMMUNICATION_FAILED:    return "Communication failed";
+        case MotorError::INVALID_PARAMETER:       return "Invalid parameter";
+        case MotorError::HANDLER_CREATION_FAILED: return "Handler creation failed";
+        case MotorError::MUTEX_LOCK_FAILED:       return "Mutex lock failed";
+        default:                                  return "Unknown error";
+    }
+}
+
 class MotorController {
 public:
     static constexpr uint8_t MAX_TMC9660_DEVICES = 4;   ///< Maximum supported TMC9660 devices (board + external)

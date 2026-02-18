@@ -73,7 +73,7 @@ void as5047u_basic_example() {
     As5047uMeasurement measurement;
     if (handler.ReadMeasurement(measurement) == As5047uError::SUCCESS) {
         logger.Info("AS5047U", "Angle: %u LSB (%.2f°)\n", measurement.angle_compensated, 
-               As5047uHandler::LSBToDegrees(measurement.angle_compensated));
+               measurement.angle_compensated * 360.0 / 16384.0);
         logger.Info("AS5047U", "Velocity: %.2f RPM\n", measurement.velocity_rpm);
     }
 }
@@ -156,17 +156,13 @@ As5047uError GetConfiguration(As5047uConfig& config) noexcept;
 
 #### Utility Methods
 ```cpp
-// Conversion utilities
-static constexpr double LSBToDegrees(uint16_t angle_lsb) noexcept;
-static constexpr double LSBToRadians(uint16_t angle_lsb) noexcept;
-static constexpr uint16_t DegreesToLSB(double degrees) noexcept;
-static constexpr uint16_t RadiansToLSB(double radians) noexcept;
-
 // Information
 const char* GetDescription() const noexcept;
 As5047uError GetLastError() const noexcept;
 void DumpDiagnostics() const noexcept;
 static As5047uConfig GetDefaultConfig() noexcept;
+
+// Angle conversion (14-bit LSB to degrees): angle_lsb * 360.0 / 16384.0
 ```
 
 ## 🎯 Hardware Support
@@ -208,8 +204,8 @@ void basic_angle_example() {
     // Read angle measurements
     uint16_t angle;
     if (handler.ReadAngle(angle) == As5047uError::SUCCESS) {
-        double angle_degrees = As5047uHandler::LSBToDegrees(angle);
-        double angle_radians = As5047uHandler::LSBToRadians(angle);
+        double angle_degrees = angle * 360.0 / 16384.0;
+        double angle_radians = angle * 2.0 * M_PI / 16384.0;
         
         logger.Info("AS5047U", "Angle: %u LSB (%.2f°, %.4f rad)\n", 
                angle, angle_degrees, angle_radians);
@@ -243,7 +239,7 @@ void complete_measurement_example() {
         logger.Info("AS5047U", "  Raw angle: %u LSB\n", measurement.angle_raw);
         logger.Info("AS5047U", "  Compensated angle: %u LSB\n", measurement.angle_compensated);
         logger.Info("AS5047U", "  Angle degrees: %.2f°\n", 
-               As5047uHandler::LSBToDegrees(measurement.angle_compensated));
+               measurement.angle_compensated * 360.0 / 16384.0);
         logger.Info("AS5047U", "  Velocity LSB: %d\n", measurement.velocity_raw);
         logger.Info("AS5047U", "  Velocity deg/s: %.2f\n", measurement.velocity_deg_per_sec);
         logger.Info("AS5047U", "  Velocity rad/s: %.4f\n", measurement.velocity_rad_per_sec);
@@ -457,7 +453,7 @@ void continuous_monitoring() {
     for (int i = 0; i < 1000; i++) {
         As5047uMeasurement measurement;
         if (handler.ReadMeasurement(measurement) == As5047uError::SUCCESS) {
-            double angle_deg = As5047uHandler::LSBToDegrees(measurement.angle_compensated);
+            double angle_deg = measurement.angle_compensated * 360.0 / 16384.0;
             
             logger.Info("AS5047U", "Sample %d: Angle=%.2f°, Velocity=%.2f RPM, AGC=%u\n", 
                    i, angle_deg, measurement.velocity_rpm, measurement.agc_value);
@@ -546,7 +542,7 @@ void multi_sensor_integration() {
     for (size_t i = 0; i < handlers.size(); i++) {
         As5047uMeasurement measurement;
         if (handlers[i]->ReadMeasurement(measurement) == As5047uError::SUCCESS) {
-            double angle_deg = As5047uHandler::LSBToDegrees(measurement.angle_compensated);
+            double angle_deg = measurement.angle_compensated * 360.0 / 16384.0;
             logger.Info("AS5047U", "Sensor %zu: Angle=%.2f°, Velocity=%.2f RPM\n", 
                    i, angle_deg, measurement.velocity_rpm);
         }

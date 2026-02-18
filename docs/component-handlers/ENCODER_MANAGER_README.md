@@ -79,7 +79,7 @@ void encoder_basic_example() {
     if (handler) {
         As5047uMeasurement measurement;
         if (handler->ReadMeasurement(measurement) == As5047uError::SUCCESS) {
-            logger.Info("ENCODER", "Complete measurement - Angle: %.2f°, Velocity: %.2f RPM", As5047uHandler::LSBToDegrees(measurement.angle_compensated), 
+            logger.Info("ENCODER", "Complete measurement - Angle: %.2f°, Velocity: %.2f RPM", measurement.angle_compensated * 360.0 / 16384.0, 
             measurement.velocity_rpm);
         }
     }

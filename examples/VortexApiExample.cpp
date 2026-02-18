@@ -62,17 +62,17 @@ void PrintSystemDiagnostics(const VortexSystemDiagnostics& diagnostics) {
     printf("  LED Management: %s\n", diagnostics.leds_initialized ? "OK" : "FAIL");
     printf("  Temperature Management: %s\n", diagnostics.temp_initialized ? "OK" : "FAIL");
     
-    if (!diagnostics.failed_components_list.empty()) {
+    if (diagnostics.failed_components_list_count > 0) {
         printf("\nFailed Components:\n");
-        for (const auto& component : diagnostics.failed_components_list) {
-            printf("  - %s\n", component.c_str());
+        for (size_t i = 0; i < diagnostics.failed_components_list_count; ++i) {
+            printf("  - %s\n", diagnostics.failed_components_list[i]);
         }
     }
     
-    if (!diagnostics.warnings.empty()) {
+    if (diagnostics.warnings_count > 0) {
         printf("\nSystem Warnings:\n");
-        for (const auto& warning : diagnostics.warnings) {
-            printf("  - %s\n", warning.c_str());
+        for (size_t i = 0; i < diagnostics.warnings_count; ++i) {
+            printf("  - %s\n", diagnostics.warnings[i]);
         }
     }
     
@@ -123,13 +123,13 @@ void DemonstrateGpio(Vortex& vortex) {
     auto& gpio = vortex.gpio;
     
     // Try to access some GPIO pins
-    bool led_pin_available = gpio.IsPinAvailable("LED_STATUS");
+    bool led_pin_available = gpio.Contains("LED_STATUS");
     printf("LED Status Pin Available: %s\n", led_pin_available ? "Yes" : "No");
     
-    bool motor_enable_pin_available = gpio.IsPinAvailable("MOTOR_ENABLE");
+    bool motor_enable_pin_available = gpio.Contains("MOTOR_ENABLE");
     printf("Motor Enable Pin Available: %s\n", motor_enable_pin_available ? "Yes" : "No");
     
-    bool imu_interrupt_pin_available = gpio.IsPinAvailable("IMU_INTERRUPT");
+    bool imu_interrupt_pin_available = gpio.Contains("IMU_INTERRUPT");
     printf("IMU Interrupt Pin Available: %s\n", imu_interrupt_pin_available ? "Yes" : "No");
     
     printf("=== End GPIO Management Demo ===\n\n");
@@ -148,13 +148,10 @@ void DemonstrateMotors(Vortex& vortex) {
     if (handler) {
         printf("✓ Onboard TMC9660 handler available\n");
         
-        // Get the underlying driver
-        auto driver = motors.driver(0);
-        if (driver) {
-            printf("✓ TMC9660 driver available\n");
-        } else {
-            printf("✗ TMC9660 driver not available\n");
-        }
+        // Access the underlying driver via visitor pattern
+        motors.visitDriver([](auto& driver) {
+            printf("✓ TMC9660 driver available (via visitDriver)\n");
+        }, 0);
     } else {
         printf("✗ Onboard TMC9660 handler not available\n");
     }
@@ -176,19 +173,19 @@ void DemonstrateAdc(Vortex& vortex) {
     
     // Try to read from some ADC channels
     float voltage;
-    if (adc.ReadVoltage("MOTOR_CURRENT", voltage) == hf_adc_err_t::HF_ADC_SUCCESS) {
+    if (adc.ReadChannelV("MOTOR_CURRENT", voltage) == hf_adc_err_t::ADC_SUCCESS) {
         printf("✓ Motor Current ADC: %.3f V\n", voltage);
     } else {
         printf("✗ Motor Current ADC read failed\n");
     }
     
-    if (adc.ReadVoltage("MOTOR_VOLTAGE", voltage) == hf_adc_err_t::HF_ADC_SUCCESS) {
+    if (adc.ReadChannelV("MOTOR_VOLTAGE", voltage) == hf_adc_err_t::ADC_SUCCESS) {
         printf("✓ Motor Voltage ADC: %.3f V\n", voltage);
     } else {
         printf("✗ Motor Voltage ADC read failed\n");
     }
     
-    if (adc.ReadVoltage("TEMP_SENSOR", voltage) == hf_adc_err_t::HF_ADC_SUCCESS) {
+    if (adc.ReadChannelV("TEMP_SENSOR", voltage) == hf_adc_err_t::ADC_SUCCESS) {
         printf("✓ Temperature Sensor ADC: %.3f V\n", voltage);
     } else {
         printf("✗ Temperature Sensor ADC read failed\n");
@@ -310,19 +307,19 @@ void DemonstrateTemperature(Vortex& vortex) {
     // Try to read from different temperature sensors
     float temperature;
     
-    if (temp.ReadTemperatureCelsius("ESP32_INTERNAL", temperature) == hf_temp_err_t::HF_TEMP_SUCCESS) {
+    if (temp.ReadTemperatureCelsius("ESP32_INTERNAL", &temperature) == hf_temp_err_t::TEMP_SUCCESS) {
         printf("✓ ESP32 Internal Temperature: %.2f°C\n", temperature);
     } else {
         printf("✗ ESP32 Internal Temperature read failed\n");
     }
     
-    if (temp.ReadTemperatureCelsius("MOTOR_TEMP", temperature) == hf_temp_err_t::HF_TEMP_SUCCESS) {
+    if (temp.ReadTemperatureCelsius("MOTOR_TEMP", &temperature) == hf_temp_err_t::TEMP_SUCCESS) {
         printf("✓ Motor Temperature: %.2f°C\n", temperature);
     } else {
         printf("✗ Motor Temperature read failed\n");
     }
     
-    if (temp.ReadTemperatureCelsius("NTC_THERMISTOR", temperature) == hf_temp_err_t::HF_TEMP_SUCCESS) {
+    if (temp.ReadTemperatureCelsius("NTC_THERMISTOR", &temperature) == hf_temp_err_t::TEMP_SUCCESS) {
         printf("✓ NTC Thermistor Temperature: %.2f°C\n", temperature);
     } else {
         printf("✗ NTC Thermistor Temperature read failed\n");
@@ -382,7 +379,7 @@ extern "C" void app_main(void) {
         vortex.DumpSystemStatistics();
         
         // Show system version
-        printf("System Version: %s\n", vortex.GetSystemVersion().c_str());
+        printf("System Version: %s\n", vortex.GetSystemVersion());
         
         // Continuous operation demo
         printf("\n=== Continuous Operation Demo ===\n");
@@ -411,19 +408,21 @@ extern "C" void app_main(void) {
         printf("✗ Vortex API initialization failed!\n");
         
         // Show what failed
-        auto failed_components = vortex.GetFailedComponents();
-        if (!failed_components.empty()) {
+        const char* failed_names[8];
+        size_t failed_count = vortex.GetFailedComponents(failed_names, 8);
+        if (failed_count > 0) {
             printf("Failed components:\n");
-            for (const auto& component : failed_components) {
-                printf("  - %s\n", component.c_str());
+            for (size_t i = 0; i < failed_count; ++i) {
+                printf("  - %s\n", failed_names[i]);
             }
         }
         
-        auto warnings = vortex.GetSystemWarnings();
-        if (!warnings.empty()) {
+        const char* warning_strs[8];
+        size_t warn_count = vortex.GetSystemWarnings(warning_strs, 8);
+        if (warn_count > 0) {
             printf("System warnings:\n");
-            for (const auto& warning : warnings) {
-                printf("  - %s\n", warning.c_str());
+            for (size_t i = 0; i < warn_count; ++i) {
+                printf("  - %s\n", warning_strs[i]);
             }
         }
     }

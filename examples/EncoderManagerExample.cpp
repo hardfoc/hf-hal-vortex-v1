@@ -61,7 +61,7 @@ void BasicEncoderExample() {
     As5047uError result = encoder_mgr.ReadAngle(0, angle_lsb);
     
     if (result == As5047uError::SUCCESS) {
-        double angle_deg = As5047uHandler::LSBToDegrees(angle_lsb);
+        double angle_deg = static_cast<double>(angle_lsb) * (360.0 / 16384.0);
         Logger::GetInstance().Info("EncoderExample", "  Raw Angle: %u LSB", angle_lsb);
         Logger::GetInstance().Info("EncoderExample", "  Angle: %.2f°", angle_deg);
         
@@ -175,7 +175,7 @@ void HighLevelOperationsExample() {
     
     // Set zero position using manager convenience method
     Logger::GetInstance().Info("EncoderExample", "Setting current position as zero reference...");
-    uint16_t current_lsb = As5047uHandler::DegreesToLSB(angle_degrees);
+    uint16_t current_lsb = static_cast<uint16_t>(angle_degrees * (16384.0 / 360.0));
     result = encoder_mgr.SetZeroPosition(0, current_lsb);
     if (result == As5047uError::SUCCESS) {
         Logger::GetInstance().Info("EncoderExample", "Zero position set successfully");
@@ -196,7 +196,7 @@ void HighLevelOperationsExample() {
     Logger::GetInstance().Info("EncoderExample", "All Active Encoders:");
     for (size_t i = 0; i < device_indices.size(); ++i) {
         if (errors[i] == As5047uError::SUCCESS) {
-            double angle_deg = As5047uHandler::LSBToDegrees(angles[i]);
+            double angle_deg = static_cast<double>(angles[i]) * (360.0 / 16384.0);
             Logger::GetInstance().Info("EncoderExample", "  Device %d: %.2f° (%u LSB)", 
                 static_cast<int>(device_indices[i]), angle_deg, angles[i]);
         } else {

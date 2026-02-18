@@ -66,10 +66,10 @@ AdcManager& AdcManager::GetInstance() noexcept {
     return *g_adc_manager_instance;
 }
 
-hf_adc_err_t AdcManager::EnsureInitialized() noexcept {
+bool AdcManager::EnsureInitialized() noexcept {
     // Quick check without lock first
     if (is_initialized_.load(std::memory_order_acquire)) {
-        return hf_adc_err_t::ADC_SUCCESS;
+        return true;
     }
     
     // Only lock if we need to initialize
@@ -77,10 +77,10 @@ hf_adc_err_t AdcManager::EnsureInitialized() noexcept {
     
     // Double-check after acquiring lock
     if (is_initialized_.load(std::memory_order_acquire)) {
-        return hf_adc_err_t::ADC_SUCCESS;
+        return true;
     }
     
-    return Initialize();
+    return Initialize() == hf_adc_err_t::ADC_SUCCESS;
 }
 
 hf_adc_err_t AdcManager::Shutdown() noexcept {

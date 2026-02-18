@@ -53,18 +53,18 @@ TemperatureManager::~TemperatureManager() noexcept {
 // LIFECYCLE MANAGEMENT
 //==============================================================================
 
-hf_temp_err_t TemperatureManager::EnsureInitialized() noexcept {
+bool TemperatureManager::EnsureInitialized() noexcept {
     if (initialized_.load()) {
-        return TEMP_SUCCESS;
+        return true;
     }
     
     MutexLockGuard lock(mutex_);
     
     if (initialized_.load()) {
-        return TEMP_SUCCESS;
+        return true;
     }
     
-    return Initialize();
+    return Initialize() == TEMP_SUCCESS;
 }
 
 hf_temp_err_t TemperatureManager::Shutdown() noexcept {
@@ -387,7 +387,7 @@ hf_temp_err_t TemperatureManager::RegisterNtcTemperatureSensor(std::string_view 
     
     // Get ADC interface from AdcManager
     AdcManager& adc_manager = AdcManager::GetInstance();
-    if (adc_manager.EnsureInitialized() != hf_adc_err_t::ADC_SUCCESS) {
+    if (!adc_manager.EnsureInitialized()) {
         Logger::GetInstance().Error(TAG, "Failed to initialize ADC manager");
         return TEMP_ERR_RESOURCE_UNAVAILABLE;
     }

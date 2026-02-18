@@ -57,43 +57,10 @@ targets:
 
 # ─── Dependencies ────────────────────────────────────────────────────────────
 dependencies:
-  # ESP-IDF Framework (required for all ESP32 development)
+  # ESP-IDF Framework (required minimum version)
+  # Note: All ESP-IDF core components (freertos, driver, etc.) are built-in
+  # and bundled with ESP-IDF, so we only declare the framework itself.
   idf: ">=5.0.0"
-  
-  # ESP-IDF Core Components (public dependencies)
-  driver: "*"           # ESP32 hardware drivers
-  freertos: "*"         # Real-time operating system
-  nvs_flash: "*"        # Non-volatile storage
-  esp_timer: "*"        # High-resolution timers
-  esp_system: "*"       # System utilities
-  esp_common: "*"       # Common ESP32 utilities
-  esp_rom: "*"          # ROM functions
-  esp_hw_support: "*"   # Hardware support
-  hal: "*"              # Hardware abstraction layer
-  soc: "*"              # System-on-chip support
-  log: "*"              # Logging system
-  
-  # ESP-IDF Communication Drivers (public dependencies)
-  esp_adc: "*"          # ADC functionality
-  esp_gpio: "*"         # GPIO control
-  esp_i2c: "*"          # I2C communication
-  esp_spi: "*"          # SPI communication
-  esp_can: "*"          # CAN communication
-  esp_uart: "*"         # UART communication
-  esp_pm: "*"           # Power management
-  esp_pwm: "*"          # PWM functionality
-  esp_pio: "*"          # Programmable I/O
-  
-  # ESP-IDF Network and Connectivity (public dependencies)
-  esp_wifi: "*"         # WiFi functionality
-  esp_netif: "*"        # Network interface
-  esp_event: "*"        # Event system
-  esp_partition: "*"    # Partition management
-  esp_ota: "*"          # Over-the-air updates
-  esp_http_client: "*"  # HTTP client
-  esp_https_ota: "*"    # HTTPS OTA
-  esp_websocket_client: "*"  # WebSocket client
-  esp_http_server: "*"  # HTTP server
 
 # ─── External Driver Dependencies ────────────────────────────────────────────
 # These are exposed via EXTRA_COMPONENT_DIRS in CMakeLists.txt
@@ -116,7 +83,6 @@ files:
   exclude:
     # Documentation and examples
     - "**/docs/**"
-    - "**/Datasheet/**"
     - "**/datasheet/**"
     - "**/examples/**"
     - "**/tests/**"

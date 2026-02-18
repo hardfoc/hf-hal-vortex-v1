@@ -277,7 +277,11 @@ public:
      * @brief Ensure the temperature manager system is initialized.
      * @return hf_temp_err_t::TEMP_SUCCESS if initialization successful, error code otherwise
      */
-    [[nodiscard]] hf_temp_err_t EnsureInitialized() noexcept;
+    /**
+     * @brief Ensure the temperature manager system is initialized.
+     * @return true if initialization successful, false otherwise
+     */
+    [[nodiscard]] bool EnsureInitialized() noexcept;
     
     /**
      * @brief Shutdown the temperature manager system.
