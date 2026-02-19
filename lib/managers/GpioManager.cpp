@@ -556,7 +556,7 @@ GpioBatchResult GpioManager::SetMultipleInactive(const std::vector<std::string_v
 
 //==============================================================================
 // SYSTEM INFORMATION
-//==============================================================================
+//==============================================================================GetSystemUptimeMs
 
 hf_gpio_err_t GpioManager::ResetAllPins() noexcept {
     MutexLockGuard registry_lock(registry_mutex_);
@@ -819,14 +819,31 @@ std::shared_ptr<BaseGpio> GpioManager::CreateTmc9660GpioPin(hf_u8_t pin_id, hf_u
         return nullptr;
     }
     
-    // Use TMC9660 handler's factory method
-    // NOTE: TMC9660 GPIO pin creation is not yet supported in the current driver API.
-    // This functionality will be implemented when the TMC9660 driver exposes GPIO control.
-    (void)handler;
-    (void)pin_id;
-    Logger::GetInstance().Warn("GpioManager", "TMC9660 GPIO pin creation not yet supported in current driver API");
-    UpdateLastError(hf_gpio_err_t::GPIO_ERR_NOT_SUPPORTED);
-    return nullptr;
+    // Validate that pin_id maps to a supported TMC9660 GPIO (17 or 18)
+    if (pin_id != 17 && pin_id != 18) {
+        Logger::GetInstance().Error("GpioManager", "TMC9660 only supports GPIO17 and GPIO18, got pin_id=%u", pin_id);
+        UpdateLastError(hf_gpio_err_t::GPIO_ERR_INVALID_PARAMETER);
+        return nullptr;
+    }
+    
+    // Get a reference to the handler's Gpio wrapper (BaseGpio subclass).
+    // The Gpio instance is owned by the Tmc9660Handler and its lifetime is
+    // guaranteed by MotorController (singleton). We create a non-owning
+    // shared_ptr via the aliasing constructor so GpioManager can store it
+    // uniformly without taking ownership.
+    BaseGpio& gpio_ref = handler->gpio(pin_id);
+    
+    // Aliasing shared_ptr: shares ownership with an empty control block (no-op
+    // deleter) while pointing to the handler-owned Gpio object.
+    std::shared_ptr<BaseGpio> gpio(std::shared_ptr<BaseGpio>{}, &gpio_ref);
+    
+    // Apply configuration from the pin mapping table
+    if (is_inverted) {
+        gpio->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+    }
+    
+    Logger::GetInstance().Info("GpioManager", "TMC9660 GPIO%u created (device_index=%u)", pin_id, device_index);
+    return gpio;
 }
 
 void GpioManager::UpdateStatistics(bool success) noexcept {
