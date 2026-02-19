@@ -39,8 +39,6 @@
 #ifndef COMPONENT_HANDLER_GPIO_MANAGER_H_
 #define COMPONENT_HANDLER_GPIO_MANAGER_H_
 
-#include "CommonIDs.h"
-#include "ThingsToString.h"
 #include "base/BaseGpio.h"
 #include "SfI2cBus.h"
 #include "Tmc9660MotorController.h"

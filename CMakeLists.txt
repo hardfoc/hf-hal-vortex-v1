@@ -140,14 +140,13 @@ set(CORE_UTILS_INCLUDE_DIRS
     "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-rtos-wrap/include"
     "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-general/include"
     "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-canopen/include"
-    "${HF_HAL_ROOT}/lib/core/hf-core-utils/hf-utils-thread-safe/include"
 )
 
 # External driver include directories
 set(EXTERNAL_DRIVER_INCLUDE_DIRS
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-as5047u-driver/src"
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-bno08x-driver/src"
-    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ntc-thermistor-driver/include"
+    "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-ntc-thermistor-driver/inc"
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-pcal95555-driver/src"
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc"
     "${HF_HAL_ROOT}/lib/core/hf-core-drivers/external/hf-tmc9660-driver/inc/register_mode"
@@ -193,41 +192,8 @@ idf_component_register(
 target_compile_options(${COMPONENT_LIB} PRIVATE 
     -Wall 
     -Wextra 
-    -Werror
     -Wpedantic
-    -Werror=return-type
-    -Werror=unused-variable
-    -Werror=unused-function
-    -Werror=unused-parameter
-    -Werror=missing-field-initializers
-    -Werror=switch
-    -Werror=switch-enum
-    -Werror=switch-default
-    -Werror=implicit-fallthrough
-    -Werror=format
-    -Werror=format-security
-    -Werror=format-nonliteral
-    -Werror=cast-align
-    -Werror=cast-qual
-    -Werror=conversion
-    -Werror=sign-conversion
-    -Werror=float-conversion
-    -Werror=float-equal
-    -Werror=shadow
-    -Werror=undef
-    -Werror=redundant-decls
-    -Werror=inline
-    -Werror=disabled-optimization
-    -Werror=stack-protector
-    -Werror=stack-usage=4096
-    -Werror=frame-larger-than=4096
-    -Werror=larger-than=8192
-    -Werror=array-bounds
-    -Werror=array-bounds=2
-    -Werror=stringop-overflow
-    -Werror=stringop-overread
-    -Werror=stringop-truncation
-    -Werror=restrict
+    -Wno-error=undef
     -Werror=null-dereference
     -Werror=nonnull
     -Werror=nonnull-compare

@@ -38,8 +38,6 @@
 #ifndef COMPONENT_HANDLER_TEMPERATURE_MANAGER_H_
 #define COMPONENT_HANDLER_TEMPERATURE_MANAGER_H_
 
-#include "CommonIDs.h"
-#include "ThingsToString.h"
 #include "base/BaseTemperature.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspTemperature.h"
 #include "handlers/ntc/NtcTemperatureHandler.h"

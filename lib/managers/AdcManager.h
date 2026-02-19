@@ -39,8 +39,6 @@
 #ifndef COMPONENT_HANDLER_ADC_MANAGER_H_
 #define COMPONENT_HANDLER_ADC_MANAGER_H_
 
-#include "CommonIDs.h"
-#include "ThingsToString.h"
 #include "base/BaseAdc.h"
 #include "MotorController.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"

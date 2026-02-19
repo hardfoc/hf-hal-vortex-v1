@@ -13,7 +13,9 @@ MotorController& MotorController::GetInstance() {
 MotorController::MotorController() 
     : onboardDeviceCreated_(false), initialized_(false), deviceMutex_() {
     // Initialize all device slots as empty and not active
-    tmcHandlers_.fill(nullptr);
+    for (auto& handler : tmcHandlers_) {
+        handler.reset();
+    }
     deviceInitialized_.fill(false);
     deviceActive_.fill(false);
 }

@@ -3,9 +3,11 @@
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <set>
 #include <cstdint>
 #include <atomic> // Added for std::atomic
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/RtosMutex.h" // Added for RtosMutex
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
 
 // Forward declarations for ESP32 comm interface classes
 class EspSpiBus;
@@ -335,8 +337,6 @@ public:
 private:
     CommChannelsManager();
     ~CommChannelsManager() = default;
-    CommChannelsManager(const CommChannelsManager&) = delete;
-    CommChannelsManager& operator=(const CommChannelsManager&) = delete;
 
     //==================== PRIVATE METHODS ====================//
     
