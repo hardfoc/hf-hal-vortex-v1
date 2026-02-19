@@ -16,6 +16,10 @@ list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/api")
 # 1. CORE FEATURE CONFIGURATION — Enable only what Vortex needs
 #==============================================================================
 
+# ── Platform Selection ────────────────────────────────────────────────────
+set(HF_CORE_MCU   "ESP32")              # MCU family (ESP32, STM32 future)
+set(HF_CORE_RTOS  "FREERTOS")           # RTOS (FREERTOS, THREADX future)
+
 # ── External Drivers + Handlers ───────────────────────────────────────────
 set(HF_CORE_ENABLE_TMC9660        ON)   # BLDC/stepper motor controller
 set(HF_CORE_ENABLE_PCAL95555      ON)   # I2C GPIO expander
