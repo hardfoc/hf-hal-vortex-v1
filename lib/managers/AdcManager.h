@@ -41,14 +41,15 @@
 
 #include "base/BaseAdc.h"
 #include "MotorController.h"
-#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspAdc.h"
+#include "hf_functional_pin_config_vortex_v1.hpp"
+#include "mcu/esp32/EspAdc.h"
 #include "handlers/tmc9660/Tmc9660AdcWrapper.h"
 
 #include <array>
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <string>
 #include <vector>
 #include <string_view>
 #include <unordered_map>
@@ -388,7 +389,7 @@ public:
      * @param statistics Reference to store channel statistics
      * @return hf_adc_err_t operation result
      */
-    [[nodiscard]] hf_adc_err_t GetStatistics(std::string_view name, BaseAdc::AdcStatistics& statistics) const noexcept;
+    [[nodiscard]] hf_adc_err_t GetStatistics(std::string_view name, hf_adc_statistics_t& statistics) const noexcept;
     
     /**
      * @brief Reset channel statistics.
@@ -403,7 +404,7 @@ public:
      * @param diagnostics Reference to store channel diagnostics
      * @return hf_adc_err_t operation result
      */
-    [[nodiscard]] hf_adc_err_t GetDiagnostics(std::string_view name, BaseAdc::AdcDiagnostics& diagnostics) const noexcept;
+    [[nodiscard]] hf_adc_err_t GetDiagnostics(std::string_view name, hf_adc_diagnostics_t& diagnostics) const noexcept;
     
     /**
      * @brief Reset channel diagnostics.
@@ -497,9 +498,9 @@ private:
     /**
      * @brief ESP32 ADC handlers (lazy initialized when first accessed).
      * Multiple instances for multi-unit boards (ADC1, ADC2).
-     * Uses EspAdcWrapper for BaseAdc interface compliance.
+     * Uses EspAdc for BaseAdc interface compliance.
      */
-    std::array<std::unique_ptr<EspAdcWrapper>, 2> esp32_adc_handlers_;
+    std::array<std::unique_ptr<EspAdc>, 2> esp32_adc_handlers_;
     mutable RtosMutex esp32_adc_mutex_;  ///< Mutex for ESP32 ADC handler initialization
     
     /**

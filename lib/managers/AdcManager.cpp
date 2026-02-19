@@ -35,14 +35,12 @@
 
 #include "AdcManager.h"
 #include "MotorController.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 // Logger for unified logging
 #include "handlers/logger/Logger.h"
 
 #include <algorithm>
-#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
-#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 #include <cstring>
 #include <sstream>
 #include <iomanip>
@@ -110,7 +108,7 @@ hf_adc_err_t AdcManager::Shutdown() noexcept {
     
     {
         std::lock_guard<RtosMutex> esp32_lock(esp32_adc_mutex_);
-        esp32_adc_handlers_.fill(nullptr);
+        for (auto& h : esp32_adc_handlers_) h.reset();
     }
     
     // Reset statistics (atomic operations, no locks needed)
@@ -136,7 +134,7 @@ hf_adc_err_t AdcManager::GetSystemDiagnostics(AdcSystemDiagnostics& diagnostics)
     
     // Fill diagnostics with atomic values (completely lock-free)
     uint64_t start_time = system_start_time_.load(std::memory_order_relaxed);
-    uint64_t now = GetCurrentTimeMs();
+    uint64_t now = RtosTime::GetCurrentTimeUs() / 1000;
     uint32_t total_ops = total_operations_.load(std::memory_order_relaxed);
     uint32_t failed_ops = failed_operations_.load(std::memory_order_relaxed);
     
@@ -200,15 +198,15 @@ hf_adc_err_t AdcManager::RegisterChannel(std::string_view name, std::unique_ptr<
     
     // Check if channel already exists
     if (adc_registry_.find(name) != adc_registry_.end()) {
-        return hf_adc_err_t::ADC_ERR_SENSOR_ALREADY_REGISTERED;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_ALREADY_REGISTERED;
     }
     
     // Create channel info with default values
     // Note: We'll need to determine the actual hardware chip and channel ID
     // from the platform mapping or ADC driver itself
     auto channel_info = std::make_unique<AdcChannelInfo>(
-        name, std::move(adc), HfFunctionalAdcChannel::UNKNOWN, 
-        HfAdcChipType::UNKNOWN, 0, 3.3f, 12, 3300, 1.0f
+        name, std::move(adc), static_cast<HfFunctionalAdcChannel>(0), 
+        HfAdcChipType::ESP32_INTERNAL, 0, 3.3f, 12, 3300, 1.0f
     );
     
     // Register the channel
@@ -298,7 +296,7 @@ hf_adc_err_t AdcManager::ReadChannelV(std::string_view name, float& voltage,
     BaseAdc* adc_driver = nullptr;
     uint8_t hardware_channel_id = 0;
     AdcChannelInfo* channel_info = nullptr;
-    uint64_t current_time = GetCurrentTimeMs();
+    uint64_t current_time = RtosTime::GetCurrentTimeUs() / 1000;
     
     {
         std::lock_guard<RtosMutex> registry_lock(registry_mutex_);
@@ -315,9 +313,9 @@ hf_adc_err_t AdcManager::ReadChannelV(std::string_view name, float& voltage,
     }
     
     if (!channel_info || !adc_driver) {
-        UpdateLastError(hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND);
+        UpdateLastError(hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND);
         UpdateStatistics(false);
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Perform the read operation (no locks needed for ADC operation)
@@ -361,15 +359,15 @@ hf_adc_err_t AdcManager::ReadChannelCount(std::string_view name, hf_u32_t& value
     }
     
     if (!channel_info || !adc_driver) {
-        UpdateLastError(hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND);
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        UpdateLastError(hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND);
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Update access statistics (quick lock for statistics update)
     {
         std::lock_guard<RtosMutex> registry_lock(registry_mutex_);
         channel_info->access_count++;
-        channel_info->last_access_time = GetCurrentTimeMs();
+        channel_info->last_access_time = RtosTime::GetCurrentTimeUs() / 1000;
     }
     
     // Perform the read operation (no locks needed for ADC operation)
@@ -412,15 +410,15 @@ hf_adc_err_t AdcManager::ReadChannel(std::string_view name, hf_u32_t& raw_value,
     }
     
     if (!channel_info || !adc_driver) {
-        UpdateLastError(hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND);
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        UpdateLastError(hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND);
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Update access statistics (quick lock for statistics update)
     {
         std::lock_guard<RtosMutex> registry_lock(registry_mutex_);
         channel_info->access_count++;
-        channel_info->last_access_time = GetCurrentTimeMs();
+        channel_info->last_access_time = RtosTime::GetCurrentTimeUs() / 1000;
     }
     
     // Perform the read operation (no locks needed for ADC operation)
@@ -487,7 +485,7 @@ AdcBatchResult AdcManager::BatchRead(const AdcBatchOperation& operation) noexcep
     result.results.resize(operation.channel_names.size());
     
     // Record start time
-    uint64_t start_time = GetCurrentTimeMs();
+    uint64_t start_time = RtosTime::GetCurrentTimeUs() / 1000;
     
     // Read each channel
     bool all_successful = true;
@@ -510,11 +508,11 @@ AdcBatchResult AdcManager::BatchRead(const AdcBatchOperation& operation) noexcep
     }
     
     // Calculate total time
-    uint64_t end_time = GetCurrentTimeMs();
+    uint64_t end_time = RtosTime::GetCurrentTimeUs() / 1000;
     result.total_time_ms = static_cast<uint32_t>(end_time - start_time);
     
     // Set overall result
-    result.overall_result = all_successful ? hf_adc_err_t::ADC_SUCCESS : hf_adc_err_t::ADC_ERR_BATCH_OPERATION_FAILED;
+    result.overall_result = all_successful ? hf_adc_err_t::ADC_SUCCESS : hf_adc_err_t::ADC_ERR_INITIALIZATION_FAILED;
     
     return result;
 }
@@ -551,7 +549,7 @@ AdcBatchResult AdcManager::ReadAllChannels() noexcept {
 // STATISTICS AND DIAGNOSTICS (Complete BaseAdc Coverage)
 //==============================================================================
 
-hf_adc_err_t AdcManager::GetStatistics(std::string_view name, BaseAdc::AdcStatistics& statistics) const noexcept {
+hf_adc_err_t AdcManager::GetStatistics(std::string_view name, hf_adc_statistics_t& statistics) const noexcept {
     if (!is_initialized_.load()) {
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
     }
@@ -570,11 +568,11 @@ hf_adc_err_t AdcManager::GetStatistics(std::string_view name, BaseAdc::AdcStatis
     }
     
     if (!adc_driver) {
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Get statistics from the ADC driver (no locks needed)
-    return adc_driver->GetStatistics(hardware_channel_id, statistics);
+    return adc_driver->GetStatistics(statistics);
 }
 
 hf_adc_err_t AdcManager::ResetStatistics(std::string_view name) noexcept {
@@ -598,7 +596,7 @@ hf_adc_err_t AdcManager::ResetStatistics(std::string_view name) noexcept {
     }
     
     if (!channel_info || !adc_driver) {
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Reset local statistics (quick lock for statistics update)
@@ -610,10 +608,10 @@ hf_adc_err_t AdcManager::ResetStatistics(std::string_view name) noexcept {
     }
     
     // Reset statistics in the ADC driver (no locks needed)
-    return adc_driver->ResetStatistics(hardware_channel_id);
+    return adc_driver->ResetStatistics();
 }
 
-hf_adc_err_t AdcManager::GetDiagnostics(std::string_view name, BaseAdc::AdcDiagnostics& diagnostics) const noexcept {
+hf_adc_err_t AdcManager::GetDiagnostics(std::string_view name, hf_adc_diagnostics_t& diagnostics) const noexcept {
     if (!is_initialized_.load()) {
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
     }
@@ -632,11 +630,11 @@ hf_adc_err_t AdcManager::GetDiagnostics(std::string_view name, BaseAdc::AdcDiagn
     }
     
     if (!adc_driver) {
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Get diagnostics from the ADC driver (no locks needed)
-    return adc_driver->GetDiagnostics(hardware_channel_id, diagnostics);
+    return adc_driver->GetDiagnostics(diagnostics);
 }
 
 hf_adc_err_t AdcManager::ResetDiagnostics(std::string_view name) noexcept {
@@ -658,11 +656,11 @@ hf_adc_err_t AdcManager::ResetDiagnostics(std::string_view name) noexcept {
     }
     
     if (!adc_driver) {
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Reset diagnostics in the ADC driver (no locks needed)
-    return adc_driver->ResetDiagnostics(hardware_channel_id);
+    return adc_driver->ResetDiagnostics();
 }
 
 hf_adc_err_t AdcManager::GetSystemHealth(std::string& health_info) const noexcept {
@@ -757,8 +755,8 @@ hf_adc_err_t AdcManager::ResetAllChannels() noexcept {
     // Perform ADC reset operations without holding locks
     for (const auto& [adc_driver, channel_id] : adc_operations) {
         if (adc_driver) {
-            adc_driver->ResetStatistics(channel_id);
-            adc_driver->ResetDiagnostics(channel_id);
+            adc_driver->ResetStatistics();
+            adc_driver->ResetDiagnostics();
         }
     }
     
@@ -790,7 +788,7 @@ hf_adc_err_t AdcManager::PerformSelfTest(std::string& result) noexcept {
     } else {
         oss << "✗ (No channels registered)\n";
         result = oss.str();
-        return hf_adc_err_t::ADC_ERR_SENSOR_NOT_FOUND;
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
     }
     
     // Test 2: Test reading from each channel
@@ -852,22 +850,13 @@ hf_adc_err_t AdcManager::PerformSelfTest(std::string& result) noexcept {
     if (successful_reads == total_tests && health_result == hf_adc_err_t::ADC_SUCCESS && diagnostics.system_healthy) {
         return hf_adc_err_t::ADC_SUCCESS;
     } else {
-        return hf_adc_err_t::ADC_ERR_SYSTEM_OVERLOAD;
+        return hf_adc_err_t::ADC_ERR_SYSTEM_ERROR;
     }
 }
 
 //==============================================================================
 // PRIVATE HELPER METHODS
 //==============================================================================
-
-/**
- * @brief Get current time in milliseconds using OS abstraction.
- * @return Current time in milliseconds since system start
- */
-static uint64_t GetCurrentTimeMs() noexcept {
-    OS_Ulong ticks = os_time_get();
-    return static_cast<uint64_t>(ticks) * 1000 / osTickRateHz; // Convert ticks to milliseconds
-}
 
 hf_adc_err_t AdcManager::Initialize() noexcept {
     // Get MotorController instance
@@ -878,7 +867,7 @@ hf_adc_err_t AdcManager::Initialize() noexcept {
     }
     
     // Record system start time
-    system_start_time_.store(GetCurrentTimeMs());
+    system_start_time_.store(RtosTime::GetCurrentTimeUs() / 1000);
     
     // Register channels from platform mapping
     hf_adc_err_t registration_result = RegisterPlatformChannels();
@@ -898,9 +887,8 @@ hf_adc_err_t AdcManager::Initialize() noexcept {
 std::unique_ptr<EspAdc> AdcManager::CreateEsp32Adc(uint8_t unit_id, float reference_voltage) noexcept {
     // Create EspAdc configuration
     hf_adc_unit_config_t config;
-    config.unit_id = static_cast<hf_adc_unit_t>(unit_id);
-    config.reference_voltage = reference_voltage;
-    config.mode = hf_adc_mode_t::ADC_MODE_ONESHOT; // Default to oneshot mode
+    config.unit_id = unit_id;
+    config.mode = hf_adc_mode_t::ONESHOT; // Default to oneshot mode
     
     // Use new with error checking instead of make_unique to avoid exceptions
     EspAdc* raw_ptr = new (std::nothrow) EspAdc(config);
@@ -1066,12 +1054,12 @@ void AdcManager::DumpStatistics() const noexcept {
     
     Logger::GetInstance().Info(TAG, "=== ADC MANAGER STATISTICS ===");
     
-    RtosMutex::LockGuard lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     // System Health
     Logger::GetInstance().Info(TAG, "System Health:");
     Logger::GetInstance().Info(TAG, "  Initialized: %s", is_initialized_.load() ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Total Channels Registered: %d", static_cast<int>(adc_channels_.size()));
+    Logger::GetInstance().Info(TAG, "  Total Channels Registered: %d", static_cast<int>(adc_registry_.size()));
     
     // Operation Statistics
     uint32_t total_ops = total_operations_.load();
@@ -1092,23 +1080,30 @@ void AdcManager::DumpStatistics() const noexcept {
     Logger::GetInstance().Info(TAG, "Error Statistics:");
     Logger::GetInstance().Info(TAG, "  Communication Errors: %d", communication_errors_.load());
     Logger::GetInstance().Info(TAG, "  Hardware Errors: %d", hardware_errors_.load());
-    Logger::GetInstance().Info(TAG, "  Last Error: %s", adc_err_to_string(last_error_.load()));
+    Logger::GetInstance().Info(TAG, "  Last Error: %d", static_cast<int>(last_error_.load()));
     
     // Channel Statistics Summary
     Logger::GetInstance().Info(TAG, "Channel Statistics Summary:");
-    std::vector<std::pair<std::string, BaseAdc::AdcStatistics>> channel_stats;
     
-    for (const auto& pair : adc_channels_) {
-        BaseAdc::AdcStatistics stats;
-        if (pair.second.adc && pair.second.adc->GetStatistics(stats) == hf_adc_err_t::ADC_SUCCESS) {
-            channel_stats.emplace_back(pair.first, stats);
+    struct ChannelStatEntry {
+        std::string_view name;
+        hf_adc_statistics_t stats;
+    };
+    std::vector<ChannelStatEntry> channel_stats;
+    
+    for (const auto& [name, channel_info] : adc_registry_) {
+        if (channel_info && channel_info->adc_driver) {
+            hf_adc_statistics_t stats{};
+            if (channel_info->adc_driver->GetStatistics(stats) == hf_adc_err_t::ADC_SUCCESS) {
+                channel_stats.push_back({name, stats});
+            }
         }
     }
     
-    // Sort by total operations
+    // Sort by total conversions
     std::sort(channel_stats.begin(), channel_stats.end(), 
         [](const auto& a, const auto& b) {
-            return (a.second.total_operations) > (b.second.total_operations);
+            return a.stats.totalConversions > b.stats.totalConversions;
         });
     
     int channels_to_show = std::min(5, static_cast<int>(channel_stats.size()));
@@ -1116,11 +1111,11 @@ void AdcManager::DumpStatistics() const noexcept {
         Logger::GetInstance().Info(TAG, "  Top %d Most Active Channels:", channels_to_show);
         for (int i = 0; i < channels_to_show; ++i) {
             const auto& channel = channel_stats[i];
-            Logger::GetInstance().Info(TAG, "    %s: %d ops (success: %d, failed: %d)", 
-                channel.first.c_str(), 
-                channel.second.total_operations,
-                channel.second.successful_operations,
-                channel.second.failed_operations);
+            Logger::GetInstance().Info(TAG, "    %.*s: %lu ops (success: %lu, failed: %lu)", 
+                static_cast<int>(channel.name.length()), channel.name.data(),
+                static_cast<unsigned long>(channel.stats.totalConversions),
+                static_cast<unsigned long>(channel.stats.successfulConversions),
+                static_cast<unsigned long>(channel.stats.failedConversions));
         }
     } else {
         Logger::GetInstance().Info(TAG, "  No channel statistics available");

@@ -18,8 +18,9 @@
 #include "GpioManager.h"
 #include "CommChannelsManager.h"
 #include "MotorController.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspGpio.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "mcu/esp32/EspGpio.h"
+#include "RtosMutex.h"
+#include "handlers/logger/Logger.h"
 
 #include <algorithm>
 #include <cstring>
@@ -44,7 +45,7 @@ bool GpioManager::EnsureInitialized() noexcept {
         return true;
     }
     
-    RtosMutex::LockGuard lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     // Double-check after acquiring lock
     if (is_initialized_.load(std::memory_order_acquire)) {
@@ -62,7 +63,7 @@ bool GpioManager::Shutdown() noexcept {
     
     // Acquire main mutex only for state change
     {
-        RtosMutex::LockGuard lock(mutex_);
+        MutexLockGuard lock(mutex_);
         
         if (!is_initialized_.load(std::memory_order_acquire)) {
             return true;
@@ -74,7 +75,7 @@ bool GpioManager::Shutdown() noexcept {
     
     // Clear resources with separate lock (no need for main mutex anymore)
     {
-        RtosMutex::LockGuard registry_lock(registry_mutex_);
+        MutexLockGuard registry_lock(registry_mutex_);
         gpio_registry_.clear();
     }
     
@@ -123,7 +124,7 @@ hf_gpio_err_t GpioManager::GetSystemDiagnostics(GpioSystemDiagnostics& diagnosti
     
     // Single scoped lock for registry access only
     {
-        RtosMutex::LockGuard registry_lock(registry_mutex_);
+        MutexLockGuard registry_lock(registry_mutex_);
         diagnostics.total_pins_registered = static_cast<uint32_t>(gpio_registry_.size());
         
         // Initialize arrays
@@ -156,7 +157,7 @@ hf_gpio_err_t GpioManager::RegisterGpio(std::string_view name, std::shared_ptr<B
         return validation_result;
     }
     
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+    MutexLockGuard registry_lock(registry_mutex_);
     
     // Check for duplicate registration
     if (gpio_registry_.find(name) != gpio_registry_.end()) {
@@ -175,7 +176,7 @@ std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
     std::shared_ptr<BaseGpio> result;
     
     {
-        RtosMutex::LockGuard registry_lock(registry_mutex_);
+        MutexLockGuard registry_lock(registry_mutex_);
         auto it = gpio_registry_.find(name);
         if (it != gpio_registry_.end()) {
             result = it->second;
@@ -188,17 +189,17 @@ std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
 }
 
 bool GpioManager::Contains(std::string_view name) const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+    MutexLockGuard registry_lock(registry_mutex_);
     return gpio_registry_.find(name) != gpio_registry_.end();
 }
 
 size_t GpioManager::Size() const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+    MutexLockGuard registry_lock(registry_mutex_);
     return gpio_registry_.size();
 }
 
 void GpioManager::LogAllRegisteredGpios() const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+    MutexLockGuard registry_lock(registry_mutex_);
     
     // In a real implementation, you'd use your logging system
     // For now, we'll just update statistics
@@ -217,7 +218,7 @@ hf_gpio_err_t GpioManager::Set(std::string_view name, bool value) noexcept {
     // Get GPIO with minimal lock duration
     std::shared_ptr<BaseGpio> gpio;
     {
-        RtosMutex::LockGuard registry_lock(registry_mutex_);
+        MutexLockGuard registry_lock(registry_mutex_);
         auto it = gpio_registry_.find(name);
         if (it != gpio_registry_.end()) {
             gpio = it->second;
@@ -253,24 +254,23 @@ hf_gpio_err_t GpioManager::SetActive(std::string_view name) noexcept {
     return result;
 }
 
-bool GpioManager::SetInactive(std::string_view name) noexcept {
+hf_gpio_err_t GpioManager::SetInactive(std::string_view name) noexcept {
     auto gpio = Get(name);
     if (!gpio) {
         UpdateStatistics(false);
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     hf_gpio_err_t result = gpio->SetInactive();
-    bool success = (result == hf_gpio_err_t::GPIO_SUCCESS);
-    UpdateStatistics(success);
-    return success;
+    UpdateStatistics(result == hf_gpio_err_t::GPIO_SUCCESS);
+    return result;
 }
 
-bool GpioManager::Read(std::string_view name, bool& state) noexcept {
+hf_gpio_err_t GpioManager::Read(std::string_view name, bool& state) noexcept {
     auto gpio = Get(name);
     if (!gpio) {
         UpdateStatistics(false);
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     bool is_active;
@@ -278,27 +278,26 @@ bool GpioManager::Read(std::string_view name, bool& state) noexcept {
     if (result == hf_gpio_err_t::GPIO_SUCCESS) {
         state = is_active;
         UpdateStatistics(true);
-        return true;
+        return hf_gpio_err_t::GPIO_SUCCESS;
     }
     
     UpdateStatistics(false);
-    return false;
+    return result;
 }
 
-bool GpioManager::Toggle(std::string_view name) noexcept {
+hf_gpio_err_t GpioManager::Toggle(std::string_view name) noexcept {
     auto gpio = Get(name);
     if (!gpio) {
         UpdateStatistics(false);
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     hf_gpio_err_t result = gpio->Toggle();
-    bool success = (result == hf_gpio_err_t::GPIO_SUCCESS);
-    UpdateStatistics(success);
-    return success;
+    UpdateStatistics(result == hf_gpio_err_t::GPIO_SUCCESS);
+    return result;
 }
 
-bool GpioManager::IsActive(std::string_view name, bool& active) noexcept {
+hf_gpio_err_t GpioManager::IsActive(std::string_view name, bool& active) noexcept {
     return Read(name, active);
 }
 
@@ -345,40 +344,40 @@ hf_gpio_err_t GpioManager::SetOutputMode(std::string_view name, hf_gpio_output_m
     return result;
 }
 
-bool GpioManager::GetDirection(std::string_view name, hf_gpio_direction_t& direction) const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+hf_gpio_err_t GpioManager::GetDirection(std::string_view name, hf_gpio_direction_t& direction) const noexcept {
+    MutexLockGuard registry_lock(registry_mutex_);
     
     auto it = gpio_registry_.find(name);
     if (it == gpio_registry_.end()) {
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     direction = it->second->GetDirection();
-    return true;
+    return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
-bool GpioManager::GetPullMode(std::string_view name, hf_gpio_pull_mode_t& pull_mode) const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+hf_gpio_err_t GpioManager::GetPullMode(std::string_view name, hf_gpio_pull_mode_t& pull_mode) const noexcept {
+    MutexLockGuard registry_lock(registry_mutex_);
     
     auto it = gpio_registry_.find(name);
     if (it == gpio_registry_.end()) {
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     pull_mode = it->second->GetPullMode();
-    return true;
+    return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
-bool GpioManager::GetOutputMode(std::string_view name, hf_gpio_output_mode_t& output_mode) const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+hf_gpio_err_t GpioManager::GetOutputMode(std::string_view name, hf_gpio_output_mode_t& output_mode) const noexcept {
+    MutexLockGuard registry_lock(registry_mutex_);
     
     auto it = gpio_registry_.find(name);
     if (it == gpio_registry_.end()) {
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     output_mode = it->second->GetOutputMode();
-    return true;
+    return hf_gpio_err_t::GPIO_SUCCESS;
 }
 
 //==============================================================================
@@ -387,7 +386,7 @@ bool GpioManager::GetOutputMode(std::string_view name, hf_gpio_output_mode_t& ou
 
 hf_gpio_err_t GpioManager::ConfigureInterrupt(std::string_view name,
                                              hf_gpio_interrupt_trigger_t trigger,
-                                             BaseGpio::InterruptCallback callback,
+                                             InterruptCallback callback,
                                              void* user_data) noexcept {
     auto gpio = Get(name);
     if (!gpio) {
@@ -428,7 +427,7 @@ hf_gpio_err_t GpioManager::DisableInterrupt(std::string_view name) noexcept {
 }
 
 bool GpioManager::SupportsInterrupts(std::string_view name) const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+    MutexLockGuard registry_lock(registry_mutex_);
     
     auto it = gpio_registry_.find(name);
     if (it == gpio_registry_.end()) {
@@ -442,36 +441,28 @@ bool GpioManager::SupportsInterrupts(std::string_view name) const noexcept {
 // STATISTICS AND DIAGNOSTICS (Complete BaseGpio Coverage)
 //==============================================================================
 
-bool GpioManager::GetStatistics(std::string_view name, BaseGpio::PinStatistics& statistics) const noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+hf_gpio_err_t GpioManager::GetStatistics(std::string_view name, hf_gpio_statistics_t& statistics) const noexcept {
+    MutexLockGuard registry_lock(registry_mutex_);
     
     auto it = gpio_registry_.find(name);
     if (it == gpio_registry_.end()) {
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
-    hf_gpio_statistics_t stats;
-    hf_gpio_err_t result = it->second->GetStatistics(stats);
-    if (result == hf_gpio_err_t::GPIO_SUCCESS) {
-        // Convert to BaseGpio::PinStatistics if needed
-        // For now, we'll just return success
-        return true;
-    }
-    
-    return false;
+    hf_gpio_err_t result = it->second->GetStatistics(statistics);
+    return result;
 }
 
-bool GpioManager::ResetStatistics(std::string_view name) noexcept {
+hf_gpio_err_t GpioManager::ResetStatistics(std::string_view name) noexcept {
     auto gpio = Get(name);
     if (!gpio) {
         UpdateStatistics(false);
-        return false;
+        return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     }
     
     hf_gpio_err_t result = gpio->ResetStatistics();
-    bool success = (result == hf_gpio_err_t::GPIO_SUCCESS);
-    UpdateStatistics(success);
-    return success;
+    UpdateStatistics(result == hf_gpio_err_t::GPIO_SUCCESS);
+    return result;
 }
 
 //==============================================================================
@@ -488,18 +479,18 @@ GpioBatchResult GpioManager::BatchWrite(const GpioBatchOperation& operation) noe
     
     for (size_t i = 0; i < operation.pin_names.size(); ++i) {
         if (i < operation.states.size()) {
-            bool success = Set(operation.pin_names[i], operation.states[i]);
-            result.results.push_back(success ? ResultCode::SUCCESS : ResultCode::FAILURE);
-            if (!success) {
+            auto err = Set(operation.pin_names[i], operation.states[i]);
+            result.results.push_back(err);
+            if (err != hf_gpio_err_t::GPIO_SUCCESS) {
                 all_successful = false;
             }
         } else {
-            result.results.push_back(ResultCode::FAILURE);
+            result.results.push_back(hf_gpio_err_t::GPIO_ERR_FAILURE);
             all_successful = false;
         }
     }
     
-    result.overall_result = all_successful ? ResultCode::SUCCESS : ResultCode::FAILURE;
+    result.overall_result = all_successful ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
     return result;
 }
 
@@ -513,15 +504,15 @@ GpioBatchResult GpioManager::BatchRead(const std::vector<std::string_view>& pin_
     
     for (const auto& name : pin_names) {
         bool state;
-        bool success = Read(name, state);
+        auto err = Read(name, state);
         result.states.push_back(state);
-        result.results.push_back(success ? ResultCode::SUCCESS : ResultCode::FAILURE);
-        if (!success) {
+        result.results.push_back(err);
+        if (err != hf_gpio_err_t::GPIO_SUCCESS) {
             all_successful = false;
         }
     }
     
-    result.overall_result = all_successful ? ResultCode::SUCCESS : ResultCode::FAILURE;
+    result.overall_result = all_successful ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
     return result;
 }
 
@@ -533,14 +524,14 @@ GpioBatchResult GpioManager::SetMultipleActive(const std::vector<std::string_vie
     bool all_successful = true;
     
     for (const auto& name : pin_names) {
-        bool success = SetActive(name);
-        result.results.push_back(success ? ResultCode::SUCCESS : ResultCode::FAILURE);
-        if (!success) {
+        auto err = SetActive(name);
+        result.results.push_back(err);
+        if (err != hf_gpio_err_t::GPIO_SUCCESS) {
             all_successful = false;
         }
     }
     
-    result.overall_result = all_successful ? ResultCode::SUCCESS : ResultCode::FAILURE;
+    result.overall_result = all_successful ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
     return result;
 }
 
@@ -552,14 +543,14 @@ GpioBatchResult GpioManager::SetMultipleInactive(const std::vector<std::string_v
     bool all_successful = true;
     
     for (const auto& name : pin_names) {
-        bool success = SetInactive(name);
-        result.results.push_back(success ? ResultCode::SUCCESS : ResultCode::FAILURE);
-        if (!success) {
+        auto err = SetInactive(name);
+        result.results.push_back(err);
+        if (err != hf_gpio_err_t::GPIO_SUCCESS) {
             all_successful = false;
         }
     }
     
-    result.overall_result = all_successful ? ResultCode::SUCCESS : ResultCode::FAILURE;
+    result.overall_result = all_successful ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
     return result;
 }
 
@@ -567,36 +558,8 @@ GpioBatchResult GpioManager::SetMultipleInactive(const std::vector<std::string_v
 // SYSTEM INFORMATION
 //==============================================================================
 
-bool GpioManager::GetSystemHealth(std::string& health_info) const noexcept {
-    GpioSystemDiagnostics diagnostics;
-    if (!GetSystemDiagnostics(diagnostics)) {
-        return false;
-    }
-    
-    std::ostringstream oss;
-    oss << "GPIO System Health Report:\n";
-    oss << "  Overall Health: " << (diagnostics.system_healthy ? "HEALTHY" : "UNHEALTHY") << "\n";
-    oss << "  Total Pins Registered: " << diagnostics.total_pins_registered << "\n";
-    oss << "  Total Operations: " << diagnostics.total_operations << "\n";
-    oss << "  Successful Operations: " << diagnostics.successful_operations << "\n";
-    oss << "  Failed Operations: " << diagnostics.failed_operations << "\n";
-    oss << "  Communication Errors: " << diagnostics.communication_errors << "\n";
-    oss << "  Hardware Errors: " << diagnostics.hardware_errors << "\n";
-    oss << "  System Uptime: " << diagnostics.system_uptime_ms << " ms\n";
-    
-    if (!diagnostics.error_messages.empty()) {
-        oss << "  Recent Errors:\n";
-        for (const auto& error : diagnostics.error_messages) {
-            oss << "    - " << error << "\n";
-        }
-    }
-    
-    health_info = oss.str();
-    return true;
-}
-
-bool GpioManager::ResetAllPins() noexcept {
-    RtosMutex::LockGuard registry_lock(registry_mutex_);
+hf_gpio_err_t GpioManager::ResetAllPins() noexcept {
+    MutexLockGuard registry_lock(registry_mutex_);
     
     bool all_successful = true;
     
@@ -611,7 +574,7 @@ bool GpioManager::ResetAllPins() noexcept {
     }
     
     UpdateStatistics(all_successful);
-    return all_successful;
+    return all_successful ? hf_gpio_err_t::GPIO_SUCCESS : hf_gpio_err_t::GPIO_ERR_FAILURE;
 }
 
 //==============================================================================
@@ -723,7 +686,7 @@ bool GpioManager::Initialize() noexcept {
 }
 
 bool GpioManager::EnsurePcal95555Handler() noexcept {
-    RtosMutex::LockGuard lock(pcal_handler_mutex_);
+    MutexLockGuard lock(pcal_handler_mutex_);
     
     if (pcal95555_handler_) {
         return true;
@@ -857,33 +820,13 @@ std::shared_ptr<BaseGpio> GpioManager::CreateTmc9660GpioPin(hf_u8_t pin_id, hf_u
     }
     
     // Use TMC9660 handler's factory method
-    auto gpio = handler->CreateGpioPin(pin_id);
-    if (!gpio) {
-        UpdateLastError(hf_gpio_err_t::GPIO_ERR_HARDWARE_FAULT);
-        return nullptr;
-    }
-    
-    // Configure pull mode based on primitive values
-    if (has_pull) {
-        hf_gpio_pull_mode_t pull_mode = pull_is_up ? 
-            hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP : 
-            hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN;
-        gpio->SetPullMode(pull_mode);
-    } else {
-        gpio->SetPullMode(hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING);
-    }
-    
-    // Configure output mode based on primitive value
-    hf_gpio_output_mode_t output_mode = is_push_pull ? 
-        hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL : 
-        hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_OPEN_DRAIN;
-    gpio->SetOutputMode(output_mode);
-    
-    // Set active state based on inversion
-    gpio->SetActiveState(is_inverted ? hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW 
-                                    : hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH);
-    
-    return gpio;
+    // NOTE: TMC9660 GPIO pin creation is not yet supported in the current driver API.
+    // This functionality will be implemented when the TMC9660 driver exposes GPIO control.
+    (void)handler;
+    (void)pin_id;
+    Logger::GetInstance().Warn("GpioManager", "TMC9660 GPIO pin creation not yet supported in current driver API");
+    UpdateLastError(hf_gpio_err_t::GPIO_ERR_NOT_SUPPORTED);
+    return nullptr;
 }
 
 void GpioManager::UpdateStatistics(bool success) noexcept {
@@ -956,12 +899,12 @@ void GpioManager::DumpStatistics() const noexcept {
     
     Logger::GetInstance().Info(TAG, "=== GPIO MANAGER STATISTICS ===");
     
-    RtosMutex::LockGuard lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     // System Health
     Logger::GetInstance().Info(TAG, "System Health:");
     Logger::GetInstance().Info(TAG, "  Initialized: %s", is_initialized_.load() ? "YES" : "NO");
-    Logger::GetInstance().Info(TAG, "  Total Pins Registered: %d", static_cast<int>(gpio_pins_.size()));
+    Logger::GetInstance().Info(TAG, "  Total Pins Registered: %d", static_cast<int>(gpio_registry_.size()));
     Logger::GetInstance().Info(TAG, "  Active Pins: %d", GetActivePinCount());
     
     // Operation Statistics
@@ -983,38 +926,25 @@ void GpioManager::DumpStatistics() const noexcept {
     Logger::GetInstance().Info(TAG, "Error Statistics:");
     Logger::GetInstance().Info(TAG, "  Communication Errors: %d", communication_errors_.load());
     Logger::GetInstance().Info(TAG, "  Hardware Errors: %d", hardware_errors_.load());
-    Logger::GetInstance().Info(TAG, "  Last Error: %s", gpio_err_to_string(last_error_.load()));
+    Logger::GetInstance().Info(TAG, "  Last Error: %s", HfGpioErrToString(last_error_.load()).data());
     
-    // Pin Category Breakdown
-    int core_pins = 0, comm_pins = 0, gpio_pins = 0;
-    for (const auto& pair : gpio_pins_) {
-        switch (pair.second.category) {
-            case PinCategory::CORE: core_pins++; break;
-            case PinCategory::COMM: comm_pins++; break;
-            case PinCategory::GPIO: gpio_pins++; break;
-        }
-    }
-    
-    Logger::GetInstance().Info(TAG, "Pin Categories:");
-    Logger::GetInstance().Info(TAG, "  CORE Pins: %d", core_pins);
-    Logger::GetInstance().Info(TAG, "  COMM Pins: %d", comm_pins);
-    Logger::GetInstance().Info(TAG, "  GPIO Pins: %d", gpio_pins);
-    
-    // Top 5 Most Used Pins (by operation count)
+    // Pin Statistics Summary
     Logger::GetInstance().Info(TAG, "Pin Statistics Summary:");
-    std::vector<std::pair<std::string, BaseGpio::PinStatistics>> pin_stats;
+    std::vector<std::pair<std::string, hf_gpio_statistics_t>> pin_stats;
     
-    for (const auto& pair : gpio_pins_) {
-        BaseGpio::PinStatistics stats;
-        if (pair.second.gpio && pair.second.gpio->GetStatistics(stats) == hf_gpio_err_t::GPIO_SUCCESS) {
-            pin_stats.emplace_back(pair.first, stats);
+    for (const auto& pair : gpio_registry_) {
+        if (pair.second) {
+            hf_gpio_statistics_t stats;
+            if (pair.second->GetStatistics(stats) == hf_gpio_err_t::GPIO_SUCCESS) {
+                pin_stats.emplace_back(std::string(pair.first), stats);
+            }
         }
     }
     
-    // Sort by total operations
+    // Sort by total operations (highest activity first)
     std::sort(pin_stats.begin(), pin_stats.end(), 
         [](const auto& a, const auto& b) {
-            return (a.second.total_operations) > (b.second.total_operations);
+            return a.second.totalOperations > b.second.totalOperations;
         });
     
     int pins_to_show = std::min(5, static_cast<int>(pin_stats.size()));
@@ -1022,11 +952,12 @@ void GpioManager::DumpStatistics() const noexcept {
         Logger::GetInstance().Info(TAG, "  Top %d Most Active Pins:", pins_to_show);
         for (int i = 0; i < pins_to_show; ++i) {
             const auto& pin = pin_stats[i];
-            Logger::GetInstance().Info(TAG, "    %s: %d ops (success: %d, failed: %d)", 
+            Logger::GetInstance().Info(TAG, "    %s: ops=%d success=%d failed=%d state_changes=%d", 
                 pin.first.c_str(), 
-                pin.second.total_operations,
-                pin.second.successful_operations,
-                pin.second.failed_operations);
+                static_cast<int>(pin.second.totalOperations),
+                static_cast<int>(pin.second.successfulOperations),
+                static_cast<int>(pin.second.failedOperations),
+                static_cast<int>(pin.second.stateChanges));
         }
     } else {
         Logger::GetInstance().Info(TAG, "  No pin statistics available");
@@ -1037,8 +968,8 @@ void GpioManager::DumpStatistics() const noexcept {
 
 int GpioManager::GetActivePinCount() const noexcept {
     int count = 0;
-    for (const auto& pair : gpio_pins_) {
-        if (pair.second.gpio) {
+    for (const auto& pair : gpio_registry_) {
+        if (pair.second) {
             count++;
         }
     }

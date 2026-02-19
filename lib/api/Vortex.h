@@ -429,14 +429,7 @@ private:
     mutable size_t failed_components_count_{0};
     
     // Component references (these are references to singletons, not owned)
-    CommChannelsManager& comms_ref_;
-    GpioManager& gpio_ref_;
-    MotorController& motors_ref_;
-    AdcManager& adc_ref_;
-    ImuManager& imu_ref_;
-    EncoderManager& encoders_ref_;
-    LedManager& leds_ref_;
-    TemperatureManager& temp_ref_;
+    // NOTE: Removed duplicate _ref_ members - public refs serve both roles
 };
 
 //==============================================================================

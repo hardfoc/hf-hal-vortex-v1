@@ -2,16 +2,19 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include <functional>
 #include <array>
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
+#include "handlers/bno08x/Bno08xHandler.h"
 
-// Forward declarations
-class Bno08xHandler;
-class IBno08xDriverOps;  ///< Type-erased BNO08x driver (see Bno08xHandler.h)
+// Forward declarations (types defined in other managers)
 class CommChannelsManager;
+enum class SpiDeviceId : uint8_t;
 class GpioManager;
 class BaseGpio;
+class BaseI2c;
+class BaseSpi;
 
 /**
  * @class ImuManager

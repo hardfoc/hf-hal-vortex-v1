@@ -153,6 +153,11 @@ struct LedColor {
     uint8_t blue;      ///< Blue component (0-255)
     
     /**
+     * @brief Default constructor (black / off)
+     */
+    constexpr LedColor() noexcept : red(0), green(0), blue(0) {}
+    
+    /**
      * @brief Constructor for RGB color
      */
     constexpr LedColor(uint8_t r, uint8_t g, uint8_t b) noexcept 
@@ -679,7 +684,7 @@ private:
     /**
      * @brief Number of LEDs in the strip (configurable).
      */
-    static constexpr uint32_t NUM_LEDS = 1;  // Can be extended for multiple LEDs
+    static constexpr uint32_t kLedCount = 1;  // Can be extended for multiple LEDs
     
     /**
      * @brief Default global maximum brightness (0-255).

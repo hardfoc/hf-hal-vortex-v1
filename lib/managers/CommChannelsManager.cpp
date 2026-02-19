@@ -1,10 +1,10 @@
 #include "CommChannelsManager.h"
 
 // ESP32 comm interface includes
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspSpi.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspI2c.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspUart.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspCan.h"
+#include "mcu/esp32/EspSpi.h"
+#include "mcu/esp32/EspI2c.h"
+#include "mcu/esp32/EspUart.h"
+#include "mcu/esp32/EspCan.h"
 
 // Logger for unified logging
 #include "handlers/logger/Logger.h"
@@ -92,7 +92,7 @@ bool CommChannelsManager::Initialize() noexcept {
 
         // If all required pins are mapped to a proper structure, create the SPI bus
         if (miso_map && mosi_map && sck_map) {
-            spi_config.host = static_cast<hf_spi_host_device_t>(1); // SPI2_HOST
+            spi_config.host = static_cast<hf_host_id_t>(SPI2_HOST); // SPI2_HOST
             spi_config.miso_pin = miso_map->physical_pin;
             spi_config.mosi_pin = mosi_map->physical_pin;
             spi_config.sclk_pin = sck_map->physical_pin;
@@ -159,14 +159,12 @@ bool CommChannelsManager::Initialize() noexcept {
             i2c_config.i2c_port = I2C_NUM_0;                                               // I2C port 0 (ESP32C6 has 1 I2C port)
             i2c_config.sda_io_num = sda_map->physical_pin;                                 // SDA GPIO pin from board mapping
             i2c_config.scl_io_num = scl_map->physical_pin;                                 // SCL GPIO pin from board mapping
-            i2c_config.enable_internal_pullup = sda_map->has_pullup && scl_map->has_pullup; // Use internal pullups if available
+            i2c_config.flags.enable_internal_pullup = sda_map->has_pull && scl_map->has_pull; // Use internal pullups if available
             i2c_config.clk_source = hf_i2c_clock_source_t::HF_I2C_CLK_SRC_DEFAULT;        // Default clock source (APB)
-            i2c_config.clk_flags = 0;                                                      // No additional clock flags
             i2c_config.glitch_ignore_cnt = hf_i2c_glitch_filter_t::HF_I2C_GLITCH_FILTER_7_CYCLES; // 7-cycle glitch filter for noise immunity
             i2c_config.trans_queue_depth = 8;                                              // Transaction queue depth for async operations
             i2c_config.intr_priority = 5;                                                  // Interrupt priority (0-7, 5=medium)
-            i2c_config.flags = 0;                                                          // No additional configuration flags
-            i2c_config.allow_pd = false;                                                   // Disable power down in sleep modes
+            i2c_config.flags.allow_pd = false;                                             // Disable power down in sleep modes
             
             // Create I2C master bus instance
             i2c_bus_ = std::make_unique<EspI2cBus>(i2c_config);
@@ -323,8 +321,6 @@ bool CommChannelsManager::Deinitialize() noexcept {
     return all_deinitialized;
 }
 
-CommChannelsManager::~CommChannelsManager() = default;
-
 //==================== Accessors ====================//
 
 BaseSpi* CommChannelsManager::GetSpiDevice(uint8_t bus_index, int device_index) noexcept {
@@ -460,30 +456,31 @@ int CommChannelsManager::CreateI2cDevice(uint8_t bus_index, uint8_t device_addre
     }
     
     // Create device configuration
-    hf_i2c_device_config_t device_config = {
-        .device_address = device_address,
-        .speed_hz = speed_hz,
-        .sda_pin = kI2cSdaPin,
-        .scl_pin = kI2cSclPin,
-        .timeout_ms = 1000
-    };
+    hf_i2c_device_config_t device_config = {};
+    device_config.device_address = device_address;
+    device_config.dev_addr_length = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
+    device_config.scl_speed_hz = speed_hz;
+    device_config.scl_wait_us = 0;
+    device_config.disable_ack_check = false;
+    device_config.flags = 0;
     
     // Add device to I2C bus
-    if (!i2c_bus_->AddDevice(device_config)) {
-        Logger::GetInstance().Error("CommChannelsManager", "Failed to add I2C device at address 0x%02X", device_address);
+    int created_index = i2c_bus_->CreateDevice(device_config);
+    if (created_index < 0) {
+        Logger::GetInstance().Error("CommChannelsManager", "Failed to create I2C device at address 0x%02X", device_address);
         return -1;
     }
     
     // Track the device
-    i2c_device_indices_.push_back(device_index);
+    i2c_device_indices_.push_back(created_index);
     i2c_device_addresses_.push_back(device_address);
     i2c_device_external_.push_back(true);  // Runtime-created devices are external
-    i2c_device_to_bus_mapping_[device_index] = bus_index;
+    i2c_device_to_bus_mapping_[created_index] = bus_index;
     
     Logger::GetInstance().Info("CommChannelsManager", "Created I2C device at address 0x%02X with index %d on bus %d", 
-             device_address, device_index, bus_index);
+             device_address, created_index, bus_index);
     
-    return device_index;
+    return created_index;
 }
 
 bool CommChannelsManager::RemoveI2cDevice(int device_index) noexcept {
@@ -556,11 +553,14 @@ bool CommChannelsManager::HasI2cDeviceAtAddress(uint8_t bus_index, uint8_t devic
     }
 }
 
-
-
-
-
-
+int CommChannelsManager::GetI2cDeviceIndexByAddress(uint8_t device_address) const noexcept {
+    for (size_t i = 0; i < i2c_device_addresses_.size(); ++i) {
+        if (i2c_device_addresses_[i] == device_address && i < i2c_device_indices_.size()) {
+            return i2c_device_indices_[i];
+        }
+    }
+    return -1;
+}
 
 //==================== RUNTIME SPI DEVICE MANAGEMENT ====================//
 
@@ -740,8 +740,6 @@ void CommChannelsManager::RegisterBuiltinDevices() noexcept {
     // I2C Device IDs map to Bus 0 with their enum values as device indices
     i2c_device_to_bus_mapping_[static_cast<int>(I2cDeviceId::BNO08X_IMU)] = 0;
     i2c_device_to_bus_mapping_[static_cast<int>(I2cDeviceId::PCAL9555_GPIO_EXPANDER)] = 0;
-    i2c_device_to_bus_mapping_[static_cast<int>(I2cDeviceId::EXTERNAL_DEVICE_1)] = 0;
-    i2c_device_to_bus_mapping_[static_cast<int>(I2cDeviceId::EXTERNAL_DEVICE_2)] = 0;
     
     Logger::GetInstance().Info("CommChannelsManager", "Registered %zu SPI devices and %zu I2C devices on Bus 0", 
              spi_device_indices_.size(), i2c_device_indices_.size());
@@ -897,7 +895,7 @@ void CommChannelsManager::DumpStatistics() const noexcept {
     
     Logger::GetInstance().Info(TAG, "=== COMM CHANNELS MANAGER STATISTICS ===");
     
-    RtosMutex::LockGuard lock(mutex_);
+    MutexLockGuard lock(mutex_);
     
     // System Health
     Logger::GetInstance().Info(TAG, "System Health:");

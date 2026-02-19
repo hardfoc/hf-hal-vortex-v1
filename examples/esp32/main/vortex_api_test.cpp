@@ -25,6 +25,16 @@
 #include "api/Vortex.h"
 #include "TestFramework.h"
 
+// Full manager definitions needed for tests (Vortex.h only forward-declares)
+#include "managers/AdcManager.h"
+#include "managers/CommChannelsManager.h"
+#include "managers/EncoderManager.h"
+#include "managers/GpioManager.h"
+#include "managers/ImuManager.h"
+#include "managers/LedManager.h"
+#include "managers/TemperatureManager.h"
+#include "managers/MotorController.h"
+
 // Handlers needed for type visibility in tests
 #include "handlers/bno08x/Bno08xHandler.h"
 

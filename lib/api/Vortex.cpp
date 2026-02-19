@@ -26,7 +26,7 @@
 #include "managers/TemperatureManager.h"
 
 // Include OS abstraction for timing
-#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsAbstraction.h"
+#include "RtosMutex.h"
 
 //==============================================================================
 // SINGLETON IMPLEMENTATION
@@ -42,7 +42,15 @@ Vortex& Vortex::GetInstance() noexcept {
 //==============================================================================
 
 Vortex::Vortex() noexcept
-    : initialized_(false),
+    : comms(CommChannelsManager::GetInstance()),
+      gpio(GpioManager::GetInstance()),
+      motors(MotorController::GetInstance()),
+      adc(AdcManager::GetInstance()),
+      imu(ImuManager::GetInstance()),
+      encoders(EncoderManager::GetInstance()),
+      leds(LedManager::GetInstance()),
+      temp(TemperatureManager::GetInstance()),
+      initialized_(false),
       initialization_start_time_(0),
       initialization_end_time_(0),
       comms_initialized_(false),
@@ -57,25 +65,7 @@ Vortex::Vortex() noexcept
       system_warnings_{},
       system_warnings_count_(0),
       failed_components_{},
-      failed_components_count_(0),
-      // Initialize references to singletons (these are references, not owned)
-      comms_ref_(CommChannelsManager::GetInstance()),
-      gpio_ref_(GpioManager::GetInstance()),
-      motors_ref_(MotorController::GetInstance()),
-      adc_ref_(AdcManager::GetInstance()),
-      imu_ref_(ImuManager::GetInstance()),
-      encoders_ref_(EncoderManager::GetInstance()),
-      leds_ref_(LedManager::GetInstance()),
-      temp_ref_(TemperatureManager::GetInstance()),
-      // Initialize public references (these point to the private references)
-      comms(comms_ref_),
-      gpio(gpio_ref_),
-      motors(motors_ref_),
-      adc(adc_ref_),
-      imu(imu_ref_),
-      encoders(encoders_ref_),
-      leds(leds_ref_),
-      temp(temp_ref_) {
+      failed_components_count_(0) {
     
     // Initialize Logger first (this is always available)
     Logger::GetInstance().Initialize();
@@ -95,13 +85,13 @@ bool Vortex::EnsureInitialized() noexcept {
     Logger::GetInstance().Info("Vortex", "Starting Vortex API initialization");
     
     // Record initialization start time
-    initialization_start_time_ = os_time_get();
+    initialization_start_time_ = RtosTime::GetCurrentTimeUs() / 1000;
     
     // Initialize all components in proper order
     bool success = InitializeAllComponents();
     
     // Record initialization end time
-    initialization_end_time_ = os_time_get();
+    initialization_end_time_ = RtosTime::GetCurrentTimeUs() / 1000;
     
     if (success) {
         initialized_ = true;
@@ -193,14 +183,14 @@ size_t Vortex::GetSystemWarnings(const char* out_warnings[], size_t max_entries)
 //==============================================================================
 
 uint64_t Vortex::GetSystemUptimeMs() const noexcept {
-    return os_time_get() * portTICK_PERIOD_MS;
+    return RtosTime::GetCurrentTimeUs() / 1000;
 }
 
 uint64_t Vortex::GetInitializationTimeMs() const noexcept {
     if (initialization_start_time_ == 0 || initialization_end_time_ == 0) {
         return 0;
     }
-    return (initialization_end_time_ - initialization_start_time_) * portTICK_PERIOD_MS;
+    return (initialization_end_time_ - initialization_start_time_);
 }
 
 void Vortex::DumpSystemStatistics() const noexcept {
@@ -214,14 +204,14 @@ void Vortex::DumpSystemStatistics() const noexcept {
     Logger::GetInstance().Info("Vortex", "Initialization Time: %llu ms", GetInitializationTimeMs());
     
     // Dump statistics from all component handlers
-    comms_ref_.DumpStatistics();
-    gpio_ref_.DumpStatistics();
-    motors_ref_.DumpStatistics();
-    adc_ref_.DumpStatistics();
-    imu_ref_.DumpStatistics();
-    encoders_ref_.DumpStatistics();
-    leds_ref_.DumpStatistics();
-    temp_ref_.DumpStatistics();
+    comms.DumpStatistics();
+    gpio.DumpStatistics();
+    motors.DumpStatistics();
+    adc.DumpStatistics();
+    imu.DumpStatistics();
+    encoders.DumpStatistics();
+    leds.DumpStatistics();
+    temp.DumpStatistics();
     
     Logger::GetInstance().Info("Vortex", "=== End Vortex API System Statistics ===");
 }
@@ -235,14 +225,14 @@ bool Vortex::PerformHealthCheck() noexcept {
     Logger::GetInstance().Info("Vortex", "Performing Vortex API health check");
     
     // Check each component's health
-    bool comms_healthy = comms_initialized_ && comms_ref_.IsInitialized();
-    bool gpio_healthy = gpio_initialized_ && gpio_ref_.IsInitialized();
-    bool motors_healthy = motors_initialized_ && motors_ref_.IsInitialized();
-    bool adc_healthy = adc_initialized_ && adc_ref_.IsInitialized();
-    bool imu_healthy = imu_initialized_ && imu_ref_.IsInitialized();
-    bool encoders_healthy = encoders_initialized_ && encoders_ref_.IsInitialized();
-    bool leds_healthy = leds_initialized_ && leds_ref_.IsInitialized();
-    bool temp_healthy = temp_initialized_ && temp_ref_.IsInitialized();
+    bool comms_healthy = comms_initialized_ && comms.IsInitialized();
+    bool gpio_healthy = gpio_initialized_ && gpio.IsInitialized();
+    bool motors_healthy = motors_initialized_ && motors.IsInitialized();
+    bool adc_healthy = adc_initialized_ && adc.IsInitialized();
+    bool imu_healthy = imu_initialized_ && imu.IsInitialized();
+    bool encoders_healthy = encoders_initialized_ && encoders.IsInitialized();
+    bool leds_healthy = leds_initialized_ && leds.IsInitialized();
+    bool temp_healthy = temp_initialized_ && temp.IsInitialized();
     
     bool overall_healthy = comms_healthy && gpio_healthy && motors_healthy && 
                           adc_healthy && imu_healthy && encoders_healthy && 
@@ -325,7 +315,7 @@ bool Vortex::InitializeAllComponents() noexcept {
 bool Vortex::InitializeComms() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing communication channels");
     
-    bool success = comms_ref_.EnsureInitialized();
+    bool success = comms.EnsureInitialized();
     comms_initialized_ = success;
     
     if (success) {
@@ -342,7 +332,7 @@ bool Vortex::InitializeComms() noexcept {
 bool Vortex::InitializeGpio() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing GPIO management");
     
-    bool success = gpio_ref_.EnsureInitialized();
+    bool success = gpio.EnsureInitialized();
     gpio_initialized_ = success;
     
     if (success) {
@@ -359,7 +349,7 @@ bool Vortex::InitializeGpio() noexcept {
 bool Vortex::InitializeMotors() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing motor controllers");
     
-    bool success = motors_ref_.EnsureInitialized();
+    bool success = motors.EnsureInitialized();
     motors_initialized_ = success;
     
     if (success) {
@@ -376,7 +366,7 @@ bool Vortex::InitializeMotors() noexcept {
 bool Vortex::InitializeAdc() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing ADC management");
     
-    bool success = adc_ref_.EnsureInitialized();
+    bool success = adc.EnsureInitialized();
     adc_initialized_ = success;
     
     if (success) {
@@ -393,7 +383,7 @@ bool Vortex::InitializeAdc() noexcept {
 bool Vortex::InitializeImu() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing IMU management");
     
-    bool success = imu_ref_.EnsureInitialized();
+    bool success = imu.EnsureInitialized();
     imu_initialized_ = success;
     
     if (success) {
@@ -410,7 +400,7 @@ bool Vortex::InitializeImu() noexcept {
 bool Vortex::InitializeEncoders() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing encoder management");
     
-    bool success = encoders_ref_.EnsureInitialized();
+    bool success = encoders.EnsureInitialized();
     encoders_initialized_ = success;
     
     if (success) {
@@ -427,7 +417,7 @@ bool Vortex::InitializeEncoders() noexcept {
 bool Vortex::InitializeLeds() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing LED management");
     
-    bool success = leds_ref_.EnsureInitialized();
+    bool success = leds.EnsureInitialized();
     leds_initialized_ = success;
     
     if (success) {
@@ -444,7 +434,7 @@ bool Vortex::InitializeLeds() noexcept {
 bool Vortex::InitializeTemperature() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing temperature management");
     
-    bool success = temp_ref_.EnsureInitialized();
+    bool success = temp.EnsureInitialized();
     temp_initialized_ = success;
     
     if (success) {

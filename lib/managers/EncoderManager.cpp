@@ -17,7 +17,6 @@
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseGpio.h"
 
 // Platform mapping for functional pin definitions
-#include "core/hf-core-drivers/internal/hf-pincfg/include/hf_platform_mapping.hpp"
 
 // RtosMutex for thread safety
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
@@ -44,7 +43,7 @@ EncoderManager& EncoderManager::GetInstance() noexcept {
 EncoderManager::EncoderManager() noexcept 
     : initialized_(false), manager_mutex_(), onboard_device_created_(false) {
     // Initialize all device slots as empty and not active
-    as5047u_handlers_.fill(nullptr);
+    for (auto& h : as5047u_handlers_) h.reset();
     device_initialized_.fill(false);
     device_active_.fill(false);
 }
@@ -121,7 +120,7 @@ As5047uHandler* EncoderManager::GetAs5047uHandler(uint8_t deviceIndex) noexcept 
     return as5047u_handlers_[deviceIndex].get();
 }
 
-AS5047U* EncoderManager::GetAs5047uDriver(uint8_t deviceIndex) noexcept {
+as5047u::AS5047U<As5047uSpiAdapter>* EncoderManager::GetAs5047uDriver(uint8_t deviceIndex) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (deviceIndex >= MAX_ENCODER_DEVICES || !device_active_[deviceIndex] || !as5047u_handlers_[deviceIndex]) {
@@ -249,7 +248,7 @@ bool EncoderManager::DeleteExternalDevice(uint8_t deviceIndex) {
     }
     
     if (!device_active_[deviceIndex]) {
-        Logger::GetInstance().Warning("EncoderManager", "Device slot %u is already empty", deviceIndex);
+        Logger::GetInstance().Warn("EncoderManager", "Device slot %u is already empty", deviceIndex);
         return true; // Consider this success
     }
     
@@ -625,7 +624,7 @@ bool EncoderManager::Initialize() noexcept {
     
     // Initialize onboard AS5047U device
     if (!InitializeOnboardAs5047uDevice()) {
-        Logger::GetInstance().Warning("EncoderManager", "Failed to initialize onboard AS5047U device");
+        Logger::GetInstance().Warn("EncoderManager", "Failed to initialize onboard AS5047U device");
         // Continue anyway - this is not fatal
     }
     

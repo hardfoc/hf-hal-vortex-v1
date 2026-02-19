@@ -5,9 +5,10 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <algorithm>
 #include <cstdint>
 #include <atomic> // Added for std::atomic
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 // Forward declarations for ESP32 comm interface classes
 class EspSpiBus;
@@ -18,13 +19,13 @@ class EspUart;
 class EspCan;
 
 // Base interface includes
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseI2c.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseUart.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseCan.h"
+#include "base/BaseSpi.h"
+#include "base/BaseI2c.h"
+#include "base/BaseUart.h"
+#include "base/BaseCan.h"
 
 // Board mapping includes (for pin/bus config)
-#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config.hpp"
+#include "hf_functional_pin_config.hpp"
 
 //==============================================================================
 // COMM CHANNELS ERROR CODES
@@ -242,6 +243,13 @@ public:
      */
     bool HasI2cDeviceAtAddress(uint8_t bus_index, uint8_t device_address) const noexcept;
     
+    /**
+     * @brief Remove a dynamically-created I2C device by its device index.
+     * @param device_index Device index returned by CreateI2cDevice()
+     * @return true if device removed successfully, false if not found
+     */
+    bool RemoveI2cDevice(int device_index) noexcept;
+    
     //==================== RUNTIME SPI DEVICE MANAGEMENT ====================//
     
     /**
@@ -255,6 +263,13 @@ public:
      * @note If bus_index is 0xFF, device will be assigned to next available bus
      */
     int RegisterCustomSpiDevice(std::shared_ptr<BaseSpi> custom_device, int device_index = -1, uint8_t bus_index = 0xFF) noexcept;
+
+    /**
+     * @brief Remove a custom SPI device by its device index.
+     * @param device_index Device index to remove
+     * @return true if removed, false if not found or built-in
+     */
+    bool RemoveSpiDevice(int device_index) noexcept;
 
     //==================== UART Accessors ====================//
     
@@ -363,6 +378,13 @@ private:
      * @return Next available device index, or -1 if no slots available
      */
     int GetNextAvailableDeviceIndex(uint8_t bus_index) const noexcept;
+    
+    /**
+     * @brief Get device index for a known I2C device address.
+     * @param device_address I2C device address
+     * @return Device index if found, -1 otherwise
+     */
+    int GetI2cDeviceIndexByAddress(uint8_t device_address) const noexcept;
 
     //==================== BUS MANAGEMENT ====================//
     
@@ -390,6 +412,7 @@ private:
     
     // I2C-specific tracking
     std::vector<uint8_t> i2c_device_addresses_;    // Built-in I2C device addresses
+    std::vector<bool> i2c_device_external_;         // Track if device is external (runtime-created)
 
     // Initialization state
     std::atomic<bool> initialized_{false};

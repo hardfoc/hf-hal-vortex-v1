@@ -13,15 +13,12 @@
 #include "handlers/logger/Logger.h"
 
 // Base interfaces
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseI2c.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseSpi.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseGpio.h"
-
-// Platform mapping for functional pin definitions
-#include "core/hf-core-drivers/internal/hf-pincfg/include/hf_platform_mapping.hpp"
+#include "base/BaseI2c.h"
+#include "base/BaseSpi.h"
+#include "base/BaseGpio.h"
 
 // RtosMutex for thread safety
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 // Standard library
 #include <iostream>
@@ -45,7 +42,7 @@ ImuManager& ImuManager::GetInstance() noexcept {
 ImuManager::ImuManager() noexcept 
     : initialized_(false), manager_mutex_(), onboard_device_created_(false) {
     // Initialize all device slots as empty and not active
-    bno08x_handlers_.fill(nullptr);
+    for (auto& h : bno08x_handlers_) h.reset();
     device_initialized_.fill(false);
     device_active_.fill(false);
     i2c_device_indices_.fill(-1); // Initialize to -1 (no I2C device)
@@ -549,7 +546,7 @@ bool ImuManager::ConfigureInterrupt(uint8_t deviceIndex, std::function<void()> c
 
     // Configure GPIO interrupt (falling edge for active-low BNO08x INT)
     auto configure_result = interrupt_gpio_->ConfigureInterrupt(
-        hf_gpio_interrupt_trigger_t::HF_GPIO_INTR_FALLING_EDGE,
+        hf_gpio_interrupt_trigger_t::HF_GPIO_INTERRUPT_TRIGGER_FALLING_EDGE,
         GpioInterruptHandler,
         this  // Pass ImuManager instance as user data
     );
@@ -829,7 +826,7 @@ void ImuManager::DumpStatistics() const noexcept {
     
     Logger::GetInstance().Info(TAG, "=== IMU MANAGER STATISTICS ===");
     
-    RtosMutex::LockGuard lock(manager_mutex_);
+    MutexLockGuard lock(manager_mutex_);
     
     // System Health
     Logger::GetInstance().Info(TAG, "System Health:");

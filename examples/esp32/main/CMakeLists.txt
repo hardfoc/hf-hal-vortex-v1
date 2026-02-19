@@ -48,6 +48,8 @@ message(STATUS "Using source file: ${APP_SOURCE_FILE}")
 # =============================================================================
 set(MAIN_REQUIRES
     hf-hal-vortex-v1        # The HAL component (registered via EXTRA_COMPONENT_DIRS)
+    esp_timer               # Required by TestFramework.h
+    esp_driver_gpio         # Required by TestFramework.h (driver/gpio.h)
 )
 
 # =============================================================================
@@ -66,11 +68,11 @@ target_compile_features(${COMPONENT_LIB} PRIVATE cxx_std_20)
 
 if(BUILD_TYPE STREQUAL "Debug")
     target_compile_options(${COMPONENT_LIB} PRIVATE
-        -Wall -Wextra -Wpedantic -O0 -g3 -DDEBUG
+        -Wall -Wextra -O0 -g3 -DHF_DEBUG=1
     )
 else()
     target_compile_options(${COMPONENT_LIB} PRIVATE
-        -Wall -Wextra -Wpedantic -O2 -g -DNDEBUG
+        -Wall -Wextra -O2 -g -DNDEBUG
     )
 endif()
 

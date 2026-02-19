@@ -2,15 +2,17 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include <functional>
 #include <array>
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "handlers/as5047u/As5047uHandler.h"
 
 // Forward declarations
-class As5047uHandler;
 class CommChannelsManager;
 class GpioManager;
-class BaseGpio;
+class BaseSpi;
+enum class SpiDeviceId : uint8_t;
 enum class AS5047U_Error : uint16_t;
 
 /**
@@ -168,7 +170,7 @@ public:
      * @note Returns nullptr if deviceIndex is invalid, device not active/initialized, or driver unavailable
      * @note Caller must not delete the returned pointer; lifetime is owned by the handler.
      */
-    AS5047U* GetAs5047uDriver(uint8_t deviceIndex = ONBOARD_ENCODER_INDEX) noexcept;
+    as5047u::AS5047U<As5047uSpiAdapter>* GetAs5047uDriver(uint8_t deviceIndex = ONBOARD_ENCODER_INDEX) noexcept;
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//

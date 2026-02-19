@@ -40,8 +40,6 @@
 #define COMPONENT_HANDLER_GPIO_MANAGER_H_
 
 #include "base/BaseGpio.h"
-#include "SfI2cBus.h"
-#include "Tmc9660MotorController.h"
 #include "handlers/pcal95555/Pcal95555Handler.h"
 #include "MotorController.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
@@ -392,7 +390,7 @@ public:
      */
     [[nodiscard]] hf_gpio_err_t ConfigureInterrupt(std::string_view name,
                                                    hf_gpio_interrupt_trigger_t trigger,
-                                                   BaseGpio::InterruptCallback callback,
+                                                   InterruptCallback callback,
                                                    void* user_data = nullptr) noexcept;
     
     /**
@@ -426,7 +424,7 @@ public:
      * @param statistics Reference to store pin statistics
      * @return hf_gpio_err_t operation result
      */
-    [[nodiscard]] hf_gpio_err_t GetStatistics(std::string_view name, BaseGpio::PinStatistics& statistics) const noexcept;
+    [[nodiscard]] hf_gpio_err_t GetStatistics(std::string_view name, hf_gpio_statistics_t& statistics) const noexcept;
     
     /**
      * @brief Reset pin statistics.

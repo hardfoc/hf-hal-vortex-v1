@@ -287,6 +287,17 @@ public:
      */
     [[nodiscard]] hf_temp_err_t Shutdown() noexcept;
     
+    /**
+     * @brief Check if the temperature manager is initialized.
+     * @return true if initialized, false otherwise
+     */
+    [[nodiscard]] bool IsInitialized() const noexcept;
+    
+    /**
+     * @brief Dump comprehensive temperature system statistics to log.
+     */
+    void DumpStatistics() const noexcept;
+    
     //==========================================================================
     // SENSOR REGISTRATION AND MANAGEMENT
     //==========================================================================
@@ -387,6 +398,7 @@ private:
     //==========================================================================
     // CORE TEMPERATURE OPERATIONS (STRING-BASED)
     //==========================================================================
+public:
     
     /**
      * @brief Read temperature in Celsius from a sensor.

@@ -46,7 +46,7 @@ TemperatureManager::TemperatureManager() noexcept
 }
 
 TemperatureManager::~TemperatureManager() noexcept {
-    Shutdown();
+    (void)Shutdown();
 }
 
 //==============================================================================
@@ -213,13 +213,13 @@ void TemperatureManager::RegisterTmc9660ThermistorSensor() noexcept {
     }
     
     // Check if TMC9660_AIN3 channel is available (this is the temperature sensor channel)
-    if (!adc_manager.IsChannelAvailable("ADC_TMC9660_AIN3")) {
+    if (!adc_manager.Contains("ADC_TMC9660_AIN3")) {
         Logger::GetInstance().Warn(TAG, "TMC9660 AIN3 channel not available, skipping thermistor sensor");
         return;
     }
     
     // Configure NTC thermistor for TMC9660 AIN3
-    ntc_temp_handler_config_t ntc_config = NTC_TEMP_HANDLER_CONFIG_DEFAULT_NTCG163JFT103FT1S();
+    ntc_temp_handler_config_t ntc_config = NTC_TEMP_HANDLER_CONFIG_DEFAULT();
     ntc_config.enable_threshold_monitoring = true;
     ntc_config.low_threshold_celsius = 0.0f;
     ntc_config.high_threshold_celsius = 85.0f;  // Conservative threshold for motor controller
@@ -393,7 +393,7 @@ hf_temp_err_t TemperatureManager::RegisterNtcTemperatureSensor(std::string_view 
     }
     
     // Get ADC channel by name
-    BaseAdc* adc_interface = adc_manager.GetAdcInterface(adc_channel_name);
+    BaseAdc* adc_interface = adc_manager.Get(adc_channel_name);
     if (!adc_interface) {
         Logger::GetInstance().Error(TAG, "ADC channel '%s' not found", std::string(adc_channel_name).c_str());
         return TEMP_ERR_RESOURCE_UNAVAILABLE;
@@ -503,56 +503,6 @@ hf_temp_err_t TemperatureManager::RegisterTmc9660TemperatureSensor(std::string_v
     return TEMP_SUCCESS;
 }
 
-hf_temp_err_t TemperatureManager::RegisterOnboardTemperatureSensors() noexcept {
-    Logger::GetInstance().Info(TAG, "=== Registering Onboard Temperature Sensors ===");
-    
-    hf_temp_err_t overall_result = TEMP_SUCCESS;
-    
-    // 1. Register ESP32 internal temperature sensor
-    Logger::GetInstance().Info(TAG, "Registering ESP32 internal temperature sensor...");
-    hf_temp_err_t esp32_result = RegisterEspTemperatureSensor("esp32_internal");
-    if (esp32_result == TEMP_SUCCESS) {
-        Logger::GetInstance().Info(TAG, "ESP32 internal temperature sensor registered successfully");
-    } else {
-        Logger::GetInstance().Warn(TAG, "Failed to register ESP32 internal temperature sensor: %s", GetTempErrorString(esp32_result));
-        overall_result = esp32_result; // Track the first error
-    }
-    
-    // 2. Register TMC9660 internal temperature sensor (if available)
-    Logger::GetInstance().Info(TAG, "Registering TMC9660 internal temperature sensor...");
-    
-    // Get MotorController instance and check if onboard TMC9660 is available
-    MotorController& motor_controller = MotorController::GetInstance();
-    if (motor_controller.EnsureInitialized()) {
-        Tmc9660Handler* onboard_tmc9660 = motor_controller.handler(MotorController::ONBOARD_TMC9660_INDEX);
-        if (onboard_tmc9660 && onboard_tmc9660->IsDriverReady()) {
-            hf_temp_err_t tmc9660_result = RegisterTmc9660TemperatureSensor("tmc9660_internal", *onboard_tmc9660);
-            if (tmc9660_result == TEMP_SUCCESS) {
-                Logger::GetInstance().Info(TAG, "TMC9660 internal temperature sensor registered successfully");
-            } else {
-                Logger::GetInstance().Warn(TAG, "Failed to register TMC9660 internal temperature sensor: %s", GetTempErrorString(tmc9660_result));
-                if (overall_result == TEMP_SUCCESS) {
-                    overall_result = tmc9660_result; // Track the first error
-                }
-            }
-        } else {
-            Logger::GetInstance().Warn(TAG, "TMC9660 onboard device not available or not ready - skipping TMC9660 temperature sensor registration");
-        }
-    } else {
-        Logger::GetInstance().Warn(TAG, "MotorController not initialized - skipping TMC9660 temperature sensor registration");
-    }
-    
-    // Log summary
-    if (overall_result == TEMP_SUCCESS) {
-        Logger::GetInstance().Info(TAG, "All available onboard temperature sensors registered successfully");
-    } else {
-        Logger::GetInstance().Warn(TAG, "Some onboard temperature sensors failed to register");
-    }
-    
-    Logger::GetInstance().Info(TAG, "=== Onboard Temperature Sensor Registration Complete ===");
-    return overall_result;
-}
-
 hf_temp_err_t TemperatureManager::UnregisterSensor(std::string_view name) noexcept {
     MutexLockGuard lock(mutex_);
     
@@ -640,7 +590,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsius(std::string_view sensor
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = it->sensor->ReadTemperatureCelsius(temperature_celsius);
     const auto end_time = os_time_get();
     
@@ -671,7 +620,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheit(std::string_view sen
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = it->sensor->ReadTemperatureFahrenheit(temperature_fahrenheit);
     const auto end_time = os_time_get();
     
@@ -702,7 +650,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureKelvin(std::string_view sensor_
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = it->sensor->ReadTemperatureKelvin(temperature_kelvin);
     const auto end_time = os_time_get();
     
@@ -733,7 +680,6 @@ hf_temp_err_t TemperatureManager::ReadTemperature(std::string_view sensor_name, 
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = it->sensor->ReadTemperature(reading);
     const auto end_time = os_time_get();
     
@@ -764,7 +710,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureUnit(std::string_view sensor_na
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = it->sensor->ReadTemperatureUnit(temperature, unit);
     const auto end_time = os_time_get();
     
@@ -815,7 +760,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsiusByIndex(uint32_t index, 
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = sensor_info.sensor->ReadTemperatureCelsius(temperature_celsius);
     const auto end_time = os_time_get();
     
@@ -846,7 +790,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheitByIndex(uint32_t inde
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = sensor_info.sensor->ReadTemperatureFahrenheit(temperature_fahrenheit);
     const auto end_time = os_time_get();
     
@@ -877,7 +820,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureKelvinByIndex(uint32_t index, f
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = sensor_info.sensor->ReadTemperatureKelvin(temperature_kelvin);
     const auto end_time = os_time_get();
     
@@ -908,7 +850,6 @@ hf_temp_err_t TemperatureManager::ReadTemperatureByIndex(uint32_t index, hf_temp
         return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
     
-    const auto start_time = os_time_get();
     hf_temp_err_t result = sensor_info.sensor->ReadTemperature(reading);
     const auto end_time = os_time_get();
     
@@ -979,4 +920,23 @@ void TemperatureManager::UpdateSensorStatistics(TempSensorInfo* sensor_info, boo
     // Update system uptime
     system_diagnostics_.system_uptime_ms = 
         static_cast<uint64_t>(os_time_get() / 1000) - system_start_time_ms_.load();
-} 
+}
+
+bool TemperatureManager::IsInitialized() const noexcept {
+    return initialized_.load(std::memory_order_acquire);
+}
+
+void TemperatureManager::DumpStatistics() const noexcept {
+    Logger::GetInstance().Info(TAG, "=== TEMPERATURE MANAGER STATISTICS ===");
+    Logger::GetInstance().Info(TAG, "  Initialized: %s", initialized_.load() ? "YES" : "NO");
+    Logger::GetInstance().Info(TAG, "  Total Operations: %lu", 
+        static_cast<unsigned long>(system_diagnostics_.total_operations));
+    Logger::GetInstance().Info(TAG, "  Successful: %lu", 
+        static_cast<unsigned long>(system_diagnostics_.successful_operations));
+    Logger::GetInstance().Info(TAG, "  Failed: %lu", 
+        static_cast<unsigned long>(system_diagnostics_.failed_operations));
+    Logger::GetInstance().Info(TAG, "  Min Temp: %.2f C", system_diagnostics_.system_min_temp_celsius);
+    Logger::GetInstance().Info(TAG, "  Max Temp: %.2f C", system_diagnostics_.system_max_temp_celsius);
+    Logger::GetInstance().Info(TAG, "  Avg Temp: %.2f C", system_diagnostics_.system_avg_temp_celsius);
+    Logger::GetInstance().Info(TAG, "=== END TEMPERATURE MANAGER STATISTICS ===");
+}
