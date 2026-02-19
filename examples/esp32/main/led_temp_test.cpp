@@ -14,6 +14,8 @@
  */
 
 #include "api/Vortex.h"
+#include "managers/LedManager.h"
+#include "managers/TemperatureManager.h"
 #include "TestFramework.h"
 
 #include "freertos/FreeRTOS.h"

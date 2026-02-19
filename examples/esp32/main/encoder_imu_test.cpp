@@ -16,6 +16,8 @@
  */
 
 #include "api/Vortex.h"
+#include "managers/EncoderManager.h"
+#include "managers/ImuManager.h"
 #include "TestFramework.h"
 #include "handlers/bno08x/Bno08xHandler.h"
 

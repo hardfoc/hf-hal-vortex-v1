@@ -16,6 +16,7 @@
  */
 
 #include "api/Vortex.h"
+#include "managers/AdcManager.h"
 #include "TestFramework.h"
 
 #include "freertos/FreeRTOS.h"

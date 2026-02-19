@@ -940,3 +940,15 @@ void TemperatureManager::DumpStatistics() const noexcept {
     Logger::GetInstance().Info(TAG, "  Avg Temp: %.2f C", system_diagnostics_.system_avg_temp_celsius);
     Logger::GetInstance().Info(TAG, "=== END TEMPERATURE MANAGER STATISTICS ===");
 }
+
+hf_temp_err_t TemperatureManager::GetSystemDiagnostics(TempSystemDiagnostics& diagnostics) noexcept {
+    if (!IsInitialized()) {
+        return hf_temp_err_t::TEMP_ERR_NOT_INITIALIZED;
+    }
+
+    diagnostics = system_diagnostics_;
+    diagnostics.system_healthy           = (system_diagnostics_.failed_operations == 0);
+    diagnostics.total_sensors_registered = static_cast<uint32_t>(sensors_.size());
+
+    return hf_temp_err_t::TEMP_SUCCESS;
+}
