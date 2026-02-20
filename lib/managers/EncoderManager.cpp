@@ -19,7 +19,7 @@
 // Platform mapping for functional pin definitions
 
 // RtosMutex for thread safety
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 // Standard library
 #include <iostream>

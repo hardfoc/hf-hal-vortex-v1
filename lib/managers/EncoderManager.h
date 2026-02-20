@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 #include <array>
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
 #include "handlers/as5047u/As5047uHandler.h"
 
 // Forward declarations

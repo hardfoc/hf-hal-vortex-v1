@@ -116,7 +116,7 @@ class McuDigitalGpio : public BaseGpio {
 
 // Project includes
 #include "base/BaseInterface.h"
-#include "utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 // Forward declarations
 class SomeClass;

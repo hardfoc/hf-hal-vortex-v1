@@ -1,6 +1,6 @@
 #include "MotorController.h"
 #include "CommChannelsManager.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/RtosMutex.h"
+#include "RtosMutex.h"
 #include "handlers/logger/Logger.h"
 #include <algorithm>
 #include <string>

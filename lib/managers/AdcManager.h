@@ -24,7 +24,7 @@
 #include <string_view>
 
 #include "base/BaseAdc.h"
-#include "utils/RtosMutex.h"
+#include "RtosMutex.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 
 // Forward declarations

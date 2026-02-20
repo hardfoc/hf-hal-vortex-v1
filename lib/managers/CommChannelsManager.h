@@ -39,7 +39,7 @@ class EspCan;
 #include "base/BaseI2c.h"
 #include "base/BaseUart.h"
 #include "base/BaseCan.h"
-#include "utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 //==============================================================================
 // COMM CHANNELS ERROR CODES

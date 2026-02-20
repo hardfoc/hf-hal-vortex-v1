@@ -25,7 +25,7 @@
 #include "base/BaseTemperature.h"
 #include "mcu/esp32/EspTemperature.h"
 #include "handlers/ntc/NtcTemperatureHandler.h"
-#include "utils/RtosMutex.h"
+#include "RtosMutex.h"
 
 //==============================================================================
 // FORWARD DECLARATIONS
