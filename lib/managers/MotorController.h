@@ -141,7 +141,7 @@ public:
      * @brief Get the singleton instance.
      * @return Reference to the singleton MotorController.
      */
-    static MotorController& GetInstance();
+    static MotorController& GetInstance() noexcept;
 
     //**************************************************************************//
     //**                  DEVICE MANAGEMENT METHODS                           **//
@@ -248,7 +248,7 @@ public:
     [[nodiscard]] MotorError CreateOnboardDevice(BaseSpi& spiInterface, 
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
-                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr) noexcept;
 
     /**
      * @brief Create the onboard TMC9660 device using a UART interface.
@@ -263,7 +263,7 @@ public:
     [[nodiscard]] MotorError CreateOnboardDevice(BaseUart& uartInterface,
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
-                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr) noexcept;
 
     /**
      * @brief Create an external TMC9660 device on specified CS line (SPI).
@@ -279,7 +279,7 @@ public:
                             SpiDeviceId spiDeviceId, 
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
-                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr) noexcept;
 
     /**
      * @brief Create an external TMC9660 device on a UART interface.
@@ -295,7 +295,7 @@ public:
                             BaseUart& uartInterface,
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
-                            const tmc9660::BootloaderConfig* bootCfg = nullptr);
+                            const tmc9660::BootloaderConfig* bootCfg = nullptr) noexcept;
 
     /**
      * @brief Delete an external TMC9660 device.
@@ -303,7 +303,7 @@ public:
      * @return MotorError::SUCCESS if device deleted, typed error otherwise
      * @note Cannot delete onboard device (index 0). Only external devices can be deleted.
      */
-    [[nodiscard]] MotorError DeleteExternalDevice(uint8_t csDeviceIndex);
+    [[nodiscard]] MotorError DeleteExternalDevice(uint8_t csDeviceIndex) noexcept;
 
     /**
      * @brief Get the number of active TMC9660 devices.
@@ -394,4 +394,16 @@ private:
     mutable RtosMutex deviceMutex_;     ///< RTOS mutex for thread-safe device access
 };
 
-#endif // COMPONENT_HANDLER_MOTOR_CONTROLLER_H_ 
+//==============================================================================
+// CONVENIENCE
+//==============================================================================
+
+/**
+ * @brief Convenience accessor — equivalent to MotorController::GetInstance().
+ * @return Reference to the singleton MotorController.
+ */
+[[nodiscard]] inline MotorController& GetMotorController() noexcept {
+    return MotorController::GetInstance();
+}
+
+#endif // COMPONENT_HANDLER_MOTOR_CONTROLLER_H_

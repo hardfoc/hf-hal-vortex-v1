@@ -32,7 +32,7 @@ The `LedManager` is a singleton that drives a single WS2812 addressable RGB LED 
 │  unique_ptr<WS2812Strip>     │  ← RMT LED strip driver
 │  unique_ptr<WS2812Animator>  │  ← Animation engine
 ├──────────────────────────────┤
-│  ESP32-C6 RMT → GPIO3       │  ← Hardware
+│  ESP32-C6 RMT → GPIO3        │  ← Hardware
 └──────────────────────────────┘
 ```
 

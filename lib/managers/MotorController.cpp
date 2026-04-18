@@ -4,7 +4,7 @@
 #include "handlers/logger/Logger.h"
 #include <algorithm>
 
-MotorController& MotorController::GetInstance() {
+MotorController& MotorController::GetInstance() noexcept {
     static MotorController instance;
     return instance;
 }
@@ -69,7 +69,7 @@ bool MotorController::Deinitialize() noexcept {
 MotorError MotorController::CreateOnboardDevice(BaseSpi& spiInterface, 
                                         uint8_t address,
                                         const Tmc9660ControlPins& pins,
-                                        const tmc9660::BootloaderConfig* bootCfg) {
+                                        const tmc9660::BootloaderConfig* bootCfg) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
     if (deviceActive_[ONBOARD_TMC9660_INDEX]) {
@@ -108,7 +108,7 @@ MotorError MotorController::CreateOnboardDevice(BaseSpi& spiInterface,
 MotorError MotorController::CreateOnboardDevice(BaseUart& uartInterface,
                                         uint8_t address,
                                         const Tmc9660ControlPins& pins,
-                                        const tmc9660::BootloaderConfig* bootCfg) {
+                                        const tmc9660::BootloaderConfig* bootCfg) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
     if (deviceActive_[ONBOARD_TMC9660_INDEX]) {
@@ -148,7 +148,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
                                          SpiDeviceId spiDeviceId, 
                                          uint8_t address,
                                          const Tmc9660ControlPins& pins,
-                                         const tmc9660::BootloaderConfig* bootCfg) {
+                                         const tmc9660::BootloaderConfig* bootCfg) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
     if (!IsExternalDeviceIndex(csDeviceIndex)) {
@@ -205,7 +205,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
                                          BaseUart& uartInterface,
                                          uint8_t address,
                                          const Tmc9660ControlPins& pins,
-                                         const tmc9660::BootloaderConfig* bootCfg) {
+                                         const tmc9660::BootloaderConfig* bootCfg) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
     if (!IsExternalDeviceIndex(csDeviceIndex)) {
@@ -245,7 +245,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
 // Device Deletion
 // ---------------------------------------------------------------------------
 
-MotorError MotorController::DeleteExternalDevice(uint8_t csDeviceIndex) {
+MotorError MotorController::DeleteExternalDevice(uint8_t csDeviceIndex) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
     if (!IsExternalDeviceIndex(csDeviceIndex)) {

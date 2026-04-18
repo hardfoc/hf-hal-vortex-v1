@@ -152,7 +152,7 @@ IBno08xDriverOps* ImuManager::GetSensor(uint8_t deviceIndex) noexcept {
 ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            uint8_t i2c_address,
                                            uint32_t i2c_speed_hz,
-                                           const Bno08xConfig& config) {
+                                           const Bno08xConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
@@ -245,7 +245,7 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
 
 ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            BaseI2c& i2c_interface,
-                                           const Bno08xConfig& config) {
+                                           const Bno08xConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
@@ -292,7 +292,7 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
 
 ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            SpiDeviceId spiDeviceId,
-                                           const Bno08xConfig& config) {
+                                           const Bno08xConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
@@ -353,7 +353,7 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
 
 ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            BaseSpi& spi_interface,
-                                           const Bno08xConfig& config) {
+                                           const Bno08xConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
@@ -398,7 +398,7 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     return ImuError::SUCCESS;
 }
 
-ImuError ImuManager::DeleteExternalDevice(uint8_t deviceIndex) {
+ImuError ImuManager::DeleteExternalDevice(uint8_t deviceIndex) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {

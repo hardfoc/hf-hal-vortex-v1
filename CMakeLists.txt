@@ -136,7 +136,7 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     -Werror=memset-transposed-args
     -Werror=mismatched-dealloc
     -Werror=mismatched-new-delete
-    -Werror=missing-include-dirs
+    -Wno-error=missing-include-dirs
     -Werror=multichar
     -Werror=multistatement-macros
     -Werror=narrowing

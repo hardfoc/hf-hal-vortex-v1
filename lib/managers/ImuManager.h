@@ -260,7 +260,7 @@ public:
     [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    uint8_t i2c_address,
                                    uint32_t i2c_speed_hz = 400000,
-                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
+                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig()) noexcept;
 
 
 
@@ -273,7 +273,7 @@ public:
      */
     [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    SpiDeviceId spiDeviceId,
-                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
+                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig()) noexcept;
 
     /**
      * @brief Create an external BNO08x IMU device using direct BaseI2c interface.
@@ -285,7 +285,7 @@ public:
      */
     [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    BaseI2c& i2c_interface,
-                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
+                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig()) noexcept;
 
     /**
      * @brief Create an external BNO08x IMU device using direct BaseSpi interface.
@@ -297,7 +297,7 @@ public:
      */
     [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    BaseSpi& spi_interface,
-                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
+                                   const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig()) noexcept;
 
     /**
      * @brief Delete an external IMU device.
@@ -305,7 +305,7 @@ public:
      * @return ImuError::SUCCESS if device deleted, typed error otherwise
      * @note Cannot delete onboard device (index 0). Only external devices can be deleted.
      */
-    [[nodiscard]] ImuError DeleteExternalDevice(uint8_t deviceIndex);
+    [[nodiscard]] ImuError DeleteExternalDevice(uint8_t deviceIndex) noexcept;
 
     /**
      * @brief Get the number of active IMU devices.
@@ -576,4 +576,16 @@ private:
     bool interrupt_enabled_ = false;
     std::atomic<uint32_t> interrupt_count_{0};
     void* interrupt_semaphore_ = nullptr;  ///< FreeRTOS semaphore for WaitForInterrupt()
-}; 
+};
+
+//==============================================================================
+// CONVENIENCE
+//==============================================================================
+
+/**
+ * @brief Convenience accessor — equivalent to ImuManager::GetInstance().
+ * @return Reference to the singleton ImuManager.
+ */
+[[nodiscard]] inline ImuManager& GetImuManager() noexcept {
+    return ImuManager::GetInstance();
+}

@@ -241,7 +241,7 @@ public:
      */
     bool CreateExternalAs5047uDevice(uint8_t deviceIndex, 
                                    SpiDeviceId spiDeviceId,
-                                   const As5047uConfig& config = As5047uHandler::GetDefaultConfig());
+                                   const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept;
 
     /**
      * @brief Create an external AS5047U encoder device using direct BaseSpi interface.
@@ -253,7 +253,7 @@ public:
      */
     bool CreateExternalAs5047uDevice(uint8_t deviceIndex, 
                                    BaseSpi& spi_interface,
-                                   const As5047uConfig& config = As5047uHandler::GetDefaultConfig());
+                                   const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept;
 
     /**
      * @brief Delete an external encoder device.
@@ -261,7 +261,7 @@ public:
      * @return true if device deleted successfully, false otherwise
      * @note Cannot delete onboard device (index 0). Only external devices can be deleted.
      */
-    bool DeleteExternalDevice(uint8_t deviceIndex);
+    bool DeleteExternalDevice(uint8_t deviceIndex) noexcept;
 
     /**
      * @brief Get the number of active encoder devices.
@@ -539,3 +539,15 @@ private:
     std::array<std::atomic<uint32_t>, MAX_ENCODER_DEVICES> measurement_counts_{0};  ///< Measurement counts per device
     std::array<std::atomic<uint32_t>, MAX_ENCODER_DEVICES> communication_error_counts_{0};  ///< Communication error counts per device
 };
+
+//==============================================================================
+// CONVENIENCE
+//==============================================================================
+
+/**
+ * @brief Convenience accessor — equivalent to EncoderManager::GetInstance().
+ * @return Reference to the singleton EncoderManager.
+ */
+[[nodiscard]] inline EncoderManager& GetEncoderManager() noexcept {
+    return EncoderManager::GetInstance();
+}

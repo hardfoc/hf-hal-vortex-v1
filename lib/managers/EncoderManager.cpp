@@ -140,7 +140,7 @@ as5047u::AS5047U<As5047uSpiAdapter>* EncoderManager::GetAs5047uDriver(uint8_t de
 
 bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex, 
                                                SpiDeviceId spiDeviceId,
-                                               const As5047uConfig& config) {
+                                               const As5047uConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
@@ -197,7 +197,7 @@ bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex,
 
 bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex, 
                                                BaseSpi& spi_interface,
-                                               const As5047uConfig& config) {
+                                               const As5047uConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
@@ -239,7 +239,7 @@ bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex,
     return true;
 }
 
-bool EncoderManager::DeleteExternalDevice(uint8_t deviceIndex) {
+bool EncoderManager::DeleteExternalDevice(uint8_t deviceIndex) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
