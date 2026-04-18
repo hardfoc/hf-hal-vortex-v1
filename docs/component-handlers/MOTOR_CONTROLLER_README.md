@@ -512,6 +512,23 @@ void error_handling_example() {
 }
 ```
 
+### MotorError Reference
+
+| Code | Value | Description |
+|------|-------|-------------|
+| `SUCCESS` | 0 | Operation completed successfully |
+| `NOT_INITIALIZED` | 1 | Manager not yet initialised |
+| `INITIALIZATION_FAILED` | 2 | Device initialisation failed |
+| `DEVICE_ALREADY_EXISTS` | 3 | A device already occupies this slot |
+| `DEVICE_NOT_FOUND` | 4 | No active device at the given index |
+| `INVALID_DEVICE_INDEX` | 5 | Device index out of valid range |
+| `CANNOT_DELETE_ONBOARD` | 6 | Onboard device (index 0) cannot be deleted |
+| `DEPENDENCY_NOT_READY` | 7 | Required dependency not initialised |
+| `COMMUNICATION_FAILED` | 8 | A bus-level transfer failed |
+| `INVALID_PARAMETER` | 9 | Null pointer or out-of-range argument |
+| `HANDLER_CREATION_FAILED` | 10 | Heap allocation or handler init failed |
+| `MUTEX_LOCK_FAILED` | 11 | RTOS mutex acquire timed out |
+
 ## 🛡️ Safety Considerations
 
 ### Required Bootloader Initialization

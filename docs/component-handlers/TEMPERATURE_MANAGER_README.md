@@ -455,7 +455,25 @@ void trend_analysis_example() {
 }
 ```
 
-## 📚 See Also
+## � Error Codes
+
+### TemperatureError Reference
+
+| Code | Value | Description |
+|------|-------|-------------|
+| `SUCCESS` | 0 | Operation completed successfully |
+| `NOT_INITIALIZED` | 1 | Manager not yet initialised |
+| `INITIALIZATION_FAILED` | 2 | Sensor initialisation failed |
+| `SENSOR_NOT_FOUND` | 3 | Named sensor does not exist in registry |
+| `SENSOR_NOT_AVAILABLE` | 4 | Sensor exists but is unavailable |
+| `READ_FAILED` | 5 | Driver-level read returned an error |
+| `INVALID_PARAMETER` | 6 | Null pointer or out-of-range argument |
+| `NO_SENSORS_AVAILABLE` | 7 | No sensors were registered at init |
+| `ALLOCATION_FAILED` | 8 | Heap allocation for a sensor driver failed |
+| `DEPENDENCY_NOT_READY` | 9 | Required dependency not initialised |
+| `MUTEX_LOCK_FAILED` | 10 | RTOS mutex acquire timed out |
+
+## �📚 See Also
 
 - **[AdcManager Documentation](ADC_MANAGER_README.md)** - ADC system for NTC thermistor readings
 - **[CommChannelsManager Documentation](COMM_CHANNELS_MANAGER_README.md)** - I2C communication for external sensors

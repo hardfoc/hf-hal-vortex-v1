@@ -811,6 +811,34 @@ void error_handling_example() {
 }
 ```
 
+### `hf_adc_err_t` Error Code Reference
+
+| Category | Codes | Description |
+|----------|-------|-------------|
+| **General** | `ADC_SUCCESS` (0) | Operation completed successfully |
+| | `ADC_ERR_FAILURE` (1) | General failure |
+| | `ADC_ERR_NOT_INITIALIZED` (2) | Not initialized |
+| | `ADC_ERR_ALREADY_INITIALIZED` (3) | Already initialized |
+| **Parameter** | `ADC_ERR_INVALID_PARAMETER` (4) | Invalid parameter |
+| | `ADC_ERR_NULL_POINTER` (5) | Null pointer |
+| **Channel** | `ADC_ERR_CHANNEL_NOT_FOUND` (7) | Channel not found |
+| | `ADC_ERR_CHANNEL_NOT_ENABLED` (8) | Channel not enabled |
+| | `ADC_ERR_CHANNEL_READ_ERR` (11) | Channel read error |
+| | `ADC_ERR_INVALID_CHANNEL` (13) | Invalid channel |
+| | `ADC_ERR_CHANNEL_BUSY` (14) | Channel busy |
+| **Sampling** | `ADC_ERR_SAMPLE_TIMEOUT` (16) | Sample timeout |
+| | `ADC_ERR_VOLTAGE_OUT_OF_RANGE` (23) | Voltage out of range |
+| **Hardware** | `ADC_ERR_HARDWARE_FAULT` (19) | Hardware fault |
+| | `ADC_ERR_COMMUNICATION_FAILURE` (20) | Communication failure |
+| | `ADC_ERR_DEVICE_NOT_RESPONDING` (21) | Device not responding |
+| **Calibration** | `ADC_ERR_CALIBRATION_FAILURE` (22) | Calibration failure |
+| | `ADC_ERR_CALIBRATION_NOT_FOUND` (28) | Calibration data not found |
+| **System** | `ADC_ERR_SYSTEM_ERROR` (40) | System error |
+| | `ADC_ERR_TIMEOUT` (45) | Operation timeout |
+| | `ADC_ERR_UNKNOWN` (57) | Unknown error |
+
+> Full enum: see `hf_adc_err_t` in `BaseAdc.h` (58 values covering channel, calibration, DMA, and system errors).
+
 ## 🔗 Integration
 
 ### With Motor Controller

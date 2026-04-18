@@ -556,6 +556,26 @@ void error_handling_example() {
 }
 ```
 
+### ImuError Reference
+
+| Code | Value | Description |
+|------|-------|-------------|
+| `SUCCESS` | 0 | Operation completed successfully |
+| `NOT_INITIALIZED` | 1 | Manager not yet initialised |
+| `INITIALIZATION_FAILED` | 2 | Device initialisation failed |
+| `DEVICE_ALREADY_EXISTS` | 3 | A device already occupies this slot |
+| `DEVICE_NOT_FOUND` | 4 | No active device at the given index |
+| `INVALID_DEVICE_INDEX` | 5 | Device index out of valid range |
+| `CANNOT_DELETE_ONBOARD` | 6 | Onboard device (index 0) cannot be deleted |
+| `INVALID_I2C_ADDRESS` | 7 | I\u00B2C address outside 0x08\u20130x77 |
+| `DEPENDENCY_NOT_READY` | 8 | Required dependency not initialised |
+| `COMMUNICATION_FAILED` | 9 | A bus-level transfer failed |
+| `I2C_DEVICE_CREATION_FAILED` | 10 | CommChannelsManager I\u00B2C device creation failed |
+| `HANDLER_CREATION_FAILED` | 11 | Heap allocation or handler init failed |
+| `INTERRUPT_ERROR` | 12 | GPIO interrupt configuration failed |
+| `ALREADY_DEINITIALIZED` | 13 | Manager already in deinitialized state |
+| `MUTEX_LOCK_FAILED` | 14 | RTOS mutex acquire timed out |
+
 ### Integration with Other Managers
 
 ```cpp

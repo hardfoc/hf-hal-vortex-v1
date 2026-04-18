@@ -520,6 +520,23 @@ void error_handling_example() {
 }
 ```
 
+### CommError Reference
+
+| Code | Value | Description |
+|------|-------|-------------|
+| `SUCCESS` | 0 | Operation completed successfully |
+| `NOT_INITIALIZED` | 1 | Manager not yet initialised |
+| `INITIALIZATION_FAILED` | 2 | Bus or device initialisation failed |
+| `BUS_NOT_AVAILABLE` | 3 | Requested bus is not present or not ready |
+| `DEVICE_NOT_FOUND` | 4 | Device index or id not in registry |
+| `INVALID_BUS_INDEX` | 5 | Bus index out of range |
+| `INVALID_DEVICE_INDEX` | 6 | Device index out of range |
+| `DEVICE_ALREADY_EXISTS` | 7 | A device at that address already exists |
+| `DEVICE_CREATION_FAILED` | 8 | Heap allocation or driver init for device failed |
+| `COMMUNICATION_FAILED` | 9 | A bus-level transfer failed |
+| `INVALID_PARAMETER` | 10 | Null pointer or out-of-range argument |
+| `MUTEX_LOCK_FAILED` | 11 | RTOS mutex acquire timed out |
+
 ## 🔗 Integration
 
 ### With Other Managers

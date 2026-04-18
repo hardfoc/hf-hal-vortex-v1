@@ -552,7 +552,26 @@ void position_analysis_example() {
 }
 ```
 
-## 📚 See Also
+## � Error Codes
+
+### EncoderError Reference
+
+| Code | Value | Description |
+|------|-------|-------------|
+| `SUCCESS` | 0 | Operation completed successfully |
+| `NOT_INITIALIZED` | 1 | Manager not yet initialised |
+| `INITIALIZATION_FAILED` | 2 | Device initialisation failed |
+| `INVALID_PARAMETER` | 3 | Null pointer or out-of-range argument |
+| `SPI_COMMUNICATION_FAILED` | 4 | SPI bus transfer failed |
+| `CRC_ERROR` | 5 | CRC mismatch on SPI frame |
+| `FRAMING_ERROR` | 6 | Malformed SPI frame received |
+| `SENSOR_ERROR` | 7 | Encoder sensor self-test failure |
+| `TIMEOUT` | 8 | Operation timed out |
+| `MUTEX_LOCK_FAILED` | 9 | RTOS mutex acquire timed out |
+
+> **Type alias**: `using As5047uError = EncoderError;`
+
+## �📚 See Also
 
 - **[CommChannelsManager Documentation](COMM_CHANNELS_MANAGER_README.md)** - SPI/I2C communication for encoders
 - **[GpioManager Documentation](GPIO_MANAGER_README.md)** - GPIO interface for incremental encoders
