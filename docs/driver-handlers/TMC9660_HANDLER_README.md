@@ -239,11 +239,11 @@ gpio18.GetPinLevel(level);
 ```cpp
 auto& adc = handler.adc();
 float voltage;
-adc.ReadChannelV(20, voltage);  // Supply voltage
+adc.ReadVoltage(20, voltage);  // Supply voltage
 
 // Use IsChannelAvailable() to validate sparse channel IDs
 if (adc.IsChannelAvailable(30)) {
-    adc.ReadChannelV(30, voltage);  // Chip temperature in Celsius
+    adc.ReadVoltage(30, voltage);  // Chip temperature in Celsius
 }
 ```
 

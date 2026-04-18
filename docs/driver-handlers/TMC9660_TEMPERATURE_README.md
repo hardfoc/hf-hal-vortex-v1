@@ -66,7 +66,7 @@ And through the ADC wrapper (channel 30):
 ```cpp
 auto& adc = handler.adc();
 float temp_c;
-adc.ReadChannelV(30, temp_c);  // Channel 30 = chip temperature in Celsius
+adc.ReadVoltage(30, temp_c);  // Channel 30 = chip temperature in Celsius
 ```
 
 ### Sensor Information

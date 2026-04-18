@@ -178,9 +178,8 @@ size_t AdcManager::Size() const noexcept {
 // READING OPERATIONS
 //==============================================================================
 
-hf_adc_err_t AdcManager::ReadChannelV(std::string_view name, float& voltage,
-                                      hf_u8_t numOfSamplesToAvg,
-                                      hf_time_t timeBetweenSamples) noexcept {
+hf_adc_err_t AdcManager::ReadVoltage(std::string_view name, float& voltage,
+                                     hf_u8_t samples, hf_time_t timeBetweenSamples) noexcept {
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -193,7 +192,7 @@ hf_adc_err_t AdcManager::ReadChannelV(std::string_view name, float& voltage,
 
     float raw_voltage = 0.0f;
     hf_adc_err_t err = entry.driver->ReadChannelV(
-        entry.hw_channel, raw_voltage, numOfSamplesToAvg, timeBetweenSamples);
+        entry.hw_channel, raw_voltage, samples, timeBetweenSamples);
 
     if (err == hf_adc_err_t::ADC_SUCCESS) {
         voltage = raw_voltage * entry.voltage_divider;
@@ -205,9 +204,8 @@ hf_adc_err_t AdcManager::ReadChannelV(std::string_view name, float& voltage,
     return err;
 }
 
-hf_adc_err_t AdcManager::ReadChannelV(HfFunctionalAdcChannel channel, float& voltage,
-                                      hf_u8_t numOfSamplesToAvg,
-                                      hf_time_t timeBetweenSamples) noexcept {
+hf_adc_err_t AdcManager::ReadVoltage(HfFunctionalAdcChannel channel, float& voltage,
+                                     hf_u8_t samples, hf_time_t timeBetweenSamples) noexcept {
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -220,7 +218,7 @@ hf_adc_err_t AdcManager::ReadChannelV(HfFunctionalAdcChannel channel, float& vol
 
     float raw_voltage = 0.0f;
     hf_adc_err_t err = entry.driver->ReadChannelV(
-        entry.hw_channel, raw_voltage, numOfSamplesToAvg, timeBetweenSamples);
+        entry.hw_channel, raw_voltage, samples, timeBetweenSamples);
 
     if (err == hf_adc_err_t::ADC_SUCCESS) {
         voltage = raw_voltage * entry.voltage_divider;
@@ -233,7 +231,7 @@ hf_adc_err_t AdcManager::ReadChannelV(HfFunctionalAdcChannel channel, float& vol
 }
 
 hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
-                                  hf_u8_t numOfSamplesToAvg) noexcept {
+                                  hf_u8_t numOfSamplesToAvg, hf_time_t timeBetweenSamples) noexcept {
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -245,7 +243,7 @@ hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
     MutexLockGuard lock(mutex_);
 
     hf_u32_t count = 0;
-    hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg);
+    hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg, timeBetweenSamples);
     if (err == hf_adc_err_t::ADC_SUCCESS) {
         raw_value = count;
         entry.access_count++;
@@ -257,7 +255,7 @@ hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
 }
 
 hf_adc_err_t AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_value,
-                                  hf_u8_t numOfSamplesToAvg) noexcept {
+                                  hf_u8_t numOfSamplesToAvg, hf_time_t timeBetweenSamples) noexcept {
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -269,7 +267,7 @@ hf_adc_err_t AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_v
     MutexLockGuard lock(mutex_);
 
     hf_u32_t count = 0;
-    hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg);
+    hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg, timeBetweenSamples);
     if (err == hf_adc_err_t::ADC_SUCCESS) {
         raw_value = count;
         entry.access_count++;

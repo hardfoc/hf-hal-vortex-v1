@@ -38,7 +38,7 @@ static void example_voltage_reading() {
     auto& adc = VORTEX_API.adc;
 
     float vm = 0.0f;
-    auto err = adc.ReadChannelV("ADC_VM", vm, 8);
+    auto err = adc.ReadVoltage("ADC_VM", vm, 8);
     if (err == hf_adc_err_t::ADC_SUCCESS) {
         ESP_LOGI(TAG, "VM supply: %.2f V (8-sample avg)", static_cast<double>(vm));
     } else {

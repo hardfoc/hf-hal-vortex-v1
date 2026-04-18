@@ -80,7 +80,7 @@ extern "C" void app_main(void) {
         // Use any component naturally
         gpio.Set("GPIO_EXT_GPIO_CS_1", true);
         float voltage;
-        adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);
+        adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);
         auto* motor_handler = motors.handler(0);
         leds.SetStatus(LedAnimation::STATUS_OK);
         
@@ -165,7 +165,7 @@ The Vortex API manages initialization in the correct dependency order for the Ha
 The HardFOC Vortex V1 API provides two access patterns optimized for different use cases:
 
 #### 🔍 String-Based API (Convenience & Extensibility)
-String-based functions like `gpio.Set("GPIO_EXT_GPIO_CS_1", true)` and `adc.ReadChannelV("ADC_TMC9660_AIN3", voltage)` provide:
+String-based functions like `gpio.Set("GPIO_EXT_GPIO_CS_1", true)` and `adc.ReadVoltage("ADC_TMC9660_AIN3", voltage)` provide:
 - **Convenience**: Easy to use and understand
 - **Extensibility**: Dynamic pin registration and configuration
 - **Higher-level abstraction**: Perfect for application logic and configuration
@@ -176,7 +176,7 @@ if (gpio.Set("GPIO_EXT_GPIO_CS_1", true) == hf_gpio_err_t::GPIO_SUCCESS) {
     // GPIO set successfully
 }
 float voltage;
-if (adc.ReadChannelV("ADC_TMC9660_AIN3", voltage) == hf_adc_err_t::ADC_SUCCESS) {
+if (adc.ReadVoltage("ADC_TMC9660_AIN3", voltage) == hf_adc_err_t::ADC_SUCCESS) {
     // ADC reading successful
 }
 ```
@@ -268,7 +268,7 @@ extern "C" void app_main(void) {
         }
         
         float voltage;
-        if (adc.ReadChannelV("ADC_TMC9660_AIN3", voltage) == hf_adc_err_t::ADC_SUCCESS) {
+        if (adc.ReadVoltage("ADC_TMC9660_AIN3", voltage) == hf_adc_err_t::ADC_SUCCESS) {
             logger.Info("MAIN", "ADC reading: %.3fV\n", voltage);
         }
         
@@ -336,7 +336,7 @@ auto& adc = vortex.adc;
 
 // Read TMC9660 ADC channels
 float voltage;
-adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);  // Temperature sensor
+adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);  // Temperature sensor
 
 // Read multiple TMC9660 channels simultaneously
 std::array<std::string_view, 4> channels = {
@@ -347,11 +347,11 @@ auto readings = adc.BatchRead(channels);
 
 // Read TMC9660 internal monitoring channels
 float current;
-adc.ReadChannelV("TMC9660_CURRENT_I0", current);
+adc.ReadVoltage("TMC9660_CURRENT_I0", current);
 float temperature;
-adc.ReadChannelV("TMC9660_CHIP_TEMPERATURE", temperature);
+adc.ReadVoltage("TMC9660_CHIP_TEMPERATURE", temperature);
 float motor_velocity;
-adc.ReadChannelV("TMC9660_MOTOR_VELOCITY", motor_velocity);
+adc.ReadVoltage("TMC9660_MOTOR_VELOCITY", motor_velocity);
 ```
 
 #### Motor Control
@@ -582,7 +582,7 @@ gpio.SetDirection("GPIO_EXT_GPIO_CS_1", hf_gpio_direction_t::HF_GPIO_DIRECTION_O
 
 // ADC Operations
 float voltage;
-adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);           // Read voltage
+adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);           // Read voltage
 uint32_t raw_value;
 adc.ReadChannelCount("ADC_TMC9660_AIN3", raw_value);     // Read raw count
 ```
@@ -697,7 +697,7 @@ if (result != hf_gpio_err_t::GPIO_SUCCESS) {
 
 // For ADC operations
 float voltage;
-auto adc_result = adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);
+auto adc_result = adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);
 if (adc_result != hf_adc_err_t::ADC_SUCCESS) {
     logger.Error("ADC", "Failed to read voltage: %s", HfAdcErrToString(adc_result));
     // Handle error appropriately

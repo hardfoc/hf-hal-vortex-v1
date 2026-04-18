@@ -331,7 +331,7 @@ void tmc9660_io_example() {
     
     // Read ADC channels (requires channel IDs)
     float voltage;
-    if (adc.ReadChannelV(0, voltage) == hf_adc_err_t::ADC_SUCCESS) {
+    if (adc.ReadVoltage(0, voltage) == hf_adc_err_t::ADC_SUCCESS) {
         logger.Info("MOTOR", "ADC Channel 0: %.3f V\n", voltage);
     }
     
@@ -612,7 +612,7 @@ void integrated_example() {
     
     // Use motor ADC through AdcManager (string-based convenience)
     float current;
-    adc.ReadChannelV("TMC9660_CURRENT_I0", current);
+    adc.ReadVoltage("TMC9660_CURRENT_I0", current);
     
     // Direct TMC9660 control (cached access)
     auto tmc = motor.driver(0);

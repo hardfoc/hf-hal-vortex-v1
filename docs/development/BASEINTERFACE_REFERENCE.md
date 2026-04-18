@@ -237,9 +237,8 @@ std::shared_ptr<BaseGpio> Get(std::string_view name) noexcept;
 ### AdcManager Convenience API
 ```cpp
 // Manager convenience functions (with string lookup overhead)
-hf_adc_err_t ReadChannelV(std::string_view name, float& voltage,
-                         hf_u8_t numOfSamplesToAvg = 1,
-                         hf_time_t timeBetweenSamples = 0) noexcept;
+hf_adc_err_t ReadVoltage(std::string_view name, float& voltage,
+                        hf_u8_t numOfSamplesToAvg = 1) noexcept;
 
 hf_adc_err_t ReadChannelCount(std::string_view name, hf_u32_t& value,
                              hf_u8_t numOfSamplesToAvg = 1,
@@ -332,7 +331,7 @@ public:
 3. **No Direct Low-Level Access**: `SetPinLevelImpl()/GetPinLevelImpl()` are protected virtual functions
 
 ### ADC Access Patterns
-1. **Component Manager**: `adc_manager.ReadChannelV("CHANNEL_NAME", voltage)` - String lookup + BaseAdc call  
+1. **Component Manager**: `adc_manager.ReadVoltage("CHANNEL_NAME", voltage)` - String lookup + BaseAdc call  
 2. **Cached BaseAdc**: `cached_adc->ReadChannelV(channel_id, voltage)` - Direct BaseAdc call
 3. **Channel ID Required**: BaseAdc functions need `hf_channel_id_t`, not just voltage reference
 

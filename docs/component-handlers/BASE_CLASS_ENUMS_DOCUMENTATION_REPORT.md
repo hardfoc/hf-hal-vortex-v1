@@ -348,7 +348,7 @@ if (result != hf_gpio_err_t::GPIO_SUCCESS) {
 ```cpp
 // Always check return codes for ADC operations
 float voltage;
-auto result = adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);
+auto result = adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);
 if (result != hf_adc_err_t::ADC_SUCCESS) {
     logger.Error("ADC", "Failed to read voltage: %s", HfAdcErrToString(result));
     
@@ -378,13 +378,13 @@ if (result != hf_adc_err_t::ADC_SUCCESS) {
 #### **Single Sample (Fastest)**
 ```cpp
 float voltage;
-adc.ReadChannelV("ADC_TMC9660_AIN3", voltage, 1, 0);  // 1 sample, no delay
+adc.ReadVoltage("ADC_TMC9660_AIN3", voltage, 1);  // 1 sample
 ```
 
 #### **Multiple Sample Averaging (More Accurate)**
 ```cpp
 float voltage_avg;
-adc.ReadChannelV("ADC_TMC9660_AIN3", voltage_avg, 16, 1);  // 16 samples, 1ms between
+adc.ReadVoltage("ADC_TMC9660_AIN3", voltage_avg, 16);  // 16 samples
 ```
 
 #### **Raw Count Reading**
@@ -484,7 +484,7 @@ gpio.EnableInterrupt("SENSOR_INT");
 ```cpp
 // Read temperature sensor
 float temperature_voltage;
-auto result = adc.ReadChannelV("ADC_TMC9660_AIN3", temperature_voltage, 8, 1);
+auto result = adc.ReadVoltage("ADC_TMC9660_AIN3", temperature_voltage, 8);
 if (result == hf_adc_err_t::ADC_SUCCESS) {
     float temperature_celsius = (temperature_voltage - 0.5) * 100.0;  // Convert to °C
     logger.Info("TEMP", "Temperature: %.1f°C", temperature_celsius);
@@ -517,7 +517,7 @@ gpio.Set("GPIO_PIN", true);  // Ignoring return code
 
 ### **2. Use Specific Error Handling**
 ```cpp
-auto result = adc.ReadChannelV("ADC_CHANNEL", voltage);
+auto result = adc.ReadVoltage("ADC_CHANNEL", voltage);
 switch (result) {
     case hf_adc_err_t::ADC_SUCCESS:
         // Success - continue processing

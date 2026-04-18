@@ -36,26 +36,26 @@ static bool test_adc_ensure_initialized() noexcept {
 
 static bool test_adc_read_voltage_motor_current() noexcept {
   float voltage = 0.0f;
-  [[maybe_unused]] auto err = ADC().ReadChannelV("MOTOR_CURRENT", voltage);
+  [[maybe_unused]] auto err = ADC().ReadVoltage("MOTOR_CURRENT", voltage);
   // Voltage should be non-negative if read succeeds
   return true;
 }
 
 static bool test_adc_read_voltage_motor_voltage() noexcept {
   float voltage = 0.0f;
-  [[maybe_unused]] auto err = ADC().ReadChannelV("MOTOR_VOLTAGE", voltage);
+  [[maybe_unused]] auto err = ADC().ReadVoltage("MOTOR_VOLTAGE", voltage);
   return true;
 }
 
 static bool test_adc_read_voltage_temp_sensor() noexcept {
   float voltage = 0.0f;
-  [[maybe_unused]] auto err = ADC().ReadChannelV("TEMP_SENSOR", voltage);
+  [[maybe_unused]] auto err = ADC().ReadVoltage("TEMP_SENSOR", voltage);
   return true;
 }
 
 static bool test_adc_read_invalid_channel() noexcept {
   float voltage = 0.0f;
-  auto err = ADC().ReadChannelV("NONEXISTENT_CH_XYZ", voltage);
+  auto err = ADC().ReadVoltage("NONEXISTENT_CH_XYZ", voltage);
   // Should return an error code — at minimum no crash
   (void)err;
   return true;
@@ -65,14 +65,14 @@ static bool test_adc_rapid_read_stress() noexcept {
   constexpr int kIterations = 500;
   float voltage = 0.0f;
   for (int i = 0; i < kIterations; ++i) {
-    [[maybe_unused]] auto err = ADC().ReadChannelV("MOTOR_CURRENT", voltage);
+    [[maybe_unused]] auto err = ADC().ReadVoltage("MOTOR_CURRENT", voltage);
   }
   return true;
 }
 
 static bool test_adc_voltage_range_sanity() noexcept {
   float voltage = -999.0f;
-  auto err = ADC().ReadChannelV("MOTOR_VOLTAGE", voltage);
+  auto err = ADC().ReadVoltage("MOTOR_VOLTAGE", voltage);
   if (err == hf_adc_err_t::ADC_SUCCESS && (voltage < -1.0f || voltage > 50.0f)) {
     return false;  // Voltage wildly out of range
   }

@@ -8,7 +8,7 @@
  *   - CommChannelsManager: SPI / I2C device enumeration
  *   - GpioManager: pin-name lookup (Contains)
  *   - MotorController: handler access, visitDriver, device count
- *   - AdcManager: multi-source voltage reads (ReadChannelV)
+ *   - AdcManager: multi-source voltage reads (ReadVoltage)
  *   - ImuManager: BNO08x handler & sensor access
  *   - EncoderManager: AS5047U angle & velocity reads
  *   - LedManager: animation, colour, brightness queries
@@ -258,9 +258,9 @@ static bool test_adc_read_channel() noexcept {
   auto& adc = VORTEX_API.adc;
   float voltage = 0.0f;
   // Try reading known channel names; failure is OK if hardware absent
-  [[maybe_unused]] auto r1 = adc.ReadChannelV("MOTOR_CURRENT", voltage);
-  [[maybe_unused]] auto r2 = adc.ReadChannelV("MOTOR_VOLTAGE", voltage);
-  [[maybe_unused]] auto r3 = adc.ReadChannelV("TEMP_SENSOR", voltage);
+  [[maybe_unused]] auto r1 = adc.ReadVoltage("MOTOR_CURRENT", voltage);
+  [[maybe_unused]] auto r2 = adc.ReadVoltage("MOTOR_VOLTAGE", voltage);
+  [[maybe_unused]] auto r3 = adc.ReadVoltage("TEMP_SENSOR", voltage);
   return true;
 }
 

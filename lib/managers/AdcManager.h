@@ -153,80 +153,56 @@ public:
     [[nodiscard]] size_t Size() const noexcept;
 
     //==========================================================================
-    // READING OPERATIONS (compatible with existing example API)
+    // READING OPERATIONS
     //==========================================================================
 
     /**
-     * @brief Read voltage from a channel by name.
-     * @param name               Channel name
-     * @param voltage            Output: voltage reading
-     * @param numOfSamplesToAvg  Number of samples to average (default 1)
-     * @param timeBetweenSamples Time between samples in ms (default 0)
-     * @return ADC error code
-     */
-    [[nodiscard]] hf_adc_err_t ReadChannelV(std::string_view name, float& voltage,
-                                            hf_u8_t numOfSamplesToAvg = 1,
-                                            hf_time_t timeBetweenSamples = 0) noexcept;
-
-    /**
-     * @brief Read voltage from a channel by functional enum.
-     * @param channel           Functional ADC channel enum.
-     * @param voltage           Output: voltage reading.
-     * @param numOfSamplesToAvg Number of samples to average (default 1).
-     * @param timeBetweenSamples Time between samples in ms (default 0).
-     * @return ADC error code.
-     */
-    [[nodiscard]] hf_adc_err_t ReadChannelV(HfFunctionalAdcChannel channel, float& voltage,
-                                            hf_u8_t numOfSamplesToAvg = 1,
-                                            hf_time_t timeBetweenSamples = 0) noexcept;
-
-    /**
-     * @brief Read raw ADC value from a channel by name.
-     * @param name              Channel name (linear scan).
-     * @param raw_value         Output: raw ADC count.
-     * @param numOfSamplesToAvg Number of samples to average (default 1).
-     * @return ADC error code.
-     */
-    [[nodiscard]] hf_adc_err_t ReadRaw(std::string_view name, uint32_t& raw_value,
-                                       hf_u8_t numOfSamplesToAvg = 1) noexcept;
-
-    /**
-     * @brief Read raw ADC value from a channel by functional enum.
-     * @param channel           Functional ADC channel enum.
-     * @param raw_value         Output: raw ADC count.
-     * @param numOfSamplesToAvg Number of samples to average (default 1).
-     * @return ADC error code.
-     */
-    [[nodiscard]] hf_adc_err_t ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_value,
-                                       hf_u8_t numOfSamplesToAvg = 1) noexcept;
-
-    //==========================================================================
-    // CROSS-HAL API ALIASES — ReadVoltage (Flux-compatible)
-    //==========================================================================
-
-    /**
-     * @brief Read voltage from a channel by name (Flux-compatible alias for ReadChannelV).
-     * @param name    Channel name
-     * @param voltage Output: voltage reading
-     * @param samples Number of samples to average (default 1)
+     * @brief Read voltage from a channel by name (already divided if divider > 1).
+     * @param name                Channel name (linear string search — use enum overload in tight loops)
+     * @param voltage             Output: voltage at the input, if divider == 1, or bus voltage
+     * @param samples             Number of samples to average (default 1)
+     * @param timeBetweenSamples  Delay in ms between consecutive samples (default 0)
      * @return ADC error code
      */
     [[nodiscard]] hf_adc_err_t ReadVoltage(std::string_view name, float& voltage,
-                                           hf_u8_t samples = 1) noexcept {
-        return ReadChannelV(name, voltage, samples, 0);
-    }
+                                           hf_u8_t samples = 1,
+                                           hf_time_t timeBetweenSamples = 0) noexcept;
 
     /**
-     * @brief Read voltage from a channel by enum (Flux-compatible alias for ReadVoltage).
-     * @param channel Functional ADC channel enum
-     * @param voltage Output: voltage reading
-     * @param samples Number of samples to average (default 1)
+     * @brief Read voltage from a channel by enum — O(1) lookup, preferred for real-time paths.
+     * @param channel             Functional ADC channel enum
+     * @param voltage             Output: voltage at the input, if divider == 1, or bus voltage
+     * @param samples             Number of samples to average (default 1)
+     * @param timeBetweenSamples  Delay in ms between consecutive samples (default 0)
      * @return ADC error code
      */
     [[nodiscard]] hf_adc_err_t ReadVoltage(HfFunctionalAdcChannel channel, float& voltage,
-                                           hf_u8_t samples = 1) noexcept {
-        return ReadChannelV(channel, voltage, samples, 0);
-    }
+                                           hf_u8_t samples = 1,
+                                           hf_time_t timeBetweenSamples = 0) noexcept;
+
+    /**
+     * @brief Read raw ADC value from a channel by name.
+     * @param name                Channel name (linear scan).
+     * @param raw_value           Output: raw ADC count.
+     * @param numOfSamplesToAvg   Number of samples to average (default 1).
+     * @param timeBetweenSamples  Delay in ms between consecutive samples (default 0).
+     * @return ADC error code.
+     */
+    [[nodiscard]] hf_adc_err_t ReadRaw(std::string_view name, uint32_t& raw_value,
+                                       hf_u8_t numOfSamplesToAvg = 1,
+                                       hf_time_t timeBetweenSamples = 0) noexcept;
+
+    /**
+     * @brief Read raw ADC value from a channel by functional enum.
+     * @param channel             Functional ADC channel enum.
+     * @param raw_value           Output: raw ADC count.
+     * @param numOfSamplesToAvg   Number of samples to average (default 1).
+     * @param timeBetweenSamples  Delay in ms between consecutive samples (default 0).
+     * @return ADC error code.
+     */
+    [[nodiscard]] hf_adc_err_t ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_value,
+                                       hf_u8_t numOfSamplesToAvg = 1,
+                                       hf_time_t timeBetweenSamples = 0) noexcept;
 
     //==========================================================================
     // DIAGNOSTICS

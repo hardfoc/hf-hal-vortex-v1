@@ -117,7 +117,7 @@ static void phase_adc_monitoring() {
     ESP_LOGI(TAG, "ADC channels: %zu", adc.Size());
 
     float voltage = 0.0f;
-    hf_adc_err_t err = adc.ReadChannelV("ADC_VM", voltage, 8);
+    hf_adc_err_t err = adc.ReadVoltage("ADC_VM", voltage, 8);
     if (err == hf_adc_err_t::ADC_SUCCESS) {
         ESP_LOGI(TAG, "VM voltage: %.2f V", static_cast<double>(voltage));
     }

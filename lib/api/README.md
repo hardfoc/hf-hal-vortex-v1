@@ -91,8 +91,8 @@ if (vortex.EnsureInitialized()) {
     
     // ADC operations with string lookup
     float voltage, current;
-    vortex.adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);
-    vortex.adc.ReadChannelV("TMC9660_CURRENT_I0", current);
+    vortex.adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);
+    vortex.adc.ReadVoltage("TMC9660_CURRENT_I0", current);
     
     // Motor control with string-based identification
     auto* motor = vortex.motors.handler(0);

@@ -225,7 +225,7 @@ encoder.EnsureInitialized();
 
 // Usage patterns
 gpio.SetActive("GPIO_EXT_GPIO_CS_1");
-float voltage = adc.ReadChannelV("ADC_TMC9660_AIN3");
+float voltage = adc.ReadVoltage("ADC_TMC9660_AIN3");
 auto* handler = motor.handler(0);
 float temperature = temp.ReadTemperature("ESP32_INTERNAL");
 led.SetColor(LedColor(255, 0, 0));

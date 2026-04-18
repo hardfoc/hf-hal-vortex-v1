@@ -66,7 +66,7 @@ void adc_example() {
     
     // Read calibrated voltage
     float voltage;
-    if (adc.ReadChannelV("ESP32_ADC1_CH0", voltage) == HF_ADC_SUCCESS) {
+    if (adc.ReadVoltage("ESP32_ADC1_CH0", voltage) == HF_ADC_SUCCESS) {
         logger.Info("ADC", "Voltage: %.3fV\n", voltage);
     }
 }
@@ -119,7 +119,7 @@ constexpr hf_time_t HF_TIMEOUT_MAX = std::numeric_limits<hf_time_t>::max();
 ```cpp
 // Always check return codes for ADC operations
 float voltage;
-auto result = adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);
+auto result = adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);
 if (result != hf_adc_err_t::ADC_SUCCESS) {
     logger.Error("ADC", "Failed to read voltage: %s", HfAdcErrToString(result));
     
@@ -145,11 +145,11 @@ if (result != hf_adc_err_t::ADC_SUCCESS) {
 ```cpp
 // Single sample reading (fastest)
 float voltage;
-adc.ReadChannelV("ADC_TMC9660_AIN3", voltage, 1, 0);
+adc.ReadVoltage("ADC_TMC9660_AIN3", voltage, 1);
 
 // Multiple sample averaging (more accurate)
 float voltage_avg;
-adc.ReadChannelV("ADC_TMC9660_AIN3", voltage_avg, 16, 1);  // 16 samples, 1ms between
+adc.ReadVoltage("ADC_TMC9660_AIN3", voltage_avg, 16);  // 16 samples
 
 // Raw count reading
 uint32_t raw_count;
@@ -178,13 +178,13 @@ if (batch_result.overall_result == hf_adc_err_t::ADC_SUCCESS) {
 float voltage;
 
 // Fast operation (short timeout)
-auto result = adc.ReadChannelV("ADC_TMC9660_AIN3", voltage, 1, 0);
+auto result = adc.ReadVoltage("ADC_TMC9660_AIN3", voltage, 1);
 if (result == hf_adc_err_t::ADC_ERR_TIMEOUT) {
     logger.Warn("ADC", "Fast read timeout - consider longer timeout");
 }
 
 // Slow operation (longer timeout for averaging)
-result = adc.ReadChannelV("ADC_TMC9660_AIN3", voltage, 64, 5);  // 64 samples, 5ms between
+result = adc.ReadVoltage("ADC_TMC9660_AIN3", voltage, 64);  // 64 samples
 if (result == hf_adc_err_t::ADC_ERR_TIMEOUT) {
     logger.Error("ADC", "Averaging read timeout - check hardware");
 }
@@ -195,7 +195,7 @@ if (result == hf_adc_err_t::ADC_ERR_TIMEOUT) {
 // Check if channel exists before using
 if (adc.Contains("ADC_TMC9660_AIN3")) {
     float voltage;
-    auto result = adc.ReadChannelV("ADC_TMC9660_AIN3", voltage);
+    auto result = adc.ReadVoltage("ADC_TMC9660_AIN3", voltage);
     if (result == hf_adc_err_t::ADC_SUCCESS) {
         logger.Info("ADC", "Voltage reading: %.3fV", voltage);
     }
@@ -236,8 +236,8 @@ hf_adc_err_t ReadChannelCount(std::string_view name, uint32_t& count,
                              uint8_t samples = 1, uint16_t interval_ms = 0) noexcept;
 
 // Voltage readings
-hf_adc_err_t ReadChannelV(std::string_view name, float& voltage,
-                         uint8_t samples = 1, uint16_t interval_ms = 0) noexcept;
+hf_adc_err_t ReadVoltage(std::string_view name, float& voltage,
+                        uint8_t samples = 1) noexcept;
 
 // Channel validation
 bool IsChannelAvailable(std::string_view name) const noexcept;
@@ -411,21 +411,21 @@ void basic_adc_example() {
         logger.Info("ADC", "Channel ADC_TMC9660_AIN3 raw: %u", raw_value);
     }
     
-    if (adc.ReadChannelV("ADC_TMC9660_AIN3", voltage) == hf_adc_err_t::ADC_SUCCESS) {
+    if (adc.ReadVoltage("ADC_TMC9660_AIN3", voltage) == hf_adc_err_t::ADC_SUCCESS) {
         logger.Info("ADC", "Channel ADC_TMC9660_AIN3 voltage: %.3fV", voltage);
     }
     
     // Multiple samples for stability
-    if (adc.ReadChannelV("ADC_TMC9660_AIN3", voltage, 16) == hf_adc_err_t::ADC_SUCCESS) {
+    if (adc.ReadVoltage("ADC_TMC9660_AIN3", voltage, 16) == hf_adc_err_t::ADC_SUCCESS) {
         logger.Info("ADC", "Channel ADC_TMC9660_AIN3 filtered: %.3fV", voltage);
     }
     
     // Read TMC9660 internal monitoring channels
-    if (adc.ReadChannelV("TMC9660_CHIP_TEMPERATURE", voltage) == hf_adc_err_t::ADC_SUCCESS) {
+    if (adc.ReadVoltage("TMC9660_CHIP_TEMPERATURE", voltage) == hf_adc_err_t::ADC_SUCCESS) {
         logger.Info("ADC", "TMC9660 Chip Temperature: %.3fV", voltage);
     }
     
-    if (adc.ReadChannelV("TMC9660_SUPPLY_VOLTAGE", voltage) == hf_adc_err_t::ADC_SUCCESS) {
+    if (adc.ReadVoltage("TMC9660_SUPPLY_VOLTAGE", voltage) == hf_adc_err_t::ADC_SUCCESS) {
         logger.Info("ADC", "TMC9660 Supply Voltage: %.3fV", voltage);
     }
 }
@@ -476,7 +476,7 @@ void motor_current_example() {
     logger.Info("ADC", "Motor current monitoring:\n");
     for (int i = 0; i < 100; i++) {
         float voltage;
-        if (adc.ReadChannelV("TMC9660_CURRENT_I0", voltage, 8) == HF_ADC_SUCCESS) {
+        if (adc.ReadVoltage("TMC9660_CURRENT_I0", voltage, 8) == HF_ADC_SUCCESS) {
             // Convert voltage to current (example: 0.1V/A current sensor)
             float current = voltage / 0.1f;
             logger.Info("ADC", "Current: %.2fA (%.3fV)\n", current, voltage);
@@ -497,7 +497,7 @@ void battery_voltage_example() {
     // Monitor battery voltage with filtering
     while (true) {
         float battery_voltage;
-        if (adc.ReadChannelV("ESP32_ADC1_CH2", battery_voltage, 32) == HF_ADC_SUCCESS) {
+        if (adc.ReadVoltage("ESP32_ADC1_CH2", battery_voltage, 32) == HF_ADC_SUCCESS) {
             logger.Info("ADC", "Battery: %.2fV", battery_voltage);
             
             // Battery status indication
@@ -661,7 +661,7 @@ void batch_operations_example() {
     for (int i = 0; i < 1000; i++) {
         for (const auto& channel : channels) {
             float voltage;
-            adc.ReadChannelV(channel, voltage);
+            adc.ReadVoltage(channel, voltage);
         }
     }
     
@@ -794,7 +794,7 @@ void error_handling_example() {
     
     // Safe ADC operations with error checking
     float voltage;
-    auto result = adc.ReadChannelV("ESP32_ADC1_CH0", voltage);
+    auto result = adc.ReadVoltage("ESP32_ADC1_CH0", voltage);
     if (result != HF_ADC_SUCCESS) {
         logger.Info("ADC", "ERROR: Failed to read ADC channel: %d\n", static_cast<int>(result));
     }
@@ -829,7 +829,7 @@ void motor_adc_integration() {
     while (true) {
         // Read motor current from TMC9660 ADC
         float motor_current;
-        if (adc.ReadChannelV("TMC9660_CURRENT_I0", motor_current) == HF_ADC_SUCCESS) {
+        if (adc.ReadVoltage("TMC9660_CURRENT_I0", motor_current) == HF_ADC_SUCCESS) {
             // Check for overcurrent condition
             if (motor_current > 5.0f) {
                 logger.Info("ADC", "Overcurrent detected: %.2fA\n", motor_current);
@@ -839,7 +839,7 @@ void motor_adc_integration() {
         
         // Read supply voltage
         float supply_voltage;
-        if (adc.ReadChannelV("ESP32_ADC1_CH0", supply_voltage) == HF_ADC_SUCCESS) {
+        if (adc.ReadVoltage("ESP32_ADC1_CH0", supply_voltage) == HF_ADC_SUCCESS) {
             // Check for undervoltage condition
             if (supply_voltage < 10.0f) {
                 logger.Info("ADC", "Undervoltage detected: %.2fV\n", supply_voltage);
