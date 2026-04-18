@@ -220,11 +220,52 @@ public:
     [[nodiscard]] hf_temp_err_t ReadTemperatureFahrenheit(std::string_view name, float& temperature_fahrenheit) noexcept;
 
     //==========================================================================
+    // CONVENIENCE READING — cross-HAL compatible
+    //==========================================================================
+
+    /**
+     * @brief Convenience: read the ESP32 internal temperature sensor.
+     * @param temperature_c Output temperature in °C.
+     * @return TEMP_SUCCESS on success.
+     */
+    [[nodiscard]] hf_temp_err_t ReadInternalTemperature(float& temperature_c) noexcept;
+
+    /**
+     * @brief Convenience: read the NTC thermistor temperature.
+     * @param temperature_c Output temperature in °C.
+     * @return TEMP_SUCCESS on success.
+     */
+    [[nodiscard]] hf_temp_err_t ReadNtcTemperature(float& temperature_c) noexcept;
+
+    /**
+     * @brief Convenience: read the TMC9660 motor controller temperature.
+     * @param temperature_c Output temperature in °C.
+     * @return TEMP_SUCCESS on success.
+     */
+    [[nodiscard]] hf_temp_err_t ReadMotorTemperature(float& temperature_c) noexcept;
+
+    /**
+     * @brief Read all sensors and compute min, max, and average temperatures.
+     * @param[out] min_c Minimum temperature across all sensors (°C).
+     * @param[out] max_c Maximum temperature across all sensors (°C).
+     * @param[out] avg_c Average temperature across all sensors (°C).
+     * @return TEMP_SUCCESS on success.
+     */
+    [[nodiscard]] hf_temp_err_t GetSystemTemperatureStats(float& min_c, float& max_c, float& avg_c) noexcept;
+
+    //==========================================================================
     // SENSOR INFO
     //==========================================================================
 
     /** @brief Get the number of registered temperature sensors. */
     [[nodiscard]] size_t GetSensorCount() const noexcept { return registered_count_; }
+
+    /**
+     * @brief Look up a sensor entry by name.
+     * @param name Sensor name.
+     * @return Pointer to the TempEntry, or nullptr if not found.
+     */
+    [[nodiscard]] const TempEntry* GetSensorEntry(std::string_view name) const noexcept;
 
     //==========================================================================
     // DIAGNOSTICS

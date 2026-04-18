@@ -236,6 +236,12 @@ size_t TemperatureManager::FindByName(std::string_view name) const noexcept {
     return kInvalidIndex;
 }
 
+const TempEntry* TemperatureManager::GetSensorEntry(std::string_view name) const noexcept {
+    size_t idx = FindByName(name);
+    if (idx == kInvalidIndex) return nullptr;
+    return &entries_[idx];
+}
+
 //==============================================================================
 // TEMPERATURE READING
 //==============================================================================
@@ -289,6 +295,47 @@ hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheit(std::string_view nam
         temperature_fahrenheit = celsius * 1.8f + 32.0f;
     }
     return err;
+}
+
+hf_temp_err_t TemperatureManager::ReadInternalTemperature(float& temperature_c) noexcept {
+    return ReadTemperatureCelsius("ESP32_INTERNAL", temperature_c);
+}
+
+hf_temp_err_t TemperatureManager::ReadNtcTemperature(float& temperature_c) noexcept {
+    return ReadTemperatureCelsius("NTC_THERMISTOR", temperature_c);
+}
+
+hf_temp_err_t TemperatureManager::ReadMotorTemperature(float& temperature_c) noexcept {
+    return ReadTemperatureCelsius("MOTOR_TEMP", temperature_c);
+}
+
+hf_temp_err_t TemperatureManager::GetSystemTemperatureStats(float& min_c, float& max_c, float& avg_c) noexcept {
+    if (!initialized_.load(std::memory_order_acquire) || registered_count_ == 0) {
+        last_error_.store(TEMP_ERR_NOT_INITIALIZED, std::memory_order_release);
+        return TEMP_ERR_NOT_INITIALIZED;
+    }
+
+    float sum = 0.0f;
+    min_c = 200.0f;
+    max_c = -100.0f;
+    uint8_t valid = 0;
+
+    for (size_t i = 0; i < registered_count_; ++i) {
+        float temp = 0.0f;
+        if (ReadTemperatureCelsius(entries_[i].name, temp) == TEMP_SUCCESS) {
+            sum += temp;
+            if (temp < min_c) min_c = temp;
+            if (temp > max_c) max_c = temp;
+            ++valid;
+        }
+    }
+
+    if (valid == 0) {
+        last_error_.store(TEMP_ERR_READ_FAILED, std::memory_order_release);
+        return TEMP_ERR_READ_FAILED;
+    }
+    avg_c = sum / static_cast<float>(valid);
+    return TEMP_SUCCESS;
 }
 
 //==============================================================================
