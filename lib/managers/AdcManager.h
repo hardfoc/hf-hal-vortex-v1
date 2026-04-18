@@ -201,6 +201,34 @@ public:
                                        hf_u8_t numOfSamplesToAvg = 1) noexcept;
 
     //==========================================================================
+    // CROSS-HAL API ALIASES — ReadVoltage (Flux-compatible)
+    //==========================================================================
+
+    /**
+     * @brief Read voltage from a channel by name (Flux-compatible alias for ReadChannelV).
+     * @param name    Channel name
+     * @param voltage Output: voltage reading
+     * @param samples Number of samples to average (default 1)
+     * @return ADC error code
+     */
+    [[nodiscard]] hf_adc_err_t ReadVoltage(std::string_view name, float& voltage,
+                                           hf_u8_t samples = 1) noexcept {
+        return ReadChannelV(name, voltage, samples, 0);
+    }
+
+    /**
+     * @brief Read voltage from a channel by enum (Flux-compatible alias for ReadVoltage).
+     * @param channel Functional ADC channel enum
+     * @param voltage Output: voltage reading
+     * @param samples Number of samples to average (default 1)
+     * @return ADC error code
+     */
+    [[nodiscard]] hf_adc_err_t ReadVoltage(HfFunctionalAdcChannel channel, float& voltage,
+                                           hf_u8_t samples = 1) noexcept {
+        return ReadChannelV(channel, voltage, samples, 0);
+    }
+
+    //==========================================================================
     // DIAGNOSTICS
     //==========================================================================
 
