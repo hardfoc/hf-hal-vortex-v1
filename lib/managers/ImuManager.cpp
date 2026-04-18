@@ -40,12 +40,13 @@ ImuManager& ImuManager::GetInstance() noexcept {
 }
 
 ImuManager::ImuManager() noexcept 
-    : initialized_(false), manager_mutex_(), onboard_device_created_(false) {
+    : initialized_(false), last_error_(ImuError::SUCCESS), manager_mutex_(), onboard_device_created_(false) {
     // Initialize all device slots as empty and not active
     for (auto& h : bno08x_handlers_) h.reset();
     device_initialized_.fill(false);
     device_active_.fill(false);
     i2c_device_indices_.fill(-1); // Initialize to -1 (no I2C device)
+    for (auto& c : device_error_counts_) c.store(0, std::memory_order_relaxed);
 }
 
 ImuManager::~ImuManager() noexcept {
@@ -148,7 +149,7 @@ IBno08xDriverOps* ImuManager::GetSensor(uint8_t deviceIndex) noexcept {
 //**                  DEVICES MANAGEMENT METHODS                           **//
 //**************************************************************************//
 
-bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
+ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            uint8_t i2c_address,
                                            uint32_t i2c_speed_hz,
                                            const Bno08xConfig& config) {
@@ -156,37 +157,43 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
         Logger::GetInstance().Error("ImuManager", "Invalid device index %u for external device", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::INVALID_DEVICE_INDEX, deviceIndex);
+        return ImuError::INVALID_DEVICE_INDEX;
     }
     
     if (device_active_[deviceIndex]) {
         Logger::GetInstance().Error("ImuManager", "Device slot %u already occupied", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::DEVICE_ALREADY_EXISTS, deviceIndex);
+        return ImuError::DEVICE_ALREADY_EXISTS;
     }
     
     // Validate I2C address (7-bit addressing: 0x08-0x77)
     if (i2c_address < 0x08 || i2c_address > 0x77) {
         Logger::GetInstance().Error("ImuManager", "Invalid I2C address: 0x%02X (must be 0x08-0x77)", i2c_address);
-        return false;
+        UpdateLastError(ImuError::INVALID_I2C_ADDRESS, deviceIndex);
+        return ImuError::INVALID_I2C_ADDRESS;
     }
     
     // Get CommChannelsManager instance
     if (!comm_manager_ || !comm_manager_->IsInitialized()) {
         Logger::GetInstance().Error("ImuManager", "CommChannelsManager not initialized");
-        return false;
+        UpdateLastError(ImuError::DEPENDENCY_NOT_READY, deviceIndex);
+        return ImuError::DEPENDENCY_NOT_READY;
     }
     
     // Check if I2C device already exists at this address on Bus 0
     if (comm_manager_->HasI2cDeviceAtAddress(0, i2c_address)) {
         Logger::GetInstance().Error("ImuManager", "I2C device already exists at address 0x%02X on Bus 0", i2c_address);
-        return false;
+        UpdateLastError(ImuError::DEVICE_ALREADY_EXISTS, deviceIndex);
+        return ImuError::DEVICE_ALREADY_EXISTS;
     }
     
     // Create I2C device at runtime
     int i2c_device_index = comm_manager_->CreateI2cDevice(i2c_address, i2c_speed_hz);
     if (i2c_device_index < 0) {
         Logger::GetInstance().Error("ImuManager", "Failed to create I2C device at address 0x%02X", i2c_address);
-        return false;
+        UpdateLastError(ImuError::I2C_DEVICE_CREATION_FAILED, deviceIndex);
+        return ImuError::I2C_DEVICE_CREATION_FAILED;
     }
     
     // Get the I2C interface for the newly created device (on Bus 0)
@@ -195,7 +202,8 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
         Logger::GetInstance().Error("ImuManager", "Failed to get I2C interface for device index %d", i2c_device_index);
         // Clean up the I2C device
         comm_manager_->RemoveI2cDevice(i2c_device_index);
-        return false;
+        UpdateLastError(ImuError::COMMUNICATION_FAILED, deviceIndex);
+        return ImuError::COMMUNICATION_FAILED;
     }
     
     // Create external BNO08x handler
@@ -204,7 +212,8 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
         Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
         // Clean up the I2C device
         comm_manager_->RemoveI2cDevice(i2c_device_index);
-        return false;
+        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
+        return ImuError::HANDLER_CREATION_FAILED;
     }
     
     // Store the handler and track the I2C device index
@@ -218,39 +227,45 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
-        device_initialized_[deviceIndex] = bno08x_handlers_[deviceIndex]->Initialize() == Bno08xError::SUCCESS;
+        Bno08xError init_result = bno08x_handlers_[deviceIndex]->Initialize();
+        device_initialized_[deviceIndex] = (init_result == Bno08xError::SUCCESS);
         if (device_initialized_[deviceIndex]) {
             Logger::GetInstance().Info("ImuManager", "External BNO08x device %u initialized successfully", deviceIndex);
         } else {
-            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u", deviceIndex);
+            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u: %s", 
+                     deviceIndex, Bno08xErrorToString(init_result));
+            UpdateLastError(ImuError::INITIALIZATION_FAILED, deviceIndex);
         }
     }
     
-    return true;
+    return ImuError::SUCCESS;
 }
 
 
 
-bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
+ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            BaseI2c& i2c_interface,
                                            const Bno08xConfig& config) {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
         Logger::GetInstance().Error("ImuManager", "Invalid device index %u for external device", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::INVALID_DEVICE_INDEX, deviceIndex);
+        return ImuError::INVALID_DEVICE_INDEX;
     }
     
     if (device_active_[deviceIndex]) {
         Logger::GetInstance().Error("ImuManager", "Device slot %u already occupied", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::DEVICE_ALREADY_EXISTS, deviceIndex);
+        return ImuError::DEVICE_ALREADY_EXISTS;
     }
     
     // Create external BNO08x handler with provided I2C interface
     auto external_handler = std::make_unique<Bno08xHandler>(i2c_interface, config);
     if (!external_handler) {
         Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
+        return ImuError::HANDLER_CREATION_FAILED;
     }
     
     bno08x_handlers_[deviceIndex] = std::move(external_handler);
@@ -261,49 +276,57 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
-        device_initialized_[deviceIndex] = bno08x_handlers_[deviceIndex]->Initialize() == Bno08xError::SUCCESS;
+        Bno08xError init_result = bno08x_handlers_[deviceIndex]->Initialize();
+        device_initialized_[deviceIndex] = (init_result == Bno08xError::SUCCESS);
         if (device_initialized_[deviceIndex]) {
             Logger::GetInstance().Info("ImuManager", "External BNO08x device %u initialized successfully", deviceIndex);
         } else {
-            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u", deviceIndex);
+            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u: %s", 
+                     deviceIndex, Bno08xErrorToString(init_result));
+            UpdateLastError(ImuError::INITIALIZATION_FAILED, deviceIndex);
         }
     }
     
-    return true;
+    return ImuError::SUCCESS;
 }
 
-bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
+ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            SpiDeviceId spiDeviceId,
                                            const Bno08xConfig& config) {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
         Logger::GetInstance().Error("ImuManager", "Invalid device index %u for external device", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::INVALID_DEVICE_INDEX, deviceIndex);
+        return ImuError::INVALID_DEVICE_INDEX;
     }
     
     if (device_active_[deviceIndex]) {
         Logger::GetInstance().Error("ImuManager", "Device slot %u already occupied", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::DEVICE_ALREADY_EXISTS, deviceIndex);
+        return ImuError::DEVICE_ALREADY_EXISTS;
     }
     
     // Get SPI interface from CommChannelsManager
     if (!comm_manager_ || !comm_manager_->IsInitialized()) {
         Logger::GetInstance().Error("ImuManager", "CommChannelsManager not initialized");
-        return false;
+        UpdateLastError(ImuError::DEPENDENCY_NOT_READY, deviceIndex);
+        return ImuError::DEPENDENCY_NOT_READY;
     }
     
     BaseSpi* spi_interface = comm_manager_->GetSpiDevice(spiDeviceId);
     if (!spi_interface) {
         Logger::GetInstance().Error("ImuManager", "SPI device %u not available", static_cast<uint8_t>(spiDeviceId));
-        return false;
+        UpdateLastError(ImuError::COMMUNICATION_FAILED, deviceIndex);
+        return ImuError::COMMUNICATION_FAILED;
     }
     
     // Create external BNO08x handler with SPI interface
     auto external_handler = std::make_unique<Bno08xHandler>(*spi_interface, config);
     if (!external_handler) {
         Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
+        return ImuError::HANDLER_CREATION_FAILED;
     }
     
     bno08x_handlers_[deviceIndex] = std::move(external_handler);
@@ -314,37 +337,43 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
-        device_initialized_[deviceIndex] = bno08x_handlers_[deviceIndex]->Initialize() == Bno08xError::SUCCESS;
+        Bno08xError init_result = bno08x_handlers_[deviceIndex]->Initialize();
+        device_initialized_[deviceIndex] = (init_result == Bno08xError::SUCCESS);
         if (device_initialized_[deviceIndex]) {
             Logger::GetInstance().Info("ImuManager", "External BNO08x device %u initialized successfully", deviceIndex);
         } else {
-            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u", deviceIndex);
+            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u: %s", 
+                     deviceIndex, Bno08xErrorToString(init_result));
+            UpdateLastError(ImuError::INITIALIZATION_FAILED, deviceIndex);
         }
     }
     
-    return true;
+    return ImuError::SUCCESS;
 }
 
-bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
+ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                            BaseSpi& spi_interface,
                                            const Bno08xConfig& config) {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
         Logger::GetInstance().Error("ImuManager", "Invalid device index %u for external device", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::INVALID_DEVICE_INDEX, deviceIndex);
+        return ImuError::INVALID_DEVICE_INDEX;
     }
     
     if (device_active_[deviceIndex]) {
         Logger::GetInstance().Error("ImuManager", "Device slot %u already occupied", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::DEVICE_ALREADY_EXISTS, deviceIndex);
+        return ImuError::DEVICE_ALREADY_EXISTS;
     }
     
     // Create external BNO08x handler with provided SPI interface
     auto external_handler = std::make_unique<Bno08xHandler>(spi_interface, config);
     if (!external_handler) {
         Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
+        return ImuError::HANDLER_CREATION_FAILED;
     }
     
     bno08x_handlers_[deviceIndex] = std::move(external_handler);
@@ -355,28 +384,33 @@ bool ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
-        device_initialized_[deviceIndex] = bno08x_handlers_[deviceIndex]->Initialize() == Bno08xError::SUCCESS;
+        Bno08xError init_result = bno08x_handlers_[deviceIndex]->Initialize();
+        device_initialized_[deviceIndex] = (init_result == Bno08xError::SUCCESS);
         if (device_initialized_[deviceIndex]) {
             Logger::GetInstance().Info("ImuManager", "External BNO08x device %u initialized successfully", deviceIndex);
         } else {
-            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u", deviceIndex);
+            Logger::GetInstance().Error("ImuManager", "Failed to initialize external BNO08x device %u: %s", 
+                     deviceIndex, Bno08xErrorToString(init_result));
+            UpdateLastError(ImuError::INITIALIZATION_FAILED, deviceIndex);
         }
     }
     
-    return true;
+    return ImuError::SUCCESS;
 }
 
-bool ImuManager::DeleteExternalDevice(uint8_t deviceIndex) {
+ImuError ImuManager::DeleteExternalDevice(uint8_t deviceIndex) {
     MutexLockGuard lock(manager_mutex_);
     
     if (!IsExternalDeviceIndex(deviceIndex)) {
         Logger::GetInstance().Error("ImuManager", "Cannot delete onboard device or invalid index %u", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::CANNOT_DELETE_ONBOARD, deviceIndex);
+        return ImuError::CANNOT_DELETE_ONBOARD;
     }
     
     if (!device_active_[deviceIndex]) {
         Logger::GetInstance().Error("ImuManager", "Device %u doesn't exist", deviceIndex);
-        return false;
+        UpdateLastError(ImuError::DEVICE_NOT_FOUND, deviceIndex);
+        return ImuError::DEVICE_NOT_FOUND;
     }
     
     // Get the I2C device index associated with the handler
@@ -395,7 +429,7 @@ bool ImuManager::DeleteExternalDevice(uint8_t deviceIndex) {
     }
 
     Logger::GetInstance().Info("ImuManager", "External IMU device %u deleted successfully", deviceIndex);
-    return true;
+    return ImuError::SUCCESS;
 }
 
 bool ImuManager::IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept {
@@ -676,6 +710,7 @@ bool ImuManager::Initialize() noexcept {
     comm_manager_ = &CommChannelsManager::GetInstance();
     if (!comm_manager_->EnsureInitialized()) {
         Logger::GetInstance().Error("ImuManager", "Failed to initialize CommChannelsManager");
+        UpdateLastError(ImuError::DEPENDENCY_NOT_READY);
         return false;
     }
 
@@ -754,6 +789,45 @@ bool ImuManager::InitializeOnboardBno08xDevice() noexcept {
     
     Logger::GetInstance().Info("ImuManager", "Onboard BNO08x IMU device initialized successfully");
     return true;
+}
+
+//==============================================================================
+// ERROR TRACKING
+//==============================================================================
+
+void ImuManager::UpdateLastError(ImuError error, int deviceIndex) noexcept {
+    last_error_.store(error, std::memory_order_release);
+    if (deviceIndex >= 0 && deviceIndex < MAX_IMU_DEVICES && error != ImuError::SUCCESS) {
+        device_error_counts_[deviceIndex].fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+ImuError ImuManager::GetSystemDiagnostics(ImuSystemDiagnostics& diagnostics) const noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) {
+        return ImuError::NOT_INITIALIZED;
+    }
+
+    MutexLockGuard lock(manager_mutex_);
+
+    diagnostics.system_initialized = true;
+    diagnostics.last_error = last_error_.load(std::memory_order_acquire);
+    diagnostics.active_device_count = 0;
+    diagnostics.initialized_device_count = 0;
+    diagnostics.total_interrupt_count = interrupt_count_.load(std::memory_order_relaxed);
+    diagnostics.interrupt_configured = interrupt_configured_;
+    diagnostics.interrupt_enabled = interrupt_enabled_;
+
+    for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
+        diagnostics.devices[i].active = device_active_[i];
+        diagnostics.devices[i].initialized = device_initialized_[i];
+        diagnostics.devices[i].error_count = device_error_counts_[i].load(std::memory_order_relaxed);
+        if (device_active_[i]) ++diagnostics.active_device_count;
+        if (device_initialized_[i]) ++diagnostics.initialized_device_count;
+    }
+
+    diagnostics.system_healthy = (diagnostics.active_device_count > 0) &&
+                                 (diagnostics.initialized_device_count == diagnostics.active_device_count);
+    return ImuError::SUCCESS;
 }
 
 //==============================================================================

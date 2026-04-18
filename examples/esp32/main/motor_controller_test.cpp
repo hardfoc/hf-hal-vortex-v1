@@ -87,6 +87,20 @@ static bool test_motor_dump_statistics() noexcept {
   return true;
 }
 
+static bool test_motor_get_last_error() noexcept {
+  // GetLastError() should return MotorError::kSuccess if no errors occurred
+  [[maybe_unused]] MotorError err = MOTORS().GetLastError();
+  return true;
+}
+
+static bool test_motor_system_diagnostics() noexcept {
+  MotorSystemDiagnostics diag{};
+  auto err = MOTORS().GetSystemDiagnostics(diag);
+  if (err != MotorError::kSuccess) return false;
+  // active_device_count should be <= max (4)
+  return (diag.active_device_count <= 4);
+}
+
 // ── Entry Point ───────────────────────────────────────────────────────────
 
 extern "C" void app_main(void) {
@@ -102,6 +116,8 @@ extern "C" void app_main(void) {
   RUN_TEST(test_motor_device_count);
   RUN_TEST(test_motor_visit_all_devices);
   RUN_TEST(test_motor_handler_null_safety);
+  RUN_TEST(test_motor_get_last_error);
+  RUN_TEST(test_motor_system_diagnostics);
   RUN_TEST(test_motor_dump_statistics);
 
   print_test_summary(g_test_results, "MOTOR CONTROLLER", TAG);

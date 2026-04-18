@@ -109,15 +109,19 @@ Bno08xHandler* GetBno08xHandler(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcep
 // Direct driver access
 std::shared_ptr<BNO085> GetBno085Driver(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcept;
 
-// Device creation/deletion
-bool CreateExternalBno08xDevice(uint8_t deviceIndex, 
+// Device creation/deletion (returns typed ImuError)
+ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                uint8_t i2c_address,
                                uint32_t i2c_speed_hz = 400000,
                                const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
-bool CreateExternalBno08xDevice(uint8_t deviceIndex, 
+ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                SpiDeviceId spiDeviceId,
                                const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
-bool DeleteExternalDevice(uint8_t deviceIndex);
+ImuError DeleteExternalDevice(uint8_t deviceIndex);
+
+// Error & diagnostics
+ImuError GetLastError() const noexcept;
+ImuError GetSystemDiagnostics(ImuSystemDiagnostics& diagnostics) const noexcept;
 
 // Device information
 uint8_t GetDeviceCount() const noexcept;
@@ -231,7 +235,8 @@ void multi_device_example() {
     imu.EnsureInitialized();
     
     // Create external I2C device
-    if (imu.CreateExternalBno08xDevice(1, 0x4A, 400000)) {
+    ImuError err = imu.CreateExternalBno08xDevice(1, 0x4A, 400000);
+    if (err == ImuError::kSuccess) {
         logger.Info("IMU", "External I2C device created at index 1\n");
         
         // Initialize external device
@@ -249,7 +254,8 @@ void multi_device_example() {
     }
     
     // Create external SPI device
-    if (imu.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1)) {
+    ImuError spi_err = imu.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1);
+    if (spi_err == ImuError::kSuccess) {
         logger.Info("IMU", "External SPI device created at index 2\n");
         
         auto* spi_handler = imu.GetBno08xHandler(2);
@@ -341,7 +347,8 @@ void external_device_example() {
         custom_config.rotation_vector_report_interval_ms = 25;  // 40Hz
         custom_config.accelerometer_report_interval_ms = 50;    // 20Hz
         
-        if (imu.CreateExternalBno08xDevice(1, 0x4B, 400000, custom_config)) {
+        ImuError err = imu.CreateExternalBno08xDevice(1, 0x4B, 400000, custom_config);
+        if (err == ImuError::kSuccess) {
             logger.Info("IMU", "External device created with custom config\n");
             
             // Use the external device
@@ -358,7 +365,8 @@ void external_device_example() {
     }
     
     // Delete external device when done
-    if (imu.DeleteExternalDevice(1)) {
+    ImuError del_err = imu.DeleteExternalDevice(1);
+    if (del_err == ImuError::kSuccess) {
         logger.Info("IMU", "External device deleted\n");
     }
 }

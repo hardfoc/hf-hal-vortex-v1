@@ -70,6 +70,17 @@ static bool test_encoder_null_safety() noexcept {
   return (h == nullptr);
 }
 
+static bool test_encoder_get_last_error() noexcept {
+  [[maybe_unused]] EncoderError err = ENC().GetLastError();
+  return true;
+}
+
+static bool test_encoder_system_diagnostics() noexcept {
+  EncoderSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = ENC().GetSystemDiagnostics(diag);
+  return (diag.active_device_count <= 4);
+}
+
 // ── IMU Tests ─────────────────────────────────────────────────────────────
 
 static bool test_imu_ensure_initialized() noexcept {
@@ -98,6 +109,17 @@ static bool test_imu_null_safety() noexcept {
   return (h == nullptr);
 }
 
+static bool test_imu_get_last_error() noexcept {
+  [[maybe_unused]] ImuError err = IMU().GetLastError();
+  return true;
+}
+
+static bool test_imu_system_diagnostics() noexcept {
+  ImuSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = IMU().GetSystemDiagnostics(diag);
+  return (diag.active_device_count <= 4);
+}
+
 // ── Entry Point ───────────────────────────────────────────────────────────
 
 extern "C" void app_main(void) {
@@ -113,12 +135,16 @@ extern "C" void app_main(void) {
   RUN_TEST(test_encoder_device_count);
   RUN_TEST(test_encoder_active_devices);
   RUN_TEST(test_encoder_null_safety);
+  RUN_TEST(test_encoder_get_last_error);
+  RUN_TEST(test_encoder_system_diagnostics);
 
   RUN_TEST(test_imu_ensure_initialized);
   RUN_TEST(test_imu_handler_access);
   RUN_TEST(test_imu_sensor_access);
   RUN_TEST(test_imu_device_count);
   RUN_TEST(test_imu_null_safety);
+  RUN_TEST(test_imu_get_last_error);
+  RUN_TEST(test_imu_system_diagnostics);
 
   print_test_summary(g_test_results, "ENCODER & IMU", TAG);
   cleanup_test_progress_indicator();

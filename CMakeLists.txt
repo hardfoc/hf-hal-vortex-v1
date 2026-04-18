@@ -87,11 +87,19 @@ set(HF_HAL_INC_DIRS
 # 4. COMPONENT REGISTRATION
 #==============================================================================
 
-idf_component_register(
-    SRCS          ${HF_HAL_SRCS}
-    INCLUDE_DIRS  ${HF_HAL_INC_DIRS}
-    REQUIRES      ${HF_CORE_IDF_REQUIRES}
-)
+if(COMMAND idf_component_register)
+    # ESP-IDF build — register as an IDF component
+    idf_component_register(
+        SRCS          ${HF_HAL_SRCS}
+        INCLUDE_DIRS  ${HF_HAL_INC_DIRS}
+        REQUIRES      ${HF_CORE_IDF_REQUIRES}
+    )
+else()
+    # Non-IDF build (host testing, CI, standalone CMake)
+    add_library(hf-hal-vortex STATIC ${HF_HAL_SRCS})
+    target_include_directories(hf-hal-vortex PUBLIC ${HF_HAL_INC_DIRS})
+    set(COMPONENT_LIB hf-hal-vortex)
+endif()
 
 #==============================================================================
 # 5. COMPILE OPTIONS AND DEFINITIONS

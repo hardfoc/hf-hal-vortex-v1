@@ -144,9 +144,40 @@ static bool test_system_warnings_api() noexcept {
   return (count <= 8);
 }
 
+static bool test_collect_manager_health() noexcept {
+  auto& vortex = VORTEX_API;
+  vortex.EnsureInitialized();
+
+  ManagerHealthSnapshot health{};
+  bool ok = vortex.CollectManagerHealth(health);
+  if (!ok) return false;
+
+  // Should report 8 managers for Vortex
+  if (health.count != 8) return false;
+
+  // Every entry should have a non-null name
+  for (size_t i = 0; i < health.count; ++i) {
+    if (health.entries[i].name == nullptr) return false;
+  }
+  return true;
+}
+
 //=============================================================================
 // COMMS TESTS
 //=============================================================================
+
+static bool test_comms_get_last_error() noexcept {
+  auto& comms = VORTEX_API.comms;
+  [[maybe_unused]] CommError err = comms.GetLastError();
+  return true;
+}
+
+static bool test_comms_system_diagnostics() noexcept {
+  auto& comms = VORTEX_API.comms;
+  CommSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = comms.GetSystemDiagnostics(diag);
+  return true;
+}
 
 static bool test_comms_spi_device_lookup() noexcept {
   auto& comms = VORTEX_API.comms;
@@ -205,6 +236,20 @@ static bool test_motor_device_count() noexcept {
   return (count <= 8);
 }
 
+static bool test_motor_get_last_error() noexcept {
+  auto& motors = VORTEX_API.motors;
+  [[maybe_unused]] MotorError err = motors.GetLastError();
+  return true;
+}
+
+static bool test_motor_system_diagnostics() noexcept {
+  auto& motors = VORTEX_API.motors;
+  MotorSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = motors.GetSystemDiagnostics(diag);
+  // active_device_count should be <= 4
+  return (diag.active_device_count <= 4);
+}
+
 //=============================================================================
 // ADC TESTS
 //=============================================================================
@@ -243,6 +288,19 @@ static bool test_imu_device_count() noexcept {
   return (count <= 4);
 }
 
+static bool test_imu_get_last_error() noexcept {
+  auto& imu = VORTEX_API.imu;
+  [[maybe_unused]] ImuError err = imu.GetLastError();
+  return true;
+}
+
+static bool test_imu_system_diagnostics() noexcept {
+  auto& imu = VORTEX_API.imu;
+  ImuSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = imu.GetSystemDiagnostics(diag);
+  return (diag.active_device_count <= 4);
+}
+
 //=============================================================================
 // ENCODER TESTS
 //=============================================================================
@@ -272,6 +330,19 @@ static bool test_encoder_device_count() noexcept {
   auto& enc = VORTEX_API.encoders;
   uint8_t count = enc.GetDeviceCount();
   return (count <= 4);
+}
+
+static bool test_encoder_get_last_error() noexcept {
+  auto& enc = VORTEX_API.encoders;
+  [[maybe_unused]] EncoderError err = enc.GetLastError();
+  return true;
+}
+
+static bool test_encoder_system_diagnostics() noexcept {
+  auto& enc = VORTEX_API.encoders;
+  EncoderSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = enc.GetSystemDiagnostics(diag);
+  return (diag.active_device_count <= 4);
 }
 
 //=============================================================================
@@ -379,10 +450,13 @@ extern "C" void app_main(void) {
     RUN_TEST(test_perform_health_check);
     RUN_TEST(test_failed_components_api);
     RUN_TEST(test_system_warnings_api);
+    RUN_TEST(test_collect_manager_health);
   );
 
   // ── Comms ───────────────────────────────────────────────────────────────
   RUN_TEST_SECTION_IF_ENABLED(ENABLE_COMMS_TESTS, "COMMUNICATION CHANNELS",
+    RUN_TEST(test_comms_get_last_error);
+    RUN_TEST(test_comms_system_diagnostics);
     RUN_TEST(test_comms_spi_device_lookup);
     RUN_TEST(test_comms_i2c_device_lookup);
   );
@@ -397,6 +471,8 @@ extern "C" void app_main(void) {
     RUN_TEST(test_motor_handler_access);
     RUN_TEST(test_motor_visit_driver);
     RUN_TEST(test_motor_device_count);
+    RUN_TEST(test_motor_get_last_error);
+    RUN_TEST(test_motor_system_diagnostics);
   );
 
   // ── ADC ─────────────────────────────────────────────────────────────────
@@ -409,6 +485,8 @@ extern "C" void app_main(void) {
     RUN_TEST(test_imu_handler_access);
     RUN_TEST(test_imu_sensor_access);
     RUN_TEST(test_imu_device_count);
+    RUN_TEST(test_imu_get_last_error);
+    RUN_TEST(test_imu_system_diagnostics);
   );
 
   // ── Encoders ────────────────────────────────────────────────────────────
@@ -417,6 +495,8 @@ extern "C" void app_main(void) {
     RUN_TEST(test_encoder_read_angle);
     RUN_TEST(test_encoder_read_velocity);
     RUN_TEST(test_encoder_device_count);
+    RUN_TEST(test_encoder_get_last_error);
+    RUN_TEST(test_encoder_system_diagnostics);
   );
 
   // ── LEDs ────────────────────────────────────────────────────────────────

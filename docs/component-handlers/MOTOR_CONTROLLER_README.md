@@ -131,10 +131,14 @@ public:
     Tmc9660Handler* handler(uint8_t deviceIndex = 0) noexcept;
     std::shared_ptr<TMC9660> driver(uint8_t deviceIndex = 0) noexcept;
     
-    // Device management
-    bool CreateExternalDevice(uint8_t csDeviceIndex, SpiDeviceId spiDeviceId, 
+    // Device management (returns typed MotorError)
+    MotorError CreateExternalDevice(uint8_t csDeviceIndex, SpiDeviceId spiDeviceId, 
                             uint8_t address, const tmc9660::BootloaderConfig* bootCfg = nullptr);
-    bool DeleteExternalDevice(uint8_t csDeviceIndex);
+    MotorError DeleteExternalDevice(uint8_t csDeviceIndex);
+    
+    // Error & diagnostics
+    MotorError GetLastError() const noexcept;
+    MotorError GetSystemDiagnostics(MotorSystemDiagnostics& diagnostics) const noexcept;
     
     // Status and diagnostics
     uint8_t GetDeviceCount() const noexcept;
@@ -253,7 +257,8 @@ void multi_device_example() {
     }
     
     // Create external TMC9660 device
-    if (motor.CreateExternalDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1, 0x01)) {
+    MotorError err = motor.CreateExternalDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1, 0x01);
+    if (err == MotorError::kSuccess) {
         logger.Info("MOTOR", "External device created on CS_1\n");
         
         // Initialize external device
@@ -522,9 +527,11 @@ auto result = tmc->bootloaderInit(&cfg);
 
 ### Parameter-Based Safety
 The TMC9660 uses a parameter-based TMCL API for all operations:
-- All functions return `bool` (success/failure)
+- Driver-level functions return `bool` (success/failure)
+- Device management functions (`CreateExternalDevice`, `DeleteExternalDevice`) return typed `MotorError`
+- Use `GetLastError()` to query the most recent error
+- Use `GetSystemDiagnostics()` for per-device health snapshots
 - Always check return values for safety-critical operations
-- Use proper error handling for motor control failures
 
 ### Communication Interface Management
 - SPI interface takes precedence over UART when both are available
@@ -537,7 +544,31 @@ The TMC9660 uses a parameter-based TMCL API for all operations:
 void diagnostic_example() {
     auto& motor = MotorController::GetInstance();
     
-    // Get system statistics
+    // Query last error
+    MotorError last = motor.GetLastError();
+    if (last != MotorError::kSuccess) {
+        logger.Warn("MOTOR", "Motor controller last error: %u\n", static_cast<unsigned>(last));
+    }
+    
+    // Get full system diagnostics
+    MotorSystemDiagnostics diag{};
+    if (motor.GetSystemDiagnostics(diag) == MotorError::kSuccess) {
+        logger.Info("MOTOR", "System healthy: %s, active: %u, initialized: %u\n",
+            diag.system_healthy ? "yes" : "no",
+            diag.active_device_count, diag.initialized_device_count);
+        
+        // Per-device status
+        for (size_t i = 0; i < 4; ++i) {
+            if (diag.devices[i].active) {
+                logger.Info("MOTOR", "  Device %u: init=%s, errors=%u\n",
+                    static_cast<unsigned>(i),
+                    diag.devices[i].initialized ? "yes" : "no",
+                    diag.devices[i].error_count);
+            }
+        }
+    }
+    
+    // Get active device list
     logger.Info("MOTOR", "Active devices: %d\n", motor.GetDeviceCount());
     
     auto active_indices = motor.GetActiveDeviceIndices();

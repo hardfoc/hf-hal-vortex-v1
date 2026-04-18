@@ -60,6 +60,30 @@ constexpr const char* As5047uErrorToString(As5047uError error) noexcept {
     return EncoderErrorToString(error);
 }
 
+//==============================================================================
+// ENCODER DIAGNOSTICS
+//==============================================================================
+
+/**
+ * @brief System-level diagnostics snapshot for encoder health monitoring.
+ */
+struct EncoderSystemDiagnostics {
+    bool system_healthy;
+    bool system_initialized;
+    uint8_t active_device_count;
+    uint8_t initialized_device_count;
+    EncoderError last_error;
+
+    struct DeviceSnapshot {
+        bool active;
+        bool initialized;
+        uint32_t measurement_count;
+        uint32_t communication_error_count;
+    };
+    static constexpr uint8_t kMaxDevices = 4;
+    DeviceSnapshot devices[kMaxDevices]{};
+};
+
 /**
  * @class EncoderManager
  * @brief Singleton for managing multiple AS5047U encoder devices with indexed access and flexible device management.
@@ -144,6 +168,19 @@ public:
      * @return true if initialized, false otherwise
      */
     bool IsInitialized() const noexcept;
+
+    /**
+     * @brief Get the most recent error code.
+     * @return Last EncoderError set by any API call
+     */
+    [[nodiscard]] EncoderError GetLastError() const noexcept { return last_error_.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Fill a diagnostics snapshot with current system state.
+     * @param diagnostics Output structure to populate
+     * @return EncoderError::SUCCESS on success, EncoderError::NOT_INITIALIZED if not init
+     */
+    [[nodiscard]] EncoderError GetSystemDiagnostics(EncoderSystemDiagnostics& diagnostics) const noexcept;
 
     /**
      * @brief Deinitialize all encoders and release resources.
@@ -407,6 +444,11 @@ private:
      * @brief System initialization state (atomic for thread safety).
      */
     std::atomic<bool> initialized_{false};
+
+    /**
+     * @brief Most recent error code for system-level tracking.
+     */
+    std::atomic<EncoderError> last_error_{EncoderError::SUCCESS};
 
     /**
      * @brief Main system mutex for thread-safe operations.

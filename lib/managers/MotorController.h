@@ -87,6 +87,33 @@ constexpr const char* MotorErrorToString(MotorError error) noexcept {
     }
 }
 
+//==============================================================================
+// MOTOR CONTROLLER DIAGNOSTICS
+//==============================================================================
+
+/**
+ * @brief System-level diagnostics snapshot for motor controller health monitoring.
+ *
+ * Aggregates per-device and system-wide status in a single copyable struct,
+ * matching the pattern used by LedSystemDiagnostics / GpioSystemDiagnostics.
+ */
+struct MotorSystemDiagnostics {
+    bool system_healthy;               ///< true when all active devices are initialized
+    bool system_initialized;           ///< MotorController::IsInitialized()
+    uint8_t active_device_count;       ///< Number of active device slots
+    uint8_t initialized_device_count;  ///< Number of successfully initialized devices
+    MotorError last_error;             ///< Most recent error code
+
+    /// Per-device snapshot (indexed 0..MAX_TMC9660_DEVICES-1)
+    struct DeviceSnapshot {
+        bool active;
+        bool initialized;
+        uint32_t error_count;          ///< Cumulative errors for this slot
+    };
+    static constexpr uint8_t kMaxDevices = 4;
+    DeviceSnapshot devices[kMaxDevices]{};
+};
+
 class MotorController {
 public:
     static constexpr uint8_t MAX_TMC9660_DEVICES = 4;   ///< Maximum supported TMC9660 devices (board + external)
@@ -114,6 +141,19 @@ public:
     }
 
     inline bool IsInitialized() const noexcept { return initialized_.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Get the most recent error code.
+     * @return Last MotorError set by any API call
+     */
+    [[nodiscard]] MotorError GetLastError() const noexcept { return last_error_.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Fill a diagnostics snapshot with current system state.
+     * @param diagnostics Output structure to populate
+     * @return MotorError::SUCCESS on success, MotorError::NOT_INITIALIZED if not init
+     */
+    [[nodiscard]] MotorError GetSystemDiagnostics(MotorSystemDiagnostics& diagnostics) const noexcept;
 
     //**************************************************************************//
     //**                  HANDLER AND DRIVER MANAGEMENT                       **//
@@ -170,11 +210,11 @@ public:
      * @param address TMC9660 device address
      * @param pins Host-side GPIO control pin references for the TMC9660
      * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
-     * @return true if device created successfully, false if already exists
+     * @return MotorError::SUCCESS if device created, typed error otherwise
      * @note Must be called before Initialize() so the onboard device is registered.
      *       The GPIO pins must already be configured (pin number, direction).
      */
-    bool CreateOnboardDevice(BaseSpi& spiInterface, 
+    [[nodiscard]] MotorError CreateOnboardDevice(BaseSpi& spiInterface, 
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
                             const tmc9660::BootloaderConfig* bootCfg = nullptr);
@@ -185,11 +225,11 @@ public:
      * @param address TMC9660 device address
      * @param pins Host-side GPIO control pin references for the TMC9660
      * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
-     * @return true if device created successfully, false if already exists
+     * @return MotorError::SUCCESS if device created, typed error otherwise
      * @note Must be called before Initialize() so the onboard device is registered.
      *       The GPIO pins must already be configured (pin number, direction).
      */
-    bool CreateOnboardDevice(BaseUart& uartInterface,
+    [[nodiscard]] MotorError CreateOnboardDevice(BaseUart& uartInterface,
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
                             const tmc9660::BootloaderConfig* bootCfg = nullptr);
@@ -201,10 +241,10 @@ public:
      * @param address TMC9660 device address
      * @param pins Host-side GPIO control pin references for the TMC9660
      * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
-     * @return true if device created successfully, false otherwise
+     * @return MotorError::SUCCESS if device created, typed error otherwise
      * @note Only EXTERNAL_DEVICE_1_INDEX (2) and EXTERNAL_DEVICE_2_INDEX (3) are allowed
      */
-    bool CreateExternalDevice(uint8_t csDeviceIndex, 
+    [[nodiscard]] MotorError CreateExternalDevice(uint8_t csDeviceIndex, 
                             SpiDeviceId spiDeviceId, 
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
@@ -217,10 +257,10 @@ public:
      * @param address TMC9660 device address
      * @param pins Host-side GPIO control pin references for the TMC9660
      * @param bootCfg Optional bootloader config (defaults to kDefaultBootConfig)
-     * @return true if device created successfully, false otherwise
+     * @return MotorError::SUCCESS if device created, typed error otherwise
      * @note Only EXTERNAL_DEVICE_1_INDEX (2) and EXTERNAL_DEVICE_2_INDEX (3) are allowed
      */
-    bool CreateExternalDevice(uint8_t csDeviceIndex,
+    [[nodiscard]] MotorError CreateExternalDevice(uint8_t csDeviceIndex,
                             BaseUart& uartInterface,
                             uint8_t address,
                             const Tmc9660ControlPins& pins,
@@ -229,10 +269,10 @@ public:
     /**
      * @brief Delete an external TMC9660 device.
      * @param csDeviceIndex External device CS index (2 or 3 only)
-     * @return true if device deleted successfully, false otherwise
+     * @return MotorError::SUCCESS if device deleted, typed error otherwise
      * @note Cannot delete onboard device (index 0). Only external devices can be deleted.
      */
-    bool DeleteExternalDevice(uint8_t csDeviceIndex);
+    [[nodiscard]] MotorError DeleteExternalDevice(uint8_t csDeviceIndex);
 
     /**
      * @brief Get the number of active TMC9660 devices.
@@ -303,12 +343,21 @@ private:
      */
     bool IsExternalDeviceIndex(uint8_t csDeviceIndex) const noexcept;
 
+    /**
+     * @brief Store a new error code and update per-device counter.
+     * @param error The error to record
+     * @param deviceIndex Optional device index to bump its error counter
+     */
+    void UpdateLastError(MotorError error, int deviceIndex = -1) noexcept;
+
     std::array<std::unique_ptr<Tmc9660Handler>, MAX_TMC9660_DEVICES> tmcHandlers_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceInitialized_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceActive_;    ///< Track which devices are active
+    std::array<std::atomic<uint32_t>, MAX_TMC9660_DEVICES> deviceErrorCounts_{}; ///< Per-device error counters
     
     bool onboardDeviceCreated_;         ///< Track if onboard device has been created
     std::atomic<bool> initialized_;      ///< Track if system has been initialized
+    std::atomic<MotorError> last_error_{MotorError::SUCCESS}; ///< Most recent error code
     mutable RtosMutex deviceMutex_;     ///< RTOS mutex for thread-safe device access
 };
 

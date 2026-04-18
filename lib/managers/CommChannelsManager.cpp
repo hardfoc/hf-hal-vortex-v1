@@ -452,6 +452,36 @@ void CommChannelsManager::DumpStatistics() const noexcept {
     log.Info(TAG, "=== End Vortex CommChannels Statistics ===");
 }
 
+CommError CommChannelsManager::GetSystemDiagnostics(CommSystemDiagnostics& diagnostics) const noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) {
+        return CommError::NOT_INITIALIZED;
+    }
+
+    MutexLockGuard lock(mutex_);
+
+    diagnostics.system_initialized = true;
+    diagnostics.spi_bus_valid = spi_bus_valid_;
+    diagnostics.i2c_bus_valid = i2c_bus_valid_;
+    diagnostics.uart_bus_valid = uart_bus_valid_;
+    diagnostics.can_bus_valid = can_bus_valid_;
+    diagnostics.last_error = last_error_.load(std::memory_order_acquire);
+
+    // Count valid SPI devices
+    diagnostics.spi_device_count = 0;
+    for (uint8_t i = 0; i < kSpiDeviceCount; ++i) {
+        if (spi_device_indices_[i] >= 0) ++diagnostics.spi_device_count;
+    }
+
+    // Count active runtime I2C devices
+    diagnostics.i2c_runtime_device_count = 0;
+    for (const auto& slot : i2c_runtime_slots_) {
+        if (slot.active) ++diagnostics.i2c_runtime_device_count;
+    }
+
+    diagnostics.system_healthy = spi_bus_valid_ || i2c_bus_valid_;
+    return CommError::SUCCESS;
+}
+
 //==============================================================================
 // DEINITIALIZE
 //==============================================================================

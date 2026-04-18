@@ -182,6 +182,74 @@ size_t Vortex::GetSystemWarnings(const char* out_warnings[], size_t max_entries)
 // PUBLIC UTILITY METHODS
 //==============================================================================
 
+bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
+    if (!initialized_) return false;
+
+    snapshot = ManagerHealthSnapshot{};
+    snapshot.count = 8;
+    snapshot.all_healthy = true;
+    snapshot.managers_with_errors = 0;
+
+    auto addEntry = [&](size_t idx, const char* name, bool init, uint8_t err) {
+        snapshot.entries[idx].name = name;
+        snapshot.entries[idx].initialized = init;
+        snapshot.entries[idx].last_error_code = err;
+        snapshot.entries[idx].has_error = (err != 0);
+        if (err != 0) {
+            snapshot.all_healthy = false;
+            ++snapshot.managers_with_errors;
+        }
+        if (!init) {
+            snapshot.all_healthy = false;
+        }
+    };
+
+    // 1. CommChannelsManager — direct GetLastError()
+    addEntry(0, "CommChannels", comms_initialized_.load(),
+             static_cast<uint8_t>(comms.GetLastError()));
+
+    // 2. GpioManager — extract from diagnostics
+    {
+        GpioSystemDiagnostics gdiag{};
+        gpio.GetSystemDiagnostics(gdiag);
+        addEntry(1, "GPIO", gpio_initialized_.load(),
+                 static_cast<uint8_t>(gdiag.last_error));
+    }
+
+    // 3. MotorController — direct GetLastError()
+    addEntry(2, "Motors", motors_initialized_.load(),
+             static_cast<uint8_t>(motors.GetLastError()));
+
+    // 4. AdcManager — extract from diagnostics
+    {
+        AdcSystemDiagnostics adiag{};
+        adc.GetSystemDiagnostics(adiag);
+        addEntry(3, "ADC", adc_initialized_.load(),
+                 static_cast<uint8_t>(adiag.last_error));
+    }
+
+    // 5. ImuManager — direct GetLastError()
+    addEntry(4, "IMU", imu_initialized_.load(),
+             static_cast<uint8_t>(imu.GetLastError()));
+
+    // 6. EncoderManager — direct GetLastError()
+    addEntry(5, "Encoders", encoders_initialized_.load(),
+             static_cast<uint8_t>(encoders.GetLastError()));
+
+    // 7. LedManager — no public error accessor; report init status only
+    addEntry(6, "LEDs", leds_initialized_.load(), 0);
+
+    // 8. TemperatureManager — extract from diagnostics
+    {
+        TempSystemDiagnostics tdiag{};
+        temp.GetSystemDiagnostics(tdiag);
+        addEntry(7, "Temperature", temp_initialized_.load(),
+                 static_cast<uint8_t>(tdiag.last_error));
+    }
+
+    return true;
+}
+
 uint64_t Vortex::GetSystemUptimeMs() const noexcept {
     return RtosTime::GetCurrentTimeUs() / 1000;
 }
@@ -224,29 +292,28 @@ bool Vortex::PerformHealthCheck() noexcept {
     
     Logger::GetInstance().Info("Vortex", "Performing Vortex API health check");
     
-    // Check each component's health
-    bool comms_healthy = comms_initialized_ && comms.IsInitialized();
-    bool gpio_healthy = gpio_initialized_ && gpio.IsInitialized();
-    bool motors_healthy = motors_initialized_ && motors.IsInitialized();
-    bool adc_healthy = adc_initialized_ && adc.IsInitialized();
-    bool imu_healthy = imu_initialized_ && imu.IsInitialized();
-    bool encoders_healthy = encoders_initialized_ && encoders.IsInitialized();
-    bool leds_healthy = leds_initialized_ && leds.IsInitialized();
-    bool temp_healthy = temp_initialized_ && temp.IsInitialized();
+    // Collect per-manager error health
+    ManagerHealthSnapshot health{};
+    CollectManagerHealth(health);
     
-    bool overall_healthy = comms_healthy && gpio_healthy && motors_healthy && 
-                          adc_healthy && imu_healthy && encoders_healthy && 
-                          leds_healthy && temp_healthy;
+    // Log per-manager status with error codes
+    for (size_t i = 0; i < health.count; ++i) {
+        const auto& e = health.entries[i];
+        if (!e.initialized) {
+            Logger::GetInstance().Error("Vortex", "  %s: NOT INITIALIZED", e.name);
+        } else if (e.has_error) {
+            Logger::GetInstance().Warn("Vortex", "  %s: ERROR (code %u)", e.name,
+                                      static_cast<unsigned>(e.last_error_code));
+        } else {
+            Logger::GetInstance().Info("Vortex", "  %s: OK", e.name);
+        }
+    }
     
-    Logger::GetInstance().Info("Vortex", "Health Check Results - Overall: %s", overall_healthy ? "HEALTHY" : "UNHEALTHY");
-    Logger::GetInstance().Info("Vortex", "  Comms: %s, GPIO: %s, Motors: %s, ADC: %s", 
-        comms_healthy ? "OK" : "FAIL", gpio_healthy ? "OK" : "FAIL", 
-        motors_healthy ? "OK" : "FAIL", adc_healthy ? "OK" : "FAIL");
-    Logger::GetInstance().Info("Vortex", "  IMU: %s, Encoders: %s, LEDs: %s, Temp: %s", 
-        imu_healthy ? "OK" : "FAIL", encoders_healthy ? "OK" : "FAIL", 
-        leds_healthy ? "OK" : "FAIL", temp_healthy ? "OK" : "FAIL");
+    Logger::GetInstance().Info("Vortex", "Health Check: %s (%zu/%zu managers healthy)",
+        health.all_healthy ? "HEALTHY" : "DEGRADED",
+        health.count - health.managers_with_errors, health.count);
     
-    return overall_healthy;
+    return health.all_healthy;
 }
 
 const char* Vortex::GetSystemVersion() const noexcept {

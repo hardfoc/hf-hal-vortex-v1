@@ -427,7 +427,9 @@ EncoderError EncoderManager::ReadAngle(uint8_t deviceIndex, uint16_t& angle) noe
     AS5047U_Error sticky = sensor->GetStickyErrorFlags();
     if (sticky != AS5047U_Error::None) {
         communication_error_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
-        return mapDriverError(sticky);
+        EncoderError err = mapDriverError(sticky);
+        last_error_.store(err, std::memory_order_release);
+        return err;
     }
     
     measurement_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
@@ -698,6 +700,32 @@ bool EncoderManager::IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept {
 
 // Note: AS5047U is a continuous reading sensor that doesn't use interrupts.
 // Measurement and error tracking is handled through the monitoring methods above.
+
+EncoderError EncoderManager::GetSystemDiagnostics(EncoderSystemDiagnostics& diagnostics) const noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) {
+        return EncoderError::NOT_INITIALIZED;
+    }
+
+    MutexLockGuard lock(manager_mutex_);
+
+    diagnostics.system_initialized = true;
+    diagnostics.last_error = last_error_.load(std::memory_order_acquire);
+    diagnostics.active_device_count = 0;
+    diagnostics.initialized_device_count = 0;
+
+    for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
+        diagnostics.devices[i].active = device_active_[i];
+        diagnostics.devices[i].initialized = device_initialized_[i];
+        diagnostics.devices[i].measurement_count = measurement_counts_[i].load(std::memory_order_relaxed);
+        diagnostics.devices[i].communication_error_count = communication_error_counts_[i].load(std::memory_order_relaxed);
+        if (device_active_[i]) ++diagnostics.active_device_count;
+        if (device_initialized_[i]) ++diagnostics.initialized_device_count;
+    }
+
+    diagnostics.system_healthy = (diagnostics.active_device_count > 0) &&
+                                 (diagnostics.initialized_device_count == diagnostics.active_device_count);
+    return EncoderError::SUCCESS;
+}
 
 void EncoderManager::DumpStatistics() const noexcept {
     MutexLockGuard lock(manager_mutex_);

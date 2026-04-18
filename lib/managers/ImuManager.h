@@ -55,7 +55,7 @@ class BaseSpi;
  *     }
  *     
  *     // Create external BNO08x device (index 1) with runtime I2C device creation
- *     if (imu_mgr.CreateExternalBno08xDevice(1, 0x48, 400000)) {
+ *     if (imu_mgr.CreateExternalBno08xDevice(1, 0x48, 400000) == ImuError::kSuccess) {
  *         IBno08xDriverOps* ext_sensor = imu_mgr.GetSensor(1);
  *         if (ext_sensor) {
  *             ext_sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
@@ -63,7 +63,7 @@ class BaseSpi;
  *     }
  *     
  *     // Create external BNO08x device (index 2) with SPI interface
- *     if (imu_mgr.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1)) {
+ *     if (imu_mgr.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1) == ImuError::kSuccess) {
  *         IBno08xDriverOps* ext_sensor = imu_mgr.GetSensor(2);
  *         if (ext_sensor) {
  *             ext_sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
@@ -126,6 +126,33 @@ constexpr const char* ImuErrorToString(ImuError error) noexcept {
     }
 }
 
+//==============================================================================
+// IMU DIAGNOSTICS
+//==============================================================================
+
+/**
+ * @brief System-level diagnostics snapshot for IMU health monitoring.
+ */
+struct ImuSystemDiagnostics {
+    bool system_healthy;
+    bool system_initialized;
+    uint8_t active_device_count;
+    uint8_t initialized_device_count;
+    ImuError last_error;
+
+    struct DeviceSnapshot {
+        bool active;
+        bool initialized;
+        uint32_t error_count;
+    };
+    static constexpr uint8_t kMaxDevices = 4;
+    DeviceSnapshot devices[kMaxDevices]{};
+
+    uint32_t total_interrupt_count;
+    bool interrupt_configured;
+    bool interrupt_enabled;
+};
+
 class ImuManager {
 public:
     static constexpr uint8_t MAX_IMU_DEVICES = 4;           ///< Maximum supported IMU devices
@@ -157,6 +184,19 @@ public:
      * @return true if initialized, false otherwise
      */
     bool IsInitialized() const noexcept;
+
+    /**
+     * @brief Get the most recent error code.
+     * @return Last ImuError set by any API call
+     */
+    [[nodiscard]] ImuError GetLastError() const noexcept { return last_error_.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Fill a diagnostics snapshot with current system state.
+     * @param diagnostics Output structure to populate
+     * @return ImuError::SUCCESS on success, ImuError::NOT_INITIALIZED if not init
+     */
+    [[nodiscard]] ImuError GetSystemDiagnostics(ImuSystemDiagnostics& diagnostics) const noexcept;
 
     /**
      * @brief Deinitialize all IMUs and release resources.
@@ -199,10 +239,10 @@ public:
      * @param i2c_address 7-bit I2C device address (0x08-0x77)
      * @param i2c_speed_hz I2C speed in Hz (default: 400000 for 400kHz)
      * @param config Optional BNO08x configuration (defaults to default config)
-     * @return true if device created successfully, false otherwise
+     * @return ImuError::SUCCESS if device created, typed error otherwise
      * @note This method handles both I2C device creation and BNO08x handler creation internally
      */
-    bool CreateExternalBno08xDevice(uint8_t deviceIndex, 
+    [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    uint8_t i2c_address,
                                    uint32_t i2c_speed_hz = 400000,
                                    const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
@@ -214,9 +254,9 @@ public:
      * @param deviceIndex External device index (1, 2, or 3 only)
      * @param spiDeviceId SPI device ID for communication
      * @param config Optional BNO08x configuration (defaults to default config)
-     * @return true if device created successfully, false otherwise
+     * @return ImuError::SUCCESS if device created, typed error otherwise
      */
-    bool CreateExternalBno08xDevice(uint8_t deviceIndex, 
+    [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    SpiDeviceId spiDeviceId,
                                    const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
 
@@ -225,10 +265,10 @@ public:
      * @param deviceIndex External device index (1, 2, or 3 only)
      * @param i2c_interface Direct reference to BaseI2c interface
      * @param config Optional BNO08x configuration (defaults to default config)
-     * @return true if device created successfully, false otherwise
+     * @return ImuError::SUCCESS if device created, typed error otherwise
      * @note This is the most flexible method - allows any external I2C interface
      */
-    bool CreateExternalBno08xDevice(uint8_t deviceIndex, 
+    [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    BaseI2c& i2c_interface,
                                    const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
 
@@ -237,20 +277,20 @@ public:
      * @param deviceIndex External device index (1, 2, or 3 only)
      * @param spi_interface Direct reference to BaseSpi interface
      * @param config Optional BNO08x configuration (defaults to default config)
-     * @return true if device created successfully, false otherwise
+     * @return ImuError::SUCCESS if device created, typed error otherwise
      * @note This is the most flexible method - allows any external SPI interface
      */
-    bool CreateExternalBno08xDevice(uint8_t deviceIndex, 
+    [[nodiscard]] ImuError CreateExternalBno08xDevice(uint8_t deviceIndex, 
                                    BaseSpi& spi_interface,
                                    const Bno08xConfig& config = Bno08xHandler::GetDefaultConfig());
 
     /**
      * @brief Delete an external IMU device.
      * @param deviceIndex External device index (1, 2, or 3 only)
-     * @return true if device deleted successfully, false otherwise
+     * @return ImuError::SUCCESS if device deleted, typed error otherwise
      * @note Cannot delete onboard device (index 0). Only external devices can be deleted.
      */
-    bool DeleteExternalDevice(uint8_t deviceIndex);
+    [[nodiscard]] ImuError DeleteExternalDevice(uint8_t deviceIndex);
 
     /**
      * @brief Get the number of active IMU devices.
@@ -410,6 +450,13 @@ private:
     bool IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept;
 
     /**
+     * @brief Store a new error code and update per-device counter.
+     * @param error The error to record
+     * @param deviceIndex Optional device index to bump its error counter
+     */
+    void UpdateLastError(ImuError error, int deviceIndex = -1) noexcept;
+
+    /**
      * @brief GPIO interrupt handler for BNO08x INT pin.
      * @param gpio Pointer to the GPIO that triggered interrupt
      * @param trigger Interrupt trigger type
@@ -425,6 +472,16 @@ private:
      * @brief System initialization state (atomic for thread safety).
      */
     std::atomic<bool> initialized_{false};
+
+    /**
+     * @brief Most recent error code for system-level tracking.
+     */
+    std::atomic<ImuError> last_error_{ImuError::SUCCESS};
+
+    /**
+     * @brief Per-device cumulative error counters.
+     */
+    std::array<std::atomic<uint32_t>, MAX_IMU_DEVICES> device_error_counts_{};
 
     /**
      * @brief Main system mutex for thread-safe operations.
