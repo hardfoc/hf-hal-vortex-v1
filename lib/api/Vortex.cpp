@@ -236,8 +236,9 @@ bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
     addEntry(5, "Encoders", encoders_initialized_.load(),
              static_cast<uint8_t>(encoders.GetLastError()));
 
-    // 7. LedManager — no public error accessor; report init status only
-    addEntry(6, "LEDs", leds_initialized_.load(), 0);
+    // 7. LedManager — typed GetLastError()
+    addEntry(6, "LEDs", leds_initialized_.load(),
+             static_cast<uint8_t>(leds.GetLastError()));
 
     // 8. TemperatureManager — extract from diagnostics
     {
@@ -317,7 +318,57 @@ bool Vortex::PerformHealthCheck() noexcept {
 }
 
 const char* Vortex::GetSystemVersion() const noexcept {
-    return "Vortex API v1.0.0 - HardFOC Platform";
+    return "Vortex API v2.0.0 - HardFOC Platform";
+}
+
+bool Vortex::Shutdown() noexcept {
+    if (!initialized_) {
+        Logger::GetInstance().Warn("Vortex", "Shutdown called but not initialized");
+        return false;
+    }
+
+    Logger::GetInstance().Info("Vortex", "Shutting down Vortex API (reverse init order)");
+
+    // Reverse initialization order: Temp → LEDs → Encoders → IMU → ADC → Motors → GPIO → Comms
+    if (temp_initialized_) {
+        temp.Deinitialize();
+        temp_initialized_ = false;
+    }
+    if (leds_initialized_) {
+        leds.Deinitialize();
+        leds_initialized_ = false;
+    }
+    if (encoders_initialized_) {
+        encoders.Deinitialize();
+        encoders_initialized_ = false;
+    }
+    if (imu_initialized_) {
+        imu.Deinitialize();
+        imu_initialized_ = false;
+    }
+    if (adc_initialized_) {
+        adc.Deinitialize();
+        adc_initialized_ = false;
+    }
+    if (motors_initialized_) {
+        motors.Deinitialize();
+        motors_initialized_ = false;
+    }
+    if (gpio_initialized_) {
+        gpio.Deinitialize();
+        gpio_initialized_ = false;
+    }
+    if (comms_initialized_) {
+        comms.Deinitialize();
+        comms_initialized_ = false;
+    }
+
+    initialized_ = false;
+    failed_components_count_ = 0;
+    system_warnings_count_ = 0;
+
+    Logger::GetInstance().Info("Vortex", "Vortex API shutdown complete");
+    return true;
 }
 
 //==============================================================================

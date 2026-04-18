@@ -40,7 +40,7 @@ class Tmc9660AdcWrapper;
  * @brief A single ADC channel entry in the fixed-size registry.
  */
 struct AdcEntry {
-    HfFunctionalAdcChannel functional_channel{HfFunctionalAdcChannel::HF_FUNCTIONAL_ADC_COUNT};
+    HfFunctionalAdcChannel functional_channel{HfFunctionalAdcChannel::HF_FUNCTIONAL_ADC_COUNT}; ///< Functional enum for this channel
     std::string_view name;              ///< Human-readable name from pincfg
     BaseAdc* driver{nullptr};           ///< Pointer to the ADC driver (owned by the wrapper unique_ptr)
     uint8_t adc_unit{0};                ///< ADC unit on the chip
@@ -49,8 +49,8 @@ struct AdcEntry {
     bool registered{false};             ///< Whether this entry is active
 
     // Statistics
-    uint32_t access_count{0};
-    uint32_t error_count{0};
+    uint32_t access_count{0};           ///< Total successful read operations on this channel
+    uint32_t error_count{0};            ///< Total failed read operations on this channel
 };
 
 //==============================================================================
@@ -61,28 +61,41 @@ struct AdcEntry {
  * @brief ADC system diagnostics (compatible with example code).
  */
 struct AdcSystemDiagnostics {
-    bool system_healthy{false};
-    uint32_t total_channels_registered{0};
-    uint32_t channels_by_chip[2]{};       ///< [0]=ESP32, [1]=TMC9660
-    uint32_t total_operations{0};
-    uint32_t successful_operations{0};
-    uint32_t failed_operations{0};
-    uint32_t communication_errors{0};
-    uint32_t hardware_errors{0};
-    uint64_t system_uptime_ms{0};
-    hf_adc_err_t last_error{hf_adc_err_t::ADC_SUCCESS};
+    bool system_healthy{false};                 ///< True when all registered channels are operational
+    uint32_t total_channels_registered{0};      ///< Number of channels currently registered
+    uint32_t channels_by_chip[2]{};             ///< [0]=ESP32, [1]=TMC9660
+    uint32_t total_operations{0};               ///< Cumulative read attempts across all channels
+    uint32_t successful_operations{0};          ///< Cumulative successful reads
+    uint32_t failed_operations{0};              ///< Cumulative failed reads
+    uint32_t communication_errors{0};           ///< Errors attributed to bus communication failures
+    uint32_t hardware_errors{0};                ///< Errors attributed to hardware faults
+    uint64_t system_uptime_ms{0};               ///< Milliseconds since ADC subsystem initialisation
+    hf_adc_err_t last_error{hf_adc_err_t::ADC_SUCCESS}; ///< Most recent error code from any operation
 };
 
 //==============================================================================
 // ADC MANAGER
 //==============================================================================
 
+/**
+ * @class AdcManager
+ * @brief Singleton manager for all analogue-to-digital channels on Vortex V1.
+ *
+ * @details Provides a uniform API over the ESP32 internal ADC and the TMC9660
+ *          motor-controller ADC. Channels are registered from the pincfg
+ *          X-MACRO table at initialisation and looked up by name or by
+ *          functional enum.
+ *
+ * @note Call EnsureInitialized() once before any reads. All public methods
+ *       are thread-safe (guarded by an internal RTOS mutex).
+ */
 class AdcManager {
 public:
     //==========================================================================
     // SINGLETON AND LIFECYCLE
     //==========================================================================
 
+    /** @brief Return the singleton AdcManager instance. */
     static AdcManager& GetInstance() noexcept;
 
     AdcManager(const AdcManager&) = delete;
@@ -90,20 +103,53 @@ public:
     AdcManager(AdcManager&&) = delete;
     AdcManager& operator=(AdcManager&&) = delete;
 
+    /**
+     * @brief Initialise the ADC subsystem if not already initialised.
+     * @return true on success or if already initialised.
+     */
     [[nodiscard]] bool EnsureInitialized() noexcept;
+
+    /**
+     * @brief Release all ADC resources and reset to uninitialised state.
+     * @return true on success.
+     */
+    [[nodiscard]] bool Deinitialize() noexcept;
+
+    /**
+     * @brief Check whether the ADC subsystem has been initialised.
+     * @return true if initialised and ready for reads.
+     */
     [[nodiscard]] bool IsInitialized() const noexcept { return initialized_.load(std::memory_order_acquire); }
 
     //==========================================================================
     // CHANNEL ACCESS
     //==========================================================================
 
-    /** @brief Get the BaseAdc driver for a named channel. Returns nullptr if not found. */
+    /**
+     * @brief Get the BaseAdc driver for a named channel.
+     * @param name Channel name from the pincfg table (linear scan).
+     * @return Pointer to the BaseAdc driver, or nullptr if not found.
+     */
     [[nodiscard]] BaseAdc* Get(std::string_view name) noexcept;
 
-    /** @brief Check if a named ADC channel exists. */
+    /**
+     * @brief Get the BaseAdc driver by functional enum — O(1) lookup.
+     * @param channel Functional ADC channel enum.
+     * @return Pointer to the BaseAdc driver, or nullptr if not found.
+     */
+    [[nodiscard]] BaseAdc* Get(HfFunctionalAdcChannel channel) noexcept;
+
+    /**
+     * @brief Check whether a named ADC channel is registered.
+     * @param name Channel name to look up.
+     * @return true if the channel exists in the registry.
+     */
     [[nodiscard]] bool Contains(std::string_view name) const noexcept;
 
-    /** @brief Number of registered ADC channels. */
+    /**
+     * @brief Get the number of registered ADC channels.
+     * @return Channel count.
+     */
     [[nodiscard]] size_t Size() const noexcept;
 
     //==========================================================================
@@ -122,11 +168,56 @@ public:
                                             hf_u8_t numOfSamplesToAvg = 1,
                                             hf_time_t timeBetweenSamples = 0) noexcept;
 
+    /**
+     * @brief Read voltage from a channel by functional enum.
+     * @param channel           Functional ADC channel enum.
+     * @param voltage           Output: voltage reading.
+     * @param numOfSamplesToAvg Number of samples to average (default 1).
+     * @param timeBetweenSamples Time between samples in ms (default 0).
+     * @return ADC error code.
+     */
+    [[nodiscard]] hf_adc_err_t ReadChannelV(HfFunctionalAdcChannel channel, float& voltage,
+                                            hf_u8_t numOfSamplesToAvg = 1,
+                                            hf_time_t timeBetweenSamples = 0) noexcept;
+
+    /**
+     * @brief Read raw ADC value from a channel by name.
+     * @param name              Channel name (linear scan).
+     * @param raw_value         Output: raw ADC count.
+     * @param numOfSamplesToAvg Number of samples to average (default 1).
+     * @return ADC error code.
+     */
+    [[nodiscard]] hf_adc_err_t ReadRaw(std::string_view name, uint32_t& raw_value,
+                                       hf_u8_t numOfSamplesToAvg = 1) noexcept;
+
+    /**
+     * @brief Read raw ADC value from a channel by functional enum.
+     * @param channel           Functional ADC channel enum.
+     * @param raw_value         Output: raw ADC count.
+     * @param numOfSamplesToAvg Number of samples to average (default 1).
+     * @return ADC error code.
+     */
+    [[nodiscard]] hf_adc_err_t ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_value,
+                                       hf_u8_t numOfSamplesToAvg = 1) noexcept;
+
     //==========================================================================
     // DIAGNOSTICS
     //==========================================================================
 
+    /**
+     * @brief Populate an AdcSystemDiagnostics snapshot.
+     * @param[out] diagnostics Diagnostics structure to fill.
+     * @return ADC_SUCCESS on success.
+     */
     [[nodiscard]] hf_adc_err_t GetSystemDiagnostics(AdcSystemDiagnostics& diagnostics) const noexcept;
+
+    /**
+     * @brief Get the most recent error code from any ADC operation.
+     * @return Last hf_adc_err_t set by any API call
+     */
+    [[nodiscard]] hf_adc_err_t GetLastError() const noexcept { return last_error_.load(std::memory_order_acquire); }
+
+    /** @brief Log ADC channel statistics and health info to the console. */
     void DumpStatistics() const noexcept;
 
 private:
@@ -137,6 +228,9 @@ private:
 
     /** @brief Find entry index by string name. Returns kInvalidIndex if not found. */
     [[nodiscard]] size_t FindByName(std::string_view name) const noexcept;
+
+    /** @brief Find entry index by functional enum. Returns kInvalidIndex if not found. */
+    [[nodiscard]] size_t FindByEnum(HfFunctionalAdcChannel channel) const noexcept;
 
     //==========================================================================
     // STORAGE — entries are fixed-size; Tmc9660AdcWrapper is heap-allocated
@@ -157,6 +251,7 @@ private:
     MotorController* motor_controller_{nullptr};
 
     std::atomic<bool> initialized_{false};
+    std::atomic<hf_adc_err_t> last_error_{hf_adc_err_t::ADC_SUCCESS};
     mutable RtosMutex mutex_;
 };
 
@@ -164,6 +259,10 @@ private:
 // CONVENIENCE
 //==============================================================================
 
+/**
+ * @brief Convenience accessor — equivalent to AdcManager::GetInstance().
+ * @return Reference to the singleton AdcManager.
+ */
 [[nodiscard]] inline AdcManager& GetAdcManager() noexcept {
     return AdcManager::GetInstance();
 }

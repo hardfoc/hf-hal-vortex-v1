@@ -175,13 +175,13 @@ struct ManagerHealthEntry {
  *
  * Supported error sources per manager:
  *   CommChannels  — CommError      via GetLastError()
- *   GPIO          — hf_gpio_err_t  via GpioSystemDiagnostics::last_error
+ *   GPIO          — hf_gpio_err_t  via GetLastError()
  *   Motors        — MotorError     via GetLastError()
- *   ADC           — hf_adc_err_t   via AdcSystemDiagnostics::last_error
+ *   ADC           — hf_adc_err_t   via GetLastError()
  *   IMU           — ImuError       via GetLastError()
  *   Encoders      — EncoderError   via GetLastError()
- *   LEDs          — init-status only (no public error accessor)
- *   Temperature   — hf_temp_err_t  via TempSystemDiagnostics::last_error
+ *   LEDs          — LedError       via GetLastError()
+ *   Temperature   — hf_temp_err_t  via GetLastError()
  */
 struct ManagerHealthSnapshot {
     static constexpr size_t kMaxManagers = 8;
@@ -240,6 +240,12 @@ public:
     [[nodiscard]] bool IsInitialized() const noexcept { return initialized_; }
 
     /**
+     * @brief Shut down all subsystems in reverse initialization order.
+     * @return true if all subsystems shut down cleanly
+     */
+    bool Shutdown() noexcept;
+
+    /**
      * @brief Get comprehensive system diagnostics
      * @param diagnostics Reference to diagnostics structure to fill
      * @return true if diagnostics retrieved successfully, false otherwise
@@ -280,60 +286,28 @@ public:
     //**                  COMPONENT ACCESS                                    **//
     //**************************************************************************//
 
-    /**
-     * @brief Access to communication channels manager
-     * @return Reference to CommChannelsManager singleton
-     * @note This is always available and initialized first
-     */
+    /** @brief Communication channels (SPI, I²C, UART, CAN). Initialised first. */
     CommChannelsManager& comms;
 
-    /**
-     * @brief Access to GPIO management system
-     * @return Reference to GpioManager singleton
-     * @note Depends on CommChannelsManager
-     */
+    /** @brief ESP32 + I/O-expander GPIO pins. Depends on comms. */
     GpioManager& gpio;
 
-    /**
-     * @brief Access to motor controller management
-     * @return Reference to MotorController singleton
-     * @note Depends on CommChannelsManager
-     */
+    /** @brief TMC9660 motor controllers. Depends on comms. */
     MotorController& motors;
 
-    /**
-     * @brief Access to ADC management system
-     * @return Reference to AdcManager singleton
-     * @note Depends on MotorController
-     */
+    /** @brief ADC channels (ADS7952 + ESP32). Depends on motors. */
     AdcManager& adc;
 
-    /**
-     * @brief Access to IMU management system
-     * @return Reference to ImuManager singleton
-     * @note Depends on CommChannelsManager and GpioManager
-     */
+    /** @brief BNO08x IMU sensors. Depends on comms and gpio. */
     ImuManager& imu;
 
-    /**
-     * @brief Access to encoder management system
-     * @return Reference to EncoderManager singleton
-     * @note Depends on CommChannelsManager and GpioManager
-     */
+    /** @brief AS5047U rotary encoders. Depends on comms and gpio. */
     EncoderManager& encoders;
 
-    /**
-     * @brief Access to LED management system
-     * @return Reference to LedManager singleton
-     * @note Independent component
-     */
+    /** @brief WS2812 status LED. Independent component. */
     LedManager& leds;
 
-    /**
-     * @brief Access to temperature management system
-     * @return Reference to TemperatureManager singleton
-     * @note Depends on AdcManager and MotorController
-     */
+    /** @brief Temperature sensors (NTC, ESP32, TMC9660). Depends on ADC and motors. */
     TemperatureManager& temp;
 
     //**************************************************************************//
@@ -485,6 +459,18 @@ private:
     // Component references (these are references to singletons, not owned)
     // NOTE: Removed duplicate _ref_ members - public refs serve both roles
 };
+
+//==============================================================================
+// CONVENIENCE
+//==============================================================================
+
+/**
+ * @brief Convenience accessor — equivalent to Vortex::GetInstance().
+ * @return Reference to the singleton Vortex API.
+ */
+[[nodiscard]] inline Vortex& GetVortex() noexcept {
+    return Vortex::GetInstance();
+}
 
 //==============================================================================
 // GLOBAL ACCESS MACROS

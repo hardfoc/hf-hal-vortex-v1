@@ -376,21 +376,21 @@ static bool test_led_get_brightness() noexcept {
 static bool test_temp_read_esp32() noexcept {
   auto& temp = VORTEX_API.temp;
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("ESP32_INTERNAL", &celsius);
+  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("ESP32_INTERNAL", celsius);
   return true;
 }
 
 static bool test_temp_read_ntc() noexcept {
   auto& temp = VORTEX_API.temp;
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("NTC_THERMISTOR", &celsius);
+  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("NTC_THERMISTOR", celsius);
   return true;
 }
 
 static bool test_temp_read_motor() noexcept {
   auto& temp = VORTEX_API.temp;
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("MOTOR_TEMP", &celsius);
+  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("MOTOR_TEMP", celsius);
   return true;
 }
 

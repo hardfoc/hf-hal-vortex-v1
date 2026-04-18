@@ -1,8 +1,18 @@
+/**
+ * @file EncoderManager.h
+ * @brief Encoder device management for the HardFOC Vortex V1 platform.
+ *
+ * @details Manages multiple AS5047U position encoder devices. The onboard
+ *          encoder (index 0) is auto-created via CommChannelsManager; up to
+ *          three external encoder devices (indices 1–3) can be added at
+ *          runtime.
+ *
+ * @version 2.0
+ */
+
 #pragma once
 
 #include <memory>
-#include <vector>
-#include <string>
 #include <functional>
 #include <array>
 #include "RtosMutex.h"
@@ -23,22 +33,26 @@ enum class AS5047U_Error : uint16_t;
  * into this common manager error domain.
  */
 enum class EncoderError : uint8_t {
-    SUCCESS = 0,
-    NOT_INITIALIZED,
-    INITIALIZATION_FAILED,
-    INVALID_PARAMETER,
-    SPI_COMMUNICATION_FAILED,
-    CRC_ERROR,
-    FRAMING_ERROR,
-    SENSOR_ERROR,
-    TIMEOUT,
-    MUTEX_LOCK_FAILED
+    SUCCESS = 0,                ///< Operation completed successfully
+    NOT_INITIALIZED,            ///< Manager not yet initialised
+    INITIALIZATION_FAILED,      ///< Device initialisation failed
+    INVALID_PARAMETER,          ///< Null pointer or out-of-range argument
+    SPI_COMMUNICATION_FAILED,   ///< SPI bus transfer failed
+    CRC_ERROR,                  ///< CRC mismatch on SPI frame
+    FRAMING_ERROR,              ///< Malformed SPI frame received
+    SENSOR_ERROR,               ///< Encoder sensor self-test failure
+    TIMEOUT,                    ///< Operation timed out
+    MUTEX_LOCK_FAILED           ///< RTOS mutex acquire timed out
 };
 
-// Backward-compatible alias for existing call sites.
+/** @brief Backward-compatible alias for EncoderError. */
 using As5047uError = EncoderError;
 
-/** @brief Convert generic EncoderError to string for debugging. */
+/**
+ * @brief Convert EncoderError to a human-readable string.
+ * @param error Error code to convert.
+ * @return Null-terminated string representation.
+ */
 constexpr const char* EncoderErrorToString(EncoderError error) noexcept {
     switch (error) {
         case EncoderError::SUCCESS: return "Success";
@@ -55,7 +69,11 @@ constexpr const char* EncoderErrorToString(EncoderError error) noexcept {
     }
 }
 
-/** @brief Backward-compatible alias helper. */
+/**
+ * @brief Backward-compatible helper — calls EncoderErrorToString().
+ * @param error Error code to convert.
+ * @return Null-terminated string representation.
+ */
 constexpr const char* As5047uErrorToString(As5047uError error) noexcept {
     return EncoderErrorToString(error);
 }
@@ -68,20 +86,21 @@ constexpr const char* As5047uErrorToString(As5047uError error) noexcept {
  * @brief System-level diagnostics snapshot for encoder health monitoring.
  */
 struct EncoderSystemDiagnostics {
-    bool system_healthy;
-    bool system_initialized;
-    uint8_t active_device_count;
-    uint8_t initialized_device_count;
-    EncoderError last_error;
+    bool system_healthy;               ///< True when all active devices are healthy
+    bool system_initialized;           ///< EncoderManager::IsInitialized()
+    uint8_t active_device_count;       ///< Number of active device slots
+    uint8_t initialized_device_count;  ///< Number of successfully initialised devices
+    EncoderError last_error;           ///< Most recent error code
 
+    /** @brief Per-device health snapshot. */
     struct DeviceSnapshot {
-        bool active;
-        bool initialized;
-        uint32_t measurement_count;
-        uint32_t communication_error_count;
+        bool active;                   ///< Slot has a device
+        bool initialized;              ///< Device initialised successfully
+        uint32_t measurement_count;    ///< Cumulative successful readings
+        uint32_t communication_error_count; ///< Cumulative SPI errors
     };
     static constexpr uint8_t kMaxDevices = 4;
-    DeviceSnapshot devices[kMaxDevices]{};
+    DeviceSnapshot devices[kMaxDevices]{}; ///< Per-slot snapshots (0–kMaxDevices-1)
 };
 
 /**
@@ -266,39 +285,42 @@ public:
     bool IsExternalSlotAvailable(uint8_t deviceIndex) const noexcept;
 
     /**
-     * @brief Get list of active device indices.
-     * @return Vector of active device indices
+     * @brief Get indices of all active encoder devices.
+     * @param out    Fixed-size output array
+     * @param count  Output: number of entries written
      */
-    std::vector<uint8_t> GetActiveDeviceIndices() const noexcept;
+    void GetActiveDeviceIndices(std::array<uint8_t, MAX_ENCODER_DEVICES>& out, size_t& count) const noexcept;
 
     /**
-     * @brief Initialize all devices and report status.
-     * @return Vector of initialization results (true/false) for each active device
+     * @brief Initialize all active encoder devices.
+     * @param results  Output: per-slot initialization result
+     * @return Number of devices successfully initialized
      */
-    std::vector<bool> InitializeAllDevices();
+    size_t InitializeAllDevices(std::array<bool, MAX_ENCODER_DEVICES>& results) noexcept;
 
     /**
-     * @brief Get initialization status for all devices.
-     * @return Vector of initialization status for each active device
+     * @brief Get initialization status of all device slots.
+     * @param status  Output: per-slot status
      */
-    std::vector<bool> GetInitializationStatus() const;
+    void GetInitializationStatus(std::array<bool, MAX_ENCODER_DEVICES>& status) const noexcept;
 
     //**************************************************************************//
     //**                  DEVICE INFORMATION METHODS                          **//
     //**************************************************************************//
 
     /**
-     * @brief Get information about available encoder devices.
-     * @return Vector of device names/identifiers
+     * @brief Get human-readable names of all available devices.
+     * @param out    Fixed-size output array of const char* string literals
+     * @param count  Output: number of entries written
      */
-    std::vector<std::string> GetAvailableDevices() const noexcept;
+    void GetAvailableDevices(std::array<const char*, MAX_ENCODER_DEVICES>& out, size_t& count) const noexcept;
 
     /**
      * @brief Get device type by index.
      * @param deviceIndex Device index
-     * @return Device type string or "Unknown" if invalid
+     * @return Device type string literal or nullptr if invalid
      */
-    std::string GetDeviceType(uint8_t deviceIndex) const noexcept;
+    [[nodiscard]] const char* GetDeviceType(uint8_t deviceIndex) const noexcept;
 
     //**************************************************************************//
     //**                  HIGH-LEVEL ENCODER OPERATIONS                       **//
@@ -346,21 +368,27 @@ public:
 
     /**
      * @brief Read angles from all active encoder devices.
-     * @param angles Output vector of angle values (one per active device)
-     * @param device_indices Output vector of corresponding device indices
-     * @return Vector of error codes (one per device)
+     * @param angles          Output: per-slot angle readings (only valid where errors[i] == SUCCESS)
+     * @param device_indices  Output: indices of active devices
+     * @param errors          Output: per-slot error codes
+     * @param count           Output: number of entries written
      */
-    std::vector<EncoderError> ReadAllAngles(std::vector<uint16_t>& angles, 
-                                          std::vector<uint8_t>& device_indices) noexcept;
+    void ReadAllAngles(std::array<uint16_t, MAX_ENCODER_DEVICES>& angles,
+                       std::array<uint8_t, MAX_ENCODER_DEVICES>& device_indices,
+                       std::array<EncoderError, MAX_ENCODER_DEVICES>& errors,
+                       size_t& count) noexcept;
 
     /**
      * @brief Read velocities from all active encoder devices.
-     * @param velocities_rpm Output vector of velocity values in RPM
-     * @param device_indices Output vector of corresponding device indices
-     * @return Vector of error codes (one per device)
+     * @param velocities_rpm  Output: per-slot velocity readings
+     * @param device_indices  Output: indices of active devices
+     * @param errors          Output: per-slot error codes
+     * @param count           Output: number of entries written
      */
-    std::vector<EncoderError> ReadAllVelocities(std::vector<double>& velocities_rpm, 
-                                              std::vector<uint8_t>& device_indices) noexcept;
+    void ReadAllVelocities(std::array<double, MAX_ENCODER_DEVICES>& velocities_rpm,
+                           std::array<uint8_t, MAX_ENCODER_DEVICES>& device_indices,
+                           std::array<EncoderError, MAX_ENCODER_DEVICES>& errors,
+                           size_t& count) noexcept;
 
     /**
      * @brief Check health status of all active encoder devices.

@@ -9,18 +9,18 @@
 #define VORTEX_VERSION_H_
 
 // Version information
-#define VORTEX_API_VERSION_MAJOR @VORTEX_API_VERSION_MAJOR@
-#define VORTEX_API_VERSION_MINOR @VORTEX_API_VERSION_MINOR@
-#define VORTEX_API_VERSION_PATCH @VORTEX_API_VERSION_PATCH@
-#define VORTEX_API_VERSION_STRING "@VORTEX_API_VERSION_STRING@"
+#define VORTEX_API_VERSION_MAJOR 2   /**< @brief Major version number. */
+#define VORTEX_API_VERSION_MINOR 0   /**< @brief Minor version number. */
+#define VORTEX_API_VERSION_PATCH 0   /**< @brief Patch version number. */
+#define VORTEX_API_VERSION_STRING "2.0.0" /**< @brief Semantic version string. */
 
 // Build information
-#define VORTEX_API_BUILD_DATE __DATE__
-#define VORTEX_API_BUILD_TIME __TIME__
+#define VORTEX_API_BUILD_DATE __DATE__ /**< @brief Compilation date stamp. */
+#define VORTEX_API_BUILD_TIME __TIME__ /**< @brief Compilation time stamp. */
 
 // Feature flags
-#define VORTEX_API_FEATURE_DIAGNOSTICS 1
-#define VORTEX_API_FEATURE_HEALTH_CHECK 1
-#define VORTEX_API_FEATURE_STATISTICS 1
+#define VORTEX_API_FEATURE_DIAGNOSTICS 1  /**< @brief Diagnostics subsystem enabled. */
+#define VORTEX_API_FEATURE_HEALTH_CHECK 1  /**< @brief Health-check subsystem enabled. */
+#define VORTEX_API_FEATURE_STATISTICS 1    /**< @brief Statistics/dump subsystem enabled. */
 
 #endif // VORTEX_VERSION_H_ 

@@ -31,6 +31,42 @@ apps:
     source_file: "led_temp_test.cpp"
     category: "component"
     ci_enabled: true
+  vortex_api_example:
+    source_file: "VortexApiExample.cpp"
+    category: "example"
+    ci_enabled: false
+  adc_manager_example:
+    source_file: "AdcManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  gpio_manager_example:
+    source_file: "GpioManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  led_manager_example:
+    source_file: "LedManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  temperature_example:
+    source_file: "TemperatureManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  motor_controller_example:
+    source_file: "MotorControllerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  encoder_manager_example:
+    source_file: "EncoderManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  imu_manager_example:
+    source_file: "ImuManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
+  comm_channels_example:
+    source_file: "CommChannelsManagerExample.cpp"
+    category: "example"
+    ci_enabled: false
 
 build_config:
   build_types:

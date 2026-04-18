@@ -52,21 +52,25 @@ class EspCan;
  * Covers SPI, I2C, UART, and CAN bus management failures.
  */
 enum class CommError : uint8_t {
-    SUCCESS = 0,
-    NOT_INITIALIZED,
-    INITIALIZATION_FAILED,
-    BUS_NOT_AVAILABLE,
-    DEVICE_NOT_FOUND,
-    INVALID_BUS_INDEX,
-    INVALID_DEVICE_INDEX,
-    DEVICE_ALREADY_EXISTS,
-    DEVICE_CREATION_FAILED,
-    COMMUNICATION_FAILED,
-    INVALID_PARAMETER,
-    MUTEX_LOCK_FAILED
+    SUCCESS = 0,              ///< Operation completed successfully
+    NOT_INITIALIZED,          ///< Manager not yet initialised
+    INITIALIZATION_FAILED,    ///< Bus or device initialisation failed
+    BUS_NOT_AVAILABLE,        ///< Requested bus is not present or not ready
+    DEVICE_NOT_FOUND,         ///< Device index or id not in registry
+    INVALID_BUS_INDEX,        ///< Bus index out of range
+    INVALID_DEVICE_INDEX,     ///< Device index out of range
+    DEVICE_ALREADY_EXISTS,    ///< A device at that address already exists
+    DEVICE_CREATION_FAILED,   ///< Heap allocation or driver init for device failed
+    COMMUNICATION_FAILED,     ///< A bus-level transfer failed
+    INVALID_PARAMETER,        ///< Null pointer or out-of-range argument
+    MUTEX_LOCK_FAILED         ///< RTOS mutex acquire timed out
 };
 
-/** @brief Convert CommError to string for debugging. */
+/**
+ * @brief Convert CommError to a human-readable string.
+ * @param error Error code to convert.
+ * @return Null-terminated string representation.
+ */
 constexpr const char* CommErrorToString(CommError error) noexcept {
     switch (error) {
         case CommError::SUCCESS:                return "Success";
@@ -93,15 +97,15 @@ constexpr const char* CommErrorToString(CommError error) noexcept {
  * @brief System-level diagnostics snapshot for communication channels.
  */
 struct CommSystemDiagnostics {
-    bool system_healthy;
-    bool system_initialized;
-    bool spi_bus_valid;
-    bool i2c_bus_valid;
-    bool uart_bus_valid;
-    bool can_bus_valid;
-    uint8_t spi_device_count;       ///< Number of SPI devices with valid indices
-    uint8_t i2c_runtime_device_count; ///< Number of active runtime I2C devices
-    CommError last_error;
+    bool system_healthy;                ///< True when all configured buses are operational
+    bool system_initialized;            ///< True if EnsureInitialized() completed
+    bool spi_bus_valid;                 ///< SPI bus initialised and usable
+    bool i2c_bus_valid;                 ///< I²C bus initialised and usable
+    bool uart_bus_valid;                ///< UART bus initialised and usable
+    bool can_bus_valid;                 ///< CAN/TWAI bus initialised and usable
+    uint8_t spi_device_count;           ///< Number of SPI devices with valid indices
+    uint8_t i2c_runtime_device_count;   ///< Number of active runtime I²C devices
+    CommError last_error;               ///< Most recent error code from any operation
 };
 
 //==============================================================================
@@ -150,6 +154,7 @@ enum class I2cDeviceId : uint8_t {
  */
 class CommChannelsManager {
 public:
+    /** @brief Return the singleton CommChannelsManager instance. */
     static CommChannelsManager& GetInstance() noexcept;
 
     // Non-copyable, non-movable
@@ -162,7 +167,16 @@ public:
     // INITIALIZATION
     //==========================================================================
 
+    /**
+     * @brief Initialise all communication buses if not already initialised.
+     * @return true on success or if already initialised.
+     */
     bool EnsureInitialized() noexcept;
+
+    /**
+     * @brief Check whether the communication subsystem has been initialised.
+     * @return true if initialised.
+     */
     [[nodiscard]] bool IsInitialized() const noexcept { return initialized_.load(std::memory_order_acquire); }
 
     /**
@@ -188,17 +202,29 @@ public:
     // SPI ACCESSORS
     //==========================================================================
 
-    /** @brief Get SPI device by enum id. Returns nullptr on bad id or uninit. */
+    /**
+     * @brief Get an SPI device handle by enum identifier.
+     * @param device_id SPI device identifier.
+     * @return Pointer to BaseSpi, or nullptr on invalid id or uninitialised.
+     */
     BaseSpi* GetSpiDevice(SpiDeviceId device_id) noexcept;
 
-    /** @brief Get SPI device by raw index (0-based). */
+    /**
+     * @brief Get an SPI device handle by raw index.
+     * @param device_index Zero-based device index.
+     * @return Pointer to BaseSpi, or nullptr on invalid index or uninitialised.
+     */
     BaseSpi* GetSpiDevice(uint8_t device_index) noexcept;
 
     //==========================================================================
     // I2C ACCESSORS
     //==========================================================================
 
-    /** @brief Get built-in I2C device by enum id. Returns nullptr if not initialized. */
+    /**
+     * @brief Get a built-in I²C device by enum identifier.
+     * @param device_id I²C device identifier.
+     * @return Pointer to BaseI2c, or nullptr on invalid id or uninitialised.
+     */
     BaseI2c* GetI2cDevice(I2cDeviceId device_id) noexcept;
 
     /**
@@ -240,16 +266,23 @@ public:
     // UART / CAN ACCESSORS
     //==========================================================================
 
-    /** @brief Get the UART bus (TMC9660 TMCL). Returns nullptr if not initialized. */
+    /**
+     * @brief Get the UART bus (TMC9660 TMCL).
+     * @return Pointer to BaseUart, or nullptr if not initialised.
+     */
     BaseUart* GetUartBus() noexcept;
 
-    /** @brief Get the TWAI/CAN bus. Returns nullptr if not initialized. */
+    /**
+     * @brief Get the TWAI/CAN bus.
+     * @return Pointer to BaseCan, or nullptr if not initialised.
+     */
     BaseCan* GetCanBus() noexcept;
 
     //==========================================================================
     // DIAGNOSTICS
     //==========================================================================
 
+    /** @brief Log communication channel statistics and bus health to the console. */
     void DumpStatistics() const noexcept;
 
 private:
@@ -303,5 +336,13 @@ private:
         last_error_.store(error, std::memory_order_release);
     }
 };
+
+/**
+ * @brief Convenience accessor — equivalent to CommChannelsManager::GetInstance().
+ * @return Reference to the singleton CommChannelsManager.
+ */
+inline CommChannelsManager& GetCommChannelsManager() noexcept {
+    return CommChannelsManager::GetInstance();
+}
 
 #endif // VORTEX_COMM_CHANNELS_MANAGER_H_

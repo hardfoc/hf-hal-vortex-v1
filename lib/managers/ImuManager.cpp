@@ -465,29 +465,30 @@ bool ImuManager::IsExternalSlotAvailable(uint8_t deviceIndex) const noexcept {
     return !device_active_[deviceIndex];
 }
 
-std::vector<uint8_t> ImuManager::GetActiveDeviceIndices() const noexcept {
+void ImuManager::GetActiveDeviceIndices(std::array<uint8_t, MAX_IMU_DEVICES>& out, size_t& count) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<uint8_t> activeIndices;
+    count = 0;
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (device_active_[i]) {
-            activeIndices.push_back(i);
+            out[count++] = i;
         }
     }
-    return activeIndices;
 }
 
-std::vector<bool> ImuManager::InitializeAllDevices() {
+size_t ImuManager::InitializeAllDevices(std::array<bool, MAX_IMU_DEVICES>& results) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<bool> results;
+    results.fill(false);
+    size_t success_count = 0;
     
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (device_active_[i] && bno08x_handlers_[i]) {
             device_initialized_[i] = bno08x_handlers_[i]->Initialize() == Bno08xError::SUCCESS;
-            results.push_back(device_initialized_[i]);
+            results[i] = device_initialized_[i];
             
             if (device_initialized_[i]) {
+                ++success_count;
                 Logger::GetInstance().Info("ImuManager", "BNO08x device %u initialized successfully", i);
             } else {
                 Logger::GetInstance().Error("ImuManager", "Failed to initialize BNO08x device %u", i);
@@ -495,50 +496,43 @@ std::vector<bool> ImuManager::InitializeAllDevices() {
         }
     }
     
-    return results;
+    return success_count;
 }
 
-std::vector<bool> ImuManager::GetInitializationStatus() const {
+void ImuManager::GetInitializationStatus(std::array<bool, MAX_IMU_DEVICES>& status) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<bool> status;
-    
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
-        if (device_active_[i]) {
-            status.push_back(device_initialized_[i]);
-        }
+        status[i] = device_active_[i] ? device_initialized_[i] : false;
     }
-    
-    return status;
 }
 
 //**************************************************************************//
 //**                  DEVICE INFORMATION METHODS                          **//
 //**************************************************************************//
 
-std::vector<std::string> ImuManager::GetAvailableDevices() const noexcept {
+void ImuManager::GetAvailableDevices(std::array<const char*, MAX_IMU_DEVICES>& out, size_t& count) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<std::string> devices;
+    count = 0;
+    static constexpr const char* kDeviceNames[] = {
+        "BNO08x-0 (Onboard)",
+        "BNO08x-1 (External)",
+        "BNO08x-2 (External)",
+        "BNO08x-3 (External)"
+    };
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (device_active_[i]) {
-            std::string device_name = "BNO08x Device " + std::to_string(i);
-            if (i == ONBOARD_IMU_INDEX) {
-                device_name += " (Onboard)";
-            } else {
-                device_name += " (External)";
-            }
-            devices.push_back(device_name);
+            out[count++] = kDeviceNames[i];
         }
     }
-    return devices;
 }
 
-std::string ImuManager::GetDeviceType(uint8_t deviceIndex) const noexcept {
+const char* ImuManager::GetDeviceType(uint8_t deviceIndex) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (deviceIndex >= MAX_IMU_DEVICES || !device_active_[deviceIndex]) {
-        return "Unknown";
+        return nullptr;
     }
     
     return "BNO08x";

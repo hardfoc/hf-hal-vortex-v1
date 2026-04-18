@@ -101,6 +101,20 @@ bool TemperatureManager::EnsureInitialized() noexcept {
     return ok;
 }
 
+bool TemperatureManager::Deinitialize() noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) return true;
+    MutexLockGuard lock(mutex_);
+    Logger::GetInstance().Info(TAG, "Deinitializing Vortex temperature manager");
+
+    for (size_t i = 0; i < registered_count_; ++i) {
+        entries_[i] = {};
+    }
+    registered_count_ = 0;
+    last_error_.store(hf_temp_err_t::TEMP_SUCCESS, std::memory_order_release);
+    initialized_.store(false, std::memory_order_release);
+    return true;
+}
+
 bool TemperatureManager::Initialize() noexcept {
     Logger::GetInstance().Info(TAG, "Initializing Vortex temperature manager");
 
@@ -227,12 +241,17 @@ size_t TemperatureManager::FindByName(std::string_view name) const noexcept {
 //==============================================================================
 
 hf_temp_err_t TemperatureManager::ReadTemperatureCelsius(std::string_view name,
-                                                         float* temperature_celsius) noexcept {
-    if (!temperature_celsius) return TEMP_ERR_NULL_POINTER;
-    if (!initialized_.load(std::memory_order_acquire)) return TEMP_ERR_NOT_INITIALIZED;
+                                                         float& temperature_celsius) noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) {
+        last_error_.store(TEMP_ERR_NOT_INITIALIZED, std::memory_order_release);
+        return TEMP_ERR_NOT_INITIALIZED;
+    }
 
     size_t idx = FindByName(name);
-    if (idx == kInvalidIndex) return TEMP_ERR_SENSOR_NOT_AVAILABLE;
+    if (idx == kInvalidIndex) {
+        last_error_.store(TEMP_ERR_SENSOR_NOT_AVAILABLE, std::memory_order_release);
+        return TEMP_ERR_SENSOR_NOT_AVAILABLE;
+    }
 
     MutexLockGuard lock(mutex_);
     auto& entry = entries_[idx];
@@ -242,27 +261,32 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsius(std::string_view name,
         case VortexTempSensorType::ESP32_INTERNAL: sensor = esp32_temp_.get();   break;
         case VortexTempSensorType::NTC_THERMISTOR: sensor = ntc_handler_.get();  break;
         case VortexTempSensorType::TMC9660_CHIP:   sensor = tmc9660_temp_.get(); break;
-        default: return TEMP_ERR_SENSOR_NOT_AVAILABLE;
+        default:
+            last_error_.store(TEMP_ERR_SENSOR_NOT_AVAILABLE, std::memory_order_release);
+            return TEMP_ERR_SENSOR_NOT_AVAILABLE;
     }
-    if (!sensor) return TEMP_ERR_SENSOR_NOT_AVAILABLE;
+    if (!sensor) {
+        last_error_.store(TEMP_ERR_SENSOR_NOT_AVAILABLE, std::memory_order_release);
+        return TEMP_ERR_SENSOR_NOT_AVAILABLE;
+    }
 
-    hf_temp_err_t err = sensor->ReadTemperatureCelsius(temperature_celsius);
+    hf_temp_err_t err = sensor->ReadTemperatureCelsius(&temperature_celsius);
     if (err == TEMP_SUCCESS) {
-        entry.last_reading_celsius = *temperature_celsius;
+        entry.last_reading_celsius = temperature_celsius;
         entry.read_count++;
     } else {
         entry.error_count++;
+        last_error_.store(err, std::memory_order_release);
     }
     return err;
 }
 
 hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheit(std::string_view name,
-                                                            float* temperature_fahrenheit) noexcept {
-    if (!temperature_fahrenheit) return TEMP_ERR_NULL_POINTER;
+                                                            float& temperature_fahrenheit) noexcept {
     float celsius = 0.0f;
-    hf_temp_err_t err = ReadTemperatureCelsius(name, &celsius);
+    hf_temp_err_t err = ReadTemperatureCelsius(name, celsius);
     if (err == TEMP_SUCCESS) {
-        *temperature_fahrenheit = celsius * 1.8f + 32.0f;
+        temperature_fahrenheit = celsius * 1.8f + 32.0f;
     }
     return err;
 }
@@ -271,7 +295,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureFahrenheit(std::string_view nam
 // DIAGNOSTICS
 //==============================================================================
 
-hf_temp_err_t TemperatureManager::GetSystemDiagnostics(TempSystemDiagnostics& d) noexcept {
+hf_temp_err_t TemperatureManager::GetSystemDiagnostics(TempSystemDiagnostics& d) const noexcept {
     if (!initialized_.load(std::memory_order_acquire)) {
         return TEMP_ERR_NOT_INITIALIZED;
     }
@@ -283,6 +307,7 @@ hf_temp_err_t TemperatureManager::GetSystemDiagnostics(TempSystemDiagnostics& d)
     d.system_min_temp_celsius = FLT_MAX;
     d.system_max_temp_celsius = -FLT_MAX;
     d.system_avg_temp_celsius = 0.0f;
+    d.last_error = last_error_.load(std::memory_order_acquire);
 
     float sum = 0.0f;
     uint32_t valid = 0;

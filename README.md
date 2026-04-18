@@ -550,10 +550,16 @@ bool GetSystemDiagnostics(VortexSystemDiagnostics& diagnostics);
 bool PerformHealthCheck();
 void DumpSystemStatistics();
 
+// Lifecycle
+void Shutdown();  // Graceful reverse-order teardown
+
 // Utility
 uint64_t GetSystemUptimeMs();
 uint64_t GetInitializationTimeMs();
-std::string GetSystemVersion();
+const char* GetSystemVersion();
+
+// Convenience free function
+Vortex& GetVortex(); // equivalent to Vortex::GetInstance()
 ```
 
 ### Component Handler Access

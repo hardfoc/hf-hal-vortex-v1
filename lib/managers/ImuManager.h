@@ -1,8 +1,18 @@
+/**
+ * @file ImuManager.h
+ * @brief IMU device management for the HardFOC Vortex V1 platform.
+ *
+ * @details Manages multiple BNO08x IMU devices. The onboard IMU (index 0) is
+ *          auto-created via CommChannelsManager I²C; up to three external IMU
+ *          devices (indices 1–3) can be added at runtime over I²C or SPI.
+ *          Includes GPIO interrupt support for data-ready signalling.
+ *
+ * @version 2.0
+ */
+
 #pragma once
 
 #include <memory>
-#include <vector>
-#include <string>
 #include <functional>
 #include <array>
 #include "RtosMutex.h"
@@ -87,24 +97,28 @@ class BaseSpi;
  * Driver-level BNO08x errors are handled internally by the handler.
  */
 enum class ImuError : uint8_t {
-    SUCCESS = 0,
-    NOT_INITIALIZED,
-    INITIALIZATION_FAILED,
-    DEVICE_ALREADY_EXISTS,
-    DEVICE_NOT_FOUND,
-    INVALID_DEVICE_INDEX,
-    CANNOT_DELETE_ONBOARD,
-    INVALID_I2C_ADDRESS,
-    DEPENDENCY_NOT_READY,
-    COMMUNICATION_FAILED,
-    I2C_DEVICE_CREATION_FAILED,
-    HANDLER_CREATION_FAILED,
-    INTERRUPT_ERROR,
-    ALREADY_DEINITIALIZED,
-    MUTEX_LOCK_FAILED
+    SUCCESS = 0,                   ///< Operation completed successfully
+    NOT_INITIALIZED,               ///< Manager not yet initialised
+    INITIALIZATION_FAILED,         ///< Device initialisation failed
+    DEVICE_ALREADY_EXISTS,         ///< A device already occupies this slot
+    DEVICE_NOT_FOUND,              ///< No active device at the given index
+    INVALID_DEVICE_INDEX,          ///< Device index out of valid range
+    CANNOT_DELETE_ONBOARD,         ///< Onboard device (index 0) cannot be deleted
+    INVALID_I2C_ADDRESS,           ///< I²C address outside 0x08–0x77
+    DEPENDENCY_NOT_READY,          ///< Required dependency not initialised
+    COMMUNICATION_FAILED,          ///< A bus-level transfer failed
+    I2C_DEVICE_CREATION_FAILED,    ///< CommChannelsManager I²C device creation failed
+    HANDLER_CREATION_FAILED,       ///< Heap allocation or handler init failed
+    INTERRUPT_ERROR,               ///< GPIO interrupt configuration failed
+    ALREADY_DEINITIALIZED,         ///< Manager already in deinitialized state
+    MUTEX_LOCK_FAILED              ///< RTOS mutex acquire timed out
 };
 
-/** @brief Convert ImuError to string for debugging. */
+/**
+ * @brief Convert ImuError to a human-readable string.
+ * @param error Error code to convert.
+ * @return Null-terminated string representation.
+ */
 constexpr const char* ImuErrorToString(ImuError error) noexcept {
     switch (error) {
         case ImuError::SUCCESS:                    return "Success";
@@ -134,23 +148,24 @@ constexpr const char* ImuErrorToString(ImuError error) noexcept {
  * @brief System-level diagnostics snapshot for IMU health monitoring.
  */
 struct ImuSystemDiagnostics {
-    bool system_healthy;
-    bool system_initialized;
-    uint8_t active_device_count;
-    uint8_t initialized_device_count;
-    ImuError last_error;
+    bool system_healthy;               ///< True when all active devices are healthy
+    bool system_initialized;           ///< ImuManager::IsInitialized()
+    uint8_t active_device_count;       ///< Number of active device slots
+    uint8_t initialized_device_count;  ///< Number of successfully initialised devices
+    ImuError last_error;               ///< Most recent error code
 
+    /** @brief Per-device health snapshot. */
     struct DeviceSnapshot {
-        bool active;
-        bool initialized;
-        uint32_t error_count;
+        bool active;                   ///< Slot has a device
+        bool initialized;              ///< Device initialised successfully
+        uint32_t error_count;          ///< Cumulative errors for this slot
     };
     static constexpr uint8_t kMaxDevices = 4;
-    DeviceSnapshot devices[kMaxDevices]{};
+    DeviceSnapshot devices[kMaxDevices]{}; ///< Per-slot snapshots (0–kMaxDevices-1)
 
-    uint32_t total_interrupt_count;
-    bool interrupt_configured;
-    bool interrupt_enabled;
+    uint32_t total_interrupt_count;    ///< Cumulative interrupt events across all devices
+    bool interrupt_configured;         ///< True if onboard interrupt GPIO is configured
+    bool interrupt_enabled;            ///< True if onboard interrupt is actively enabled
 };
 
 class ImuManager {
@@ -314,39 +329,42 @@ public:
     bool IsExternalSlotAvailable(uint8_t deviceIndex) const noexcept;
 
     /**
-     * @brief Get list of active device indices.
-     * @return Vector of active device indices
+     * @brief Get indices of all active IMU devices.
+     * @param out    Fixed-size output array
+     * @param count  Output: number of entries written
      */
-    std::vector<uint8_t> GetActiveDeviceIndices() const noexcept;
+    void GetActiveDeviceIndices(std::array<uint8_t, MAX_IMU_DEVICES>& out, size_t& count) const noexcept;
 
     /**
-     * @brief Initialize all devices and report status.
-     * @return Vector of initialization results (true/false) for each active device
+     * @brief Initialize all active IMU devices.
+     * @param results  Output: per-slot initialization result
+     * @return Number of devices successfully initialized
      */
-    std::vector<bool> InitializeAllDevices();
+    size_t InitializeAllDevices(std::array<bool, MAX_IMU_DEVICES>& results) noexcept;
 
     /**
-     * @brief Get initialization status for all devices.
-     * @return Vector of initialization status for each active device
+     * @brief Get initialization status of all device slots.
+     * @param status  Output: per-slot status
      */
-    std::vector<bool> GetInitializationStatus() const;
+    void GetInitializationStatus(std::array<bool, MAX_IMU_DEVICES>& status) const noexcept;
 
     //**************************************************************************//
     //**                  DEVICE INFORMATION METHODS                          **//
     //**************************************************************************//
 
     /**
-     * @brief Get information about available IMU devices.
-     * @return Vector of device names/identifiers
+     * @brief Get human-readable names of all available IMU devices.
+     * @param out    Fixed-size output array of const char* string literals
+     * @param count  Output: number of entries written
      */
-    std::vector<std::string> GetAvailableDevices() const noexcept;
+    void GetAvailableDevices(std::array<const char*, MAX_IMU_DEVICES>& out, size_t& count) const noexcept;
 
     /**
      * @brief Get device type by index.
      * @param deviceIndex Device index
-     * @return Device type string or "Unknown" if invalid
+     * @return Device type string literal or nullptr if invalid
      */
-    std::string GetDeviceType(uint8_t deviceIndex) const noexcept;
+    [[nodiscard]] const char* GetDeviceType(uint8_t deviceIndex) const noexcept;
 
     //**************************************************************************//
     //**                  INTERRUPT SUPPORT METHODS                           **//

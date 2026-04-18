@@ -7,7 +7,6 @@
 #include <memory>
 #include <array>
 #include <atomic>
-#include <vector>
 
 /**
  * @file MotorController.h
@@ -54,21 +53,25 @@ struct Tmc9660ControlPins {
  * initialize). Driver-level TMC9660 errors are handled internally by the handler.
  */
 enum class MotorError : uint8_t {
-    SUCCESS = 0,
-    NOT_INITIALIZED,
-    INITIALIZATION_FAILED,
-    DEVICE_ALREADY_EXISTS,
-    DEVICE_NOT_FOUND,
-    INVALID_DEVICE_INDEX,
-    CANNOT_DELETE_ONBOARD,
-    DEPENDENCY_NOT_READY,
-    COMMUNICATION_FAILED,
-    INVALID_PARAMETER,
-    HANDLER_CREATION_FAILED,
-    MUTEX_LOCK_FAILED
+    SUCCESS = 0,              ///< Operation completed successfully
+    NOT_INITIALIZED,          ///< Manager not yet initialised
+    INITIALIZATION_FAILED,    ///< Device initialisation failed
+    DEVICE_ALREADY_EXISTS,    ///< A device already occupies this slot
+    DEVICE_NOT_FOUND,         ///< No active device at the given index
+    INVALID_DEVICE_INDEX,     ///< Device index out of valid range
+    CANNOT_DELETE_ONBOARD,    ///< Onboard device (index 0) cannot be deleted
+    DEPENDENCY_NOT_READY,     ///< Required dependency not initialised
+    COMMUNICATION_FAILED,     ///< A bus-level transfer failed
+    INVALID_PARAMETER,        ///< Null pointer or out-of-range argument
+    HANDLER_CREATION_FAILED,  ///< Heap allocation or handler init failed
+    MUTEX_LOCK_FAILED         ///< RTOS mutex acquire timed out
 };
 
-/** @brief Convert MotorError to string for debugging. */
+/**
+ * @brief Convert MotorError to a human-readable string.
+ * @param error Error code to convert.
+ * @return Null-terminated string representation.
+ */
 constexpr const char* MotorErrorToString(MotorError error) noexcept {
     switch (error) {
         case MotorError::SUCCESS:                 return "Success";
@@ -114,6 +117,19 @@ struct MotorSystemDiagnostics {
     DeviceSnapshot devices[kMaxDevices]{};
 };
 
+/**
+ * @class MotorController
+ * @brief Singleton managing multiple TMC9660 motor controllers on Vortex V1.
+ *
+ * @details Creates the onboard TMC9660 (index 0) and allows dynamic creation
+ *          of external TMC9660 devices (indices 2–3). Provides array-based
+ *          access to Tmc9660Handler instances, thread-safe device registration,
+ *          and board-aware CS-pin management.
+ *
+ * @note Call CreateOnboardDevice() before EnsureInitialized(). Host-side GPIO
+ *       control pins (RST, DRV_EN, FAULTN, WAKE) are required for the TMC9660
+ *       bootloader sequence.
+ */
 class MotorController {
 public:
     static constexpr uint8_t MAX_TMC9660_DEVICES = 4;   ///< Maximum supported TMC9660 devices (board + external)
@@ -123,6 +139,7 @@ public:
 public:
     /**
      * @brief Get the singleton instance.
+     * @return Reference to the singleton MotorController.
      */
     static MotorController& GetInstance();
 
@@ -130,6 +147,10 @@ public:
     //**                  DEVICE MANAGEMENT METHODS                           **//
     //**************************************************************************//
 
+    /**
+     * @brief Initialise all registered motor controllers if not already done.
+     * @return true on success or if already initialised.
+     */
     bool EnsureInitialized() noexcept {
         if (!initialized_.load(std::memory_order_acquire)) {
             RtosUniqueLock<RtosMutex> lock(deviceMutex_);
@@ -140,7 +161,17 @@ public:
         return initialized_.load(std::memory_order_acquire);
     }
 
+    /**
+     * @brief Check whether the motor controller subsystem has been initialised.
+     * @return true if initialised.
+     */
     inline bool IsInitialized() const noexcept { return initialized_.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Shut down all motor controller devices and release resources.
+     * @return true on success
+     */
+    bool Deinitialize() noexcept;
 
     /**
      * @brief Get the most recent error code.
@@ -296,22 +327,24 @@ public:
     bool IsExternalSlotAvailable(uint8_t csDeviceIndex) const noexcept;
 
     /**
-     * @brief Get list of active device indices.
-     * @return Vector of active device indices
+     * @brief Get indices of all active devices.
+     * @param out    Fixed-size output array
+     * @param count  Output: number of entries written
      */
-    std::vector<uint8_t> GetActiveDeviceIndices() const noexcept;
+    void GetActiveDeviceIndices(std::array<uint8_t, MAX_TMC9660_DEVICES>& out, size_t& count) const noexcept;
 
     /**
-     * @brief Initialize all devices and report status.
-     * @return Vector of initialization results (true/false) for each active device
+     * @brief Initialize all active devices.
+     * @param results  Output: per-slot initialization result
+     * @return Number of devices successfully initialized
      */
-    std::vector<bool> InitializeAllDevices();
+    size_t InitializeAllDevices(std::array<bool, MAX_TMC9660_DEVICES>& results) noexcept;
 
     /**
-     * @brief Get initialization status for all devices.
-     * @return Vector of initialization status for each active device
+     * @brief Get initialization status of all device slots.
+     * @param status  Output: per-slot status
      */
-    std::vector<bool> GetInitializationStatus() const;
+    void GetInitializationStatus(std::array<bool, MAX_TMC9660_DEVICES>& status) const noexcept;
     
     /**
      * @brief Dump comprehensive system statistics to log as INFO level.

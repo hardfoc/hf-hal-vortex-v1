@@ -47,6 +47,28 @@ bool GpioManager::EnsureInitialized() noexcept {
     return ok;
 }
 
+bool GpioManager::Deinitialize() noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) return true;
+    MutexLockGuard lock(mutex_);
+    Logger::GetInstance().Info(TAG, "Deinitializing Vortex GPIO manager");
+
+    for (size_t i = 0; i < HF_GPIO_MAPPING_SIZE; ++i) {
+        entries_[i].driver.reset();
+        entries_[i].registered = false;
+        entries_[i].access_count = 0;
+        entries_[i].error_count = 0;
+    }
+    registered_count_ = 0;
+    total_ops_ = 0;
+    successful_ops_ = 0;
+    failed_ops_ = 0;
+    last_error_ = hf_gpio_err_t::GPIO_SUCCESS;
+    pcal95555_handler_.reset();
+    motor_controller_ = nullptr;
+    initialized_.store(false, std::memory_order_release);
+    return true;
+}
+
 bool GpioManager::Initialize() noexcept {
     Logger::GetInstance().Info(TAG, "Initializing Vortex GPIO manager");
 

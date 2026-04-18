@@ -42,6 +42,22 @@ bool AdcManager::EnsureInitialized() noexcept {
     return ok;
 }
 
+bool AdcManager::Deinitialize() noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) return true; // already off
+    MutexLockGuard lock(mutex_);
+    Logger::GetInstance().Info(TAG, "Deinitializing Vortex ADC manager");
+
+    for (size_t i = 0; i < registered_count_; ++i) {
+        entries_[i] = {};                // zero each entry
+    }
+    registered_count_ = 0;
+    tmc9660_adc_.reset();
+    motor_controller_ = nullptr;
+    last_error_.store(hf_adc_err_t::ADC_SUCCESS, std::memory_order_release);
+    initialized_.store(false, std::memory_order_release);
+    return true;
+}
+
 bool AdcManager::Initialize() noexcept {
     Logger::GetInstance().Info(TAG, "Initializing Vortex ADC manager");
 
@@ -126,9 +142,24 @@ size_t AdcManager::FindByName(std::string_view name) const noexcept {
     return kInvalidIndex;
 }
 
+size_t AdcManager::FindByEnum(HfFunctionalAdcChannel channel) const noexcept {
+    for (size_t i = 0; i < registered_count_; ++i) {
+        if (entries_[i].registered && entries_[i].functional_channel == channel) return i;
+    }
+    return kInvalidIndex;
+}
+
 BaseAdc* AdcManager::Get(std::string_view name) noexcept {
     if (!initialized_.load(std::memory_order_acquire)) return nullptr;
     size_t idx = FindByName(name);
+    if (idx == kInvalidIndex) return nullptr;
+    entries_[idx].access_count++;
+    return entries_[idx].driver;
+}
+
+BaseAdc* AdcManager::Get(HfFunctionalAdcChannel channel) noexcept {
+    if (!initialized_.load(std::memory_order_acquire)) return nullptr;
+    size_t idx = FindByEnum(channel);
     if (idx == kInvalidIndex) return nullptr;
     entries_[idx].access_count++;
     return entries_[idx].driver;
@@ -169,6 +200,82 @@ hf_adc_err_t AdcManager::ReadChannelV(std::string_view name, float& voltage,
         entry.access_count++;
     } else {
         entry.error_count++;
+        last_error_.store(err, std::memory_order_release);
+    }
+    return err;
+}
+
+hf_adc_err_t AdcManager::ReadChannelV(HfFunctionalAdcChannel channel, float& voltage,
+                                      hf_u8_t numOfSamplesToAvg,
+                                      hf_time_t timeBetweenSamples) noexcept {
+    if (!initialized_.load(std::memory_order_acquire))
+        return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
+
+    size_t idx = FindByEnum(channel);
+    if (idx == kInvalidIndex)
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
+
+    auto& entry = entries_[idx];
+    MutexLockGuard lock(mutex_);
+
+    float raw_voltage = 0.0f;
+    hf_adc_err_t err = entry.driver->ReadChannelV(
+        entry.hw_channel, raw_voltage, numOfSamplesToAvg, timeBetweenSamples);
+
+    if (err == hf_adc_err_t::ADC_SUCCESS) {
+        voltage = raw_voltage * entry.voltage_divider;
+        entry.access_count++;
+    } else {
+        entry.error_count++;
+        last_error_.store(err, std::memory_order_release);
+    }
+    return err;
+}
+
+hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
+                                  hf_u8_t numOfSamplesToAvg) noexcept {
+    if (!initialized_.load(std::memory_order_acquire))
+        return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
+
+    size_t idx = FindByName(name);
+    if (idx == kInvalidIndex)
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
+
+    auto& entry = entries_[idx];
+    MutexLockGuard lock(mutex_);
+
+    hf_u32_t count = 0;
+    hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg);
+    if (err == hf_adc_err_t::ADC_SUCCESS) {
+        raw_value = count;
+        entry.access_count++;
+    } else {
+        entry.error_count++;
+        last_error_.store(err, std::memory_order_release);
+    }
+    return err;
+}
+
+hf_adc_err_t AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_value,
+                                  hf_u8_t numOfSamplesToAvg) noexcept {
+    if (!initialized_.load(std::memory_order_acquire))
+        return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
+
+    size_t idx = FindByEnum(channel);
+    if (idx == kInvalidIndex)
+        return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
+
+    auto& entry = entries_[idx];
+    MutexLockGuard lock(mutex_);
+
+    hf_u32_t count = 0;
+    hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg);
+    if (err == hf_adc_err_t::ADC_SUCCESS) {
+        raw_value = count;
+        entry.access_count++;
+    } else {
+        entry.error_count++;
+        last_error_.store(err, std::memory_order_release);
     }
     return err;
 }
@@ -197,7 +304,7 @@ hf_adc_err_t AdcManager::GetSystemDiagnostics(AdcSystemDiagnostics& diag) const 
 
     diag.system_healthy = (registered_count_ > 0) && (diag.failed_operations == 0);
     diag.system_uptime_ms = os_get_elapsed_time_msec();
-    diag.last_error = hf_adc_err_t::ADC_SUCCESS;
+    diag.last_error = last_error_.load(std::memory_order_acquire);
 
     return hf_adc_err_t::ADC_SUCCESS;
 }

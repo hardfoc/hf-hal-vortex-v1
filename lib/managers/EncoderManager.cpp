@@ -292,29 +292,30 @@ bool EncoderManager::IsExternalSlotAvailable(uint8_t deviceIndex) const noexcept
     return !device_active_[deviceIndex];
 }
 
-std::vector<uint8_t> EncoderManager::GetActiveDeviceIndices() const noexcept {
+void EncoderManager::GetActiveDeviceIndices(std::array<uint8_t, MAX_ENCODER_DEVICES>& out, size_t& count) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<uint8_t> active_indices;
+    count = 0;
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i]) {
-            active_indices.push_back(i);
+            out[count++] = i;
         }
     }
-    return active_indices;
 }
 
-std::vector<bool> EncoderManager::InitializeAllDevices() {
+size_t EncoderManager::InitializeAllDevices(std::array<bool, MAX_ENCODER_DEVICES>& results) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<bool> results;
+    results.fill(false);
+    size_t success_count = 0;
     
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && as5047u_handlers_[i]) {
             device_initialized_[i] = as5047u_handlers_[i]->Initialize();
-            results.push_back(device_initialized_[i]);
+            results[i] = device_initialized_[i];
             
             if (device_initialized_[i]) {
+                ++success_count;
                 Logger::GetInstance().Info("EncoderManager", "AS5047U device %u initialized successfully", i);
             } else {
                 Logger::GetInstance().Error("EncoderManager", "AS5047U device %u initialization failed (driver_flags=0x%04X)", 
@@ -323,48 +324,43 @@ std::vector<bool> EncoderManager::InitializeAllDevices() {
         }
     }
     
-    return results;
+    return success_count;
 }
 
-std::vector<bool> EncoderManager::GetInitializationStatus() const {
+void EncoderManager::GetInitializationStatus(std::array<bool, MAX_ENCODER_DEVICES>& status) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<bool> status;
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
-        if (device_active_[i]) {
-            status.push_back(device_initialized_[i]);
-        }
+        status[i] = device_active_[i] ? device_initialized_[i] : false;
     }
-    return status;
 }
 
 //**************************************************************************//
 //**                  DEVICE INFORMATION METHODS                          **//
 //**************************************************************************//
 
-std::vector<std::string> EncoderManager::GetAvailableDevices() const noexcept {
+void EncoderManager::GetAvailableDevices(std::array<const char*, MAX_ENCODER_DEVICES>& out, size_t& count) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    std::vector<std::string> devices;
+    count = 0;
+    static constexpr const char* kDeviceNames[] = {
+        "AS5047U-0 (Onboard)",
+        "AS5047U-1 (External)",
+        "AS5047U-2 (External)",
+        "AS5047U-3 (External)"
+    };
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i]) {
-            std::string device_name = "AS5047U-" + std::to_string(i);
-            if (i == ONBOARD_ENCODER_INDEX) {
-                device_name += " (Onboard)";
-            } else {
-                device_name += " (External)";
-            }
-            devices.push_back(device_name);
+            out[count++] = kDeviceNames[i];
         }
     }
-    return devices;
 }
 
-std::string EncoderManager::GetDeviceType(uint8_t deviceIndex) const noexcept {
+const char* EncoderManager::GetDeviceType(uint8_t deviceIndex) const noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (deviceIndex >= MAX_ENCODER_DEVICES || !device_active_[deviceIndex]) {
-        return "Unknown";
+        return nullptr;
     }
     
     return "AS5047U";
@@ -542,48 +538,46 @@ EncoderError EncoderManager::SetZeroPosition(uint8_t deviceIndex, uint16_t zero_
     return EncoderError::SUCCESS;
 }
 
-std::vector<EncoderError> EncoderManager::ReadAllAngles(std::vector<uint16_t>& angles, 
-                                                       std::vector<uint8_t>& device_indices) noexcept {
+void EncoderManager::ReadAllAngles(std::array<uint16_t, MAX_ENCODER_DEVICES>& angles,
+                                   std::array<uint8_t, MAX_ENCODER_DEVICES>& device_indices,
+                                   std::array<EncoderError, MAX_ENCODER_DEVICES>& errors,
+                                   size_t& count) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    angles.clear();
-    device_indices.clear();
-    std::vector<EncoderError> errors;
+    count = 0;
     
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && device_initialized_[i] && as5047u_handlers_[i]) {
             uint16_t angle = 0;
             EncoderError error = ReadAngle(i, angle);
             
-            angles.push_back(angle);
-            device_indices.push_back(i);
-            errors.push_back(error);
+            angles[count] = angle;
+            device_indices[count] = i;
+            errors[count] = error;
+            ++count;
         }
     }
-    
-    return errors;
 }
 
-std::vector<EncoderError> EncoderManager::ReadAllVelocities(std::vector<double>& velocities_rpm, 
-                                                           std::vector<uint8_t>& device_indices) noexcept {
+void EncoderManager::ReadAllVelocities(std::array<double, MAX_ENCODER_DEVICES>& velocities_rpm,
+                                       std::array<uint8_t, MAX_ENCODER_DEVICES>& device_indices,
+                                       std::array<EncoderError, MAX_ENCODER_DEVICES>& errors,
+                                       size_t& count) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
-    velocities_rpm.clear();
-    device_indices.clear();
-    std::vector<EncoderError> errors;
+    count = 0;
     
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i] && device_initialized_[i] && as5047u_handlers_[i]) {
             double velocity = 0.0;
             EncoderError error = ReadVelocityRPM(i, velocity);
             
-            velocities_rpm.push_back(velocity);
-            device_indices.push_back(i);
-            errors.push_back(error);
+            velocities_rpm[count] = velocity;
+            device_indices[count] = i;
+            errors[count] = error;
+            ++count;
         }
     }
-    
-    return errors;
 }
 
 bool EncoderManager::CheckAllDevicesHealth() noexcept {
@@ -637,7 +631,10 @@ bool EncoderManager::Initialize() noexcept {
     }
     
     // Initialize all active devices
-    InitializeAllDevices();
+    {
+        std::array<bool, MAX_ENCODER_DEVICES> init_results{};
+        InitializeAllDevices(init_results);
+    }
     
     initialized_.store(true, std::memory_order_release);
     Logger::GetInstance().Info("EncoderManager", "Encoder Manager initialized successfully");

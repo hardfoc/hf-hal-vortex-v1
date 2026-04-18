@@ -3,7 +3,6 @@
 #include "RtosMutex.h"
 #include "handlers/logger/Logger.h"
 #include <algorithm>
-#include <string>
 
 MotorController& MotorController::GetInstance() {
     static MotorController instance;
@@ -44,6 +43,23 @@ bool MotorController::Initialize() {
     }
     
     return allSuccess;
+}
+
+bool MotorController::Deinitialize() noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    static constexpr const char* TAG = "MotorController";
+    Logger::GetInstance().Info(TAG, "Deinitializing motor controller");
+
+    for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
+        tmcHandlers_[i].reset();
+        deviceActive_[i] = false;
+        deviceInitialized_[i] = false;
+        deviceErrorCounts_[i].store(0, std::memory_order_relaxed);
+    }
+    onboardDeviceCreated_ = false;
+    last_error_.store(MotorError::SUCCESS, std::memory_order_release);
+    initialized_.store(false, std::memory_order_release);
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -286,16 +302,15 @@ bool MotorController::IsExternalSlotAvailable(uint8_t csDeviceIndex) const noexc
     return !deviceActive_[csDeviceIndex];
 }
 
-std::vector<uint8_t> MotorController::GetActiveDeviceIndices() const noexcept {
+void MotorController::GetActiveDeviceIndices(std::array<uint8_t, MAX_TMC9660_DEVICES>& out, size_t& count) const noexcept {
     MutexLockGuard lock(deviceMutex_);
     
-    std::vector<uint8_t> activeIndices;
+    count = 0;
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         if (deviceActive_[i]) {
-            activeIndices.push_back(i);
+            out[count++] = i;
         }
     }
-    return activeIndices;
 }
 
 // ---------------------------------------------------------------------------
@@ -316,33 +331,29 @@ Tmc9660Handler* MotorController::handler(uint8_t deviceIndex) noexcept {
 // Device Initialization
 // ---------------------------------------------------------------------------
 
-std::vector<bool> MotorController::InitializeAllDevices() {
+size_t MotorController::InitializeAllDevices(std::array<bool, MAX_TMC9660_DEVICES>& results) noexcept {
     MutexLockGuard lock(deviceMutex_);
     
-    std::vector<bool> results;
+    results.fill(false);
+    size_t success_count = 0;
     
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         if (deviceActive_[i] && tmcHandlers_[i]) {
             deviceInitialized_[i] = tmcHandlers_[i]->Initialize();
-            results.push_back(deviceInitialized_[i]);
+            results[i] = deviceInitialized_[i];
+            if (deviceInitialized_[i]) ++success_count;
         }
     }
     
-    return results;
+    return success_count;
 }
 
-std::vector<bool> MotorController::GetInitializationStatus() const {
+void MotorController::GetInitializationStatus(std::array<bool, MAX_TMC9660_DEVICES>& status) const noexcept {
     MutexLockGuard lock(deviceMutex_);
     
-    std::vector<bool> status;
-    
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
-        if (deviceActive_[i]) {
-            status.push_back(deviceInitialized_[i]);
-        }
+        status[i] = deviceActive_[i] ? deviceInitialized_[i] : false;
     }
-    
-    return status;
 }
 
 // ---------------------------------------------------------------------------
@@ -448,11 +459,13 @@ void MotorController::DumpStatistics() const noexcept {
     Logger::GetInstance().Info(TAG, "  Max Possible Devices: %d", MAX_TMC9660_DEVICES);
     
     // Device Index Information
-    auto active_indices = GetActiveDeviceIndices();
-    if (!active_indices.empty()) {
+    std::array<uint8_t, MAX_TMC9660_DEVICES> idx_buf{};
+    size_t idx_count = 0;
+    GetActiveDeviceIndices(idx_buf, idx_count);
+    if (idx_count > 0) {
         Logger::GetInstance().Info(TAG, "  Active Device Indices: ");
-        for (size_t i = 0; i < active_indices.size(); ++i) {
-            Logger::GetInstance().Info(TAG, "    [%d]", active_indices[i]);
+        for (size_t i = 0; i < idx_count; ++i) {
+            Logger::GetInstance().Info(TAG, "    [%d]", idx_buf[i]);
         }
     }
     
