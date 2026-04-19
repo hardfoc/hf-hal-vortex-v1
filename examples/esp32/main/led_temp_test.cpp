@@ -1,6 +1,6 @@
 /**
  * @file led_temp_test.cpp
- * @brief LED & Temperature manager focused test for ESP32-C6
+ * @brief LED & Temperature manager focused test for ESP32
  *
  * Deep-dive testing of LedManager and TemperatureManager:
  *   - LED status, color, brightness, animation APIs

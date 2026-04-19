@@ -158,7 +158,7 @@ public:
 
 // Implementation
 class McuDigitalGpio : public BaseGpio {
-    // ESP32-C6 specific implementation
+    // ESP32 specific implementation
 };
 
 class Pcal95555GpioWrapper : public BaseGpio {

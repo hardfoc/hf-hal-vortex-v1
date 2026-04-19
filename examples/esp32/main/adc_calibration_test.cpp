@@ -1,9 +1,9 @@
 /**
  * @file adc_calibration_test.cpp
- * @brief ADC manager focused calibration & reading test for ESP32-C6
+ * @brief ADC manager focused calibration & reading test for ESP32
  *
  * Deep-dive testing of AdcManager:
- *   - Multi-source voltage reads (ESP32-C6, TMC9660)
+ *   - Multi-source voltage reads (ESP32, TMC9660)
  *   - Raw reads vs voltage reads
  *   - Channel enumeration and name lookup
  *   - Calibration validation (voltage within expected range)

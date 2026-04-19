@@ -3,7 +3,7 @@
  * @brief Temperature sensor management for the HardFOC Vortex V1 platform.
  *
  * @details The Vortex board has three temperature sources:
- *            1. ESP32-C6 internal temperature sensor (on-chip)
+ *            1. ESP32 internal temperature sensor (on-chip)
  *            2. NTC thermistor via TMC9660 AIN3 ADC channel
  *            3. TMC9660 internal chip temperature sensor
  *
@@ -89,7 +89,7 @@ private:
  * @brief Identifies the physical temperature sensor type on the Vortex board.
  */
 enum class VortexTempSensorType : uint8_t {
-    ESP32_INTERNAL = 0, ///< ESP32-C6 on-chip temperature sensor
+    ESP32_INTERNAL = 0, ///< ESP32 on-chip temperature sensor
     NTC_THERMISTOR = 1, ///< External NTC thermistor via TMC9660 AIN3
     TMC9660_CHIP   = 2, ///< TMC9660 internal chip temperature
     SENSOR_COUNT        ///< Number of sensor types (not a valid sensor)
@@ -159,7 +159,7 @@ struct TempSystemDiagnostics {
  * @class TemperatureManager
  * @brief Singleton manager for all temperature sensors on Vortex V1.
  *
- * @details Manages three temperature sources: ESP32-C6 internal sensor,
+ * @details Manages three temperature sources: ESP32 internal sensor,
  *          NTC thermistor via TMC9660 AIN3, and TMC9660 internal chip
  *          temperature. Sensors are registered in a fixed-size array;
  *          readings are returned in Celsius or Fahrenheit.

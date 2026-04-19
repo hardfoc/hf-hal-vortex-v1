@@ -1,6 +1,6 @@
 /**
  * @file vortex_api_test.cpp
- * @brief Comprehensive Vortex HAL API test suite for ESP32-C6 (noexcept)
+ * @brief Comprehensive Vortex HAL API test suite for ESP32 (noexcept)
  *
  * This file exercises every public surface of the Vortex singleton:
  *   - Full initialization sequence via EnsureInitialized()

@@ -3,7 +3,7 @@
  * @brief ADC management for the HardFOC Vortex V1 platform.
  *
  * @details The Vortex board uses TMC9660-hosted ADC channels exclusively
- *          (no ESP32-C6 internal ADC channels are active). All 15 functional
+ *          (no ESP32 internal ADC channels are active). All 15 functional
  *          ADC channels are routed through a single Tmc9660AdcWrapper that
  *          delegates to the MotorController-owned Tmc9660Handler.
  *

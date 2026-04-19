@@ -12,11 +12,11 @@
 
 ## 📋 Overview
 
-The `AdcManager` is a singleton component handler that provides unified, thread-safe access to ADC channels across multiple hardware sources. It integrates with the platform mapping system to automatically manage ADC channels from ESP32-C6 internal ADC and TMC9660 motor controller ADC through a single, consistent API using string-based channel identification.
+The `AdcManager` is a singleton component handler that provides unified, thread-safe access to ADC channels across multiple hardware sources. It integrates with the platform mapping system to automatically manage ADC channels from ESP32 internal ADC and TMC9660 motor controller ADC through a single, consistent API using string-based channel identification.
 
 ### ✨ Key Features
 
-- **🔗 Multi-Source ADC Management**: ESP32-C6 internal ADC, TMC9660 ADC
+- **🔗 Multi-Source ADC Management**: ESP32 internal ADC, TMC9660 ADC
 - **🔒 Thread-Safe Operations**: Concurrent access from multiple tasks
 - **📍 String-Based Channel Identification**: Flexible, extensible channel naming
 - **🛡️ Platform Mapping Integration**: Automatic hardware discovery
@@ -337,13 +337,13 @@ struct AdcBatchResult {
 
 | Hardware | Channels Available | Resolution | Reference Voltage | Features |
 |----------|-------------------|------------|------------------|----------|
-| **ESP32-C6** | 6 channels (ADC1: 0-4, ADC2: 0) | 12-bit | 3.3V | Calibration, attenuation |
+| **ESP32** | 6 channels (ADC1: 0-4, ADC2: 0) | 12-bit | 3.3V | Calibration, attenuation |
 | **TMC9660** | 12 channels (4 current + 4 analog + 4 voltage/temp) | 12-bit | 3.3V | Motor feedback, diagnostics |
 
 ### Channel Naming Convention
 
 ```cpp
-// ESP32-C6 ADC channels
+// ESP32 ADC channels
 "ESP32_ADC1_CH0" to "ESP32_ADC1_CH4"    // ADC1 channels 0-4
 "ESP32_ADC2_CH0"                        // ADC2 channel 0
 

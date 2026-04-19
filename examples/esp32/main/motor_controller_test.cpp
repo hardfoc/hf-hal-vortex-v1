@@ -1,6 +1,6 @@
 /**
  * @file motor_controller_test.cpp
- * @brief Motor controller focused test for ESP32-C6
+ * @brief Motor controller focused test for ESP32
  *
  * Deep-dive testing of MotorController:
  *   - Handler access for onboard + external devices

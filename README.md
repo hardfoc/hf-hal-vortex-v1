@@ -26,7 +26,7 @@ The **Vortex API** is named after the **HardFOC Vortex V1** board, providing a u
 - **🔌 Vortex API**: Unified singleton interface to all system components
 - **🏗️ HardFOC Vortex V1 Optimized**: Specifically designed for the Vortex V1 board
 - **🔧 Unified Hardware Management**: Single API for GPIO, ADC, SPI, I2C, UART, and CAN
-- **🎛️ Multi-Source Support**: ESP32-C6, PCAL95555, TMC9660, BNO08x, AS5047U, NTC thermistors, WS2812 LEDs integrated
+- **🎛️ Multi-Source Support**: ESP32, PCAL95555, TMC9660, BNO08x, AS5047U, NTC thermistors, WS2812 LEDs integrated
 - **🔒 Thread-Safe Operations**: Concurrent access from multiple tasks
 - **📊 Advanced Diagnostics**: Real-time health monitoring and error tracking
 - **⚡ High Performance**: Optimized batch operations and interrupt handling
@@ -99,8 +99,8 @@ The Vortex API provides direct access to all component handlers on the HardFOC V
 
 | Component | Access | Purpose | Hardware Sources |
 |-----------|--------|---------|------------------|
-| **Communication** | `vortex.comms` | SPI, I2C, UART, CAN interfaces | ESP32-C6 |
-| **GPIO Management** | `vortex.gpio` | Pin control and configuration | ESP32-C6, PCAL95555, TMC9660 |
+| **Communication** | `vortex.comms` | SPI, I2C, UART, CAN interfaces | ESP32 |
+| **GPIO Management** | `vortex.gpio` | Pin control and configuration | ESP32, PCAL95555, TMC9660 |
 | **Motor Controllers** | `vortex.motors` | Motor control and management | TMC9660 devices |
 | **ADC Management** | `vortex.adc` | Analog-to-digital conversion | TMC9660 |
 | **IMU Sensors** | `vortex.imu` | Motion and orientation sensing | BNO08x via I2C |
@@ -452,8 +452,8 @@ High-level singleton managers providing unified interfaces for the HardFOC Vorte
 
 | Manager | Vortex Access | Purpose | Hardware Sources |
 |---------|---------------|---------|------------------|
-| **CommChannelsManager** | `vortex.comms` | Communication interfaces | ESP32-C6 SPI/I2C/UART/CAN |
-| **GpioManager** | `vortex.gpio` | GPIO pin management | ESP32-C6, PCAL95555, TMC9660 |
+| **CommChannelsManager** | `vortex.comms` | Communication interfaces | ESP32 SPI/I2C/UART/CAN |
+| **GpioManager** | `vortex.gpio` | GPIO pin management | ESP32, PCAL95555, TMC9660 |
 | **AdcManager** | `vortex.adc` | ADC channel management | TMC9660 |
 | **MotorController** | `vortex.motors` | Motor controller management | TMC9660 devices |
 | **ImuManager** | `vortex.imu` | IMU sensor management | BNO08x via I2C |
@@ -473,7 +473,7 @@ Hardware-specific drivers providing device interfaces for the HardFOC Vortex V1 
 
 ### Hardware Support Matrix for HardFOC Vortex V1
 
-| Feature | ESP32-C6 | PCAL95555 | TMC9660 | AS5047U | BNO08x |
+| Feature | ESP32 | PCAL95555 | TMC9660 | AS5047U | BNO08x |
 |---------|-----------|-----------|---------|---------|--------|
 | **GPIO** | ✅ 2 pins | ✅ 12 pins | ✅ 8 pins | ❌ | ❌ |
 | **ADC** | ❌ (disabled) | ❌ | ✅ 4 channels | ❌ | ❌ |
@@ -485,7 +485,7 @@ Hardware-specific drivers providing device interfaces for the HardFOC Vortex V1 
 
 ### Available GPIO Pins on HardFOC Vortex V1
 
-#### ESP32-C6 GPIO Pins
+#### ESP32 GPIO Pins
 - `GPIO_EXT_GPIO_CS_1` - External GPIO chip select 1
 - `GPIO_EXT_GPIO_CS_2` - External GPIO chip select 2
 

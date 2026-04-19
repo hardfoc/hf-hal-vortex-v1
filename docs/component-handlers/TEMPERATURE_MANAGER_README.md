@@ -182,7 +182,7 @@ void ResetStatistics() noexcept;
 - **Calibration**: Automatic Steinhart-Hart compensation
 
 #### Integrated Temperature Sensors
-- **ESP32-C6 Internal**: On-chip temperature monitoring
+- **ESP32 Internal**: On-chip temperature monitoring
 - **TMC9660 Internal**: Motor controller temperature
 - **Range**: -40°C to +125°C
 - **Accuracy**: ±2°C typical

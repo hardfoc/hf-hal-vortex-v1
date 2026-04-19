@@ -68,9 +68,9 @@ Component handlers provide high-level management interfaces for system resources
 
 | Component | Purpose | Hardware Sources | Documentation |
 |-----------|---------|------------------|---------------|
-| **🎛️ GpioManager** | GPIO pin management | ESP32-C6, PCAL95555, TMC9660 | **[📖 GPIO Manager Guide](docs/component-handlers/GPIO_MANAGER_README.md)** |
-| **📊 AdcManager** | ADC channel management | ESP32-C6, TMC9660 | **[📖 ADC Manager Guide](docs/component-handlers/ADC_MANAGER_README.md)** |
-| **📡 CommChannelsManager** | Communication interfaces | ESP32-C6 SPI/I2C/UART/CAN | **[📖 Comm Manager Guide](docs/component-handlers/COMM_CHANNELS_MANAGER_README.md)** |
+| **🎛️ GpioManager** | GPIO pin management | ESP32, PCAL95555, TMC9660 | **[📖 GPIO Manager Guide](docs/component-handlers/GPIO_MANAGER_README.md)** |
+| **📊 AdcManager** | ADC channel management | ESP32, TMC9660 | **[📖 ADC Manager Guide](docs/component-handlers/ADC_MANAGER_README.md)** |
+| **📡 CommChannelsManager** | Communication interfaces | ESP32 SPI/I2C/UART/CAN | **[📖 Comm Manager Guide](docs/component-handlers/COMM_CHANNELS_MANAGER_README.md)** |
 | **🎛️ MotorController** | Motor controller management | TMC9660 devices | **[📖 Motor Controller Guide](docs/component-handlers/MOTOR_CONTROLLER_README.md)** |
 | **🧭 ImuManager** | IMU sensor management | BNO08x via I2C | **[📖 IMU Manager Guide](docs/component-handlers/IMU_MANAGER_README.md)** |
 | **🌡️ TemperatureManager** | Temperature monitoring | NTC thermistors, integrated sensors | **[📖 Temperature Manager Guide](docs/component-handlers/TEMPERATURE_MANAGER_README.md)** |
@@ -80,7 +80,7 @@ Component handlers provide high-level management interfaces for system resources
 ### Component Handler Features
 
 #### GpioManager - Advanced GPIO Management
-- **Multi-Source Support**: ESP32-C6 (40+ pins), PCAL95555 (32 pins), TMC9660 (8 pins)
+- **Multi-Source Support**: ESP32 (40+ pins), PCAL95555 (32 pins), TMC9660 (8 pins)
 - **String-Based API**: Flexible pin identification (`"ESP32_GPIO_2"`, `"PCAL95555_CHIP1_PIN_0"`)
 - **Thread-Safe Operations**: Concurrent access from multiple tasks
 - **Batch Operations**: Optimized multi-pin read/write operations
@@ -88,7 +88,7 @@ Component handlers provide high-level management interfaces for system resources
 - **Health Monitoring**: Per-chip and per-pin statistics
 
 #### AdcManager - Unified ADC System
-- **Multi-Source Support**: ESP32-C6 (6 channels), TMC9660 (3 channels)
+- **Multi-Source Support**: ESP32 (6 channels), TMC9660 (3 channels)
 - **Calibration System**: Automatic voltage conversion with reference scaling
 - **Batch Operations**: Simultaneous multi-channel readings
 - **Filtering Support**: Hardware and software filtering options
@@ -148,7 +148,7 @@ Driver handlers provide hardware-specific interfaces for individual devices. Eac
 
 #### Hardware Support Matrix
 
-| Feature | ESP32-C6 | PCAL95555 | TMC9660 | AS5047U | BNO08x | NTC Sensors | WS2812 LEDs | Logger |
+| Feature | ESP32 | PCAL95555 | TMC9660 | AS5047U | BNO08x | NTC Sensors | WS2812 LEDs | Logger |
 |---------|-----------|-----------|---------|---------|--------|-------------|-------------|---------|
 | **GPIO** | ✅ 40+ pins | ✅ 32 pins | ✅ 8 pins | ❌ | ❌ | ❌ | ✅ Individual LEDs | ❌ |
 | **ADC** | ✅ 6 channels | ❌ | ✅ 3 channels | ❌ | ❌ | ✅ Thermistors | ❌ | ❌ |
@@ -250,7 +250,7 @@ uint16_t angle = encoder.ReadAngle(0);
 
 ### ESP32 On-Target Test Suite
 
-All testing has been consolidated into the `examples/esp32/` on-target test framework that runs directly on ESP32-C6 hardware. This replaces the previous host-based `tests/` directory.
+All testing has been consolidated into the `examples/esp32/` on-target test framework that runs directly on ESP32 hardware. This replaces the previous host-based `tests/` directory.
 
 - **[📦 ESP32 Test Suite](examples/esp32/README.md)** - On-target test framework and build instructions
 - **[🔧 Test Framework Header](examples/esp32/main/TestFramework.h)** - Lightweight `TEST_ASSERT` macros for embedded
@@ -378,7 +378,7 @@ if (!diagnostics.system_healthy) {
 ## 📚 Reference Materials
 
 ### External Documentation
-- **[ESP32-C6 Technical Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c6/)** - ESP32-C6 official documentation
+- **[ESP32 Technical Reference](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c6/)** - ESP32 official documentation
 - **[TMC9660 Datasheet](https://www.trinamic.com/products/integrated-circuits/details/tmc9660/)** - TMC9660 motor controller
 - **[PCAL95555 Datasheet](https://www.nxp.com/docs/en/data-sheet/PCAL95555.pdf)** - PCAL95555 GPIO expander
 - **[BNO08x Reference](https://www.ceva-dsp.com/product/bno080-085/)** - BNO08x IMU sensor

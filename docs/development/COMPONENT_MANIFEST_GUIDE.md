@@ -191,13 +191,13 @@ The component follows [semantic versioning](https://semver.org/) principles:
 This version represents the first stable release of the HardFOC HAL with:
 - Complete API layer implementation
 - All 8 component handlers
-- Full ESP32-C6 support
+- Full ESP32 support
 - Comprehensive documentation
 
 ### Version Compatibility
 
 - **ESP-IDF**: Requires version 5.0.0 or later
-- **Target**: ESP32-C6 (primary), extensible to other ESP32 variants
+- **Target**: ESP32 (primary), extensible to other ESP32 variants
 - **C++ Standard**: C++17 or later
 
 ## Maintenance Guidelines

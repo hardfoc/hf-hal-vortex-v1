@@ -1,6 +1,6 @@
 /**
  * @file gpio_stress_test.cpp
- * @brief GPIO manager focused stress test for ESP32-C6
+ * @brief GPIO manager focused stress test for ESP32
  *
  * Deep-dive testing of GpioManager:
  *   - Pin enumeration and Contains checks

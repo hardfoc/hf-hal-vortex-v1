@@ -37,7 +37,7 @@ The `CommChannelsManager` is a singleton component handler that provides unified
 ├─────────────────────────────────────────────────────────────────┤
 │  Pin Configuration  │ Board-specific pin and bus mapping      │
 ├─────────────────────────────────────────────────────────────────┤
-│  ESP32 Drivers      │ ESP32-C6 hardware interface drivers     │
+│  ESP32 Drivers      │ ESP32 hardware interface drivers     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

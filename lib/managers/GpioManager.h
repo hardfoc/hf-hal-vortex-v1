@@ -3,7 +3,7 @@
  * @brief GPIO management for the HardFOC Vortex V1 platform.
  *
  * @details The Vortex board spans three GPIO chip types:
- *          - ESP32-C6 internal GPIOs
+ *          - ESP32 internal GPIOs
  *          - PCAL95555 I²C GPIO expander
  *          - TMC9660 motor-controller GPIO bridge (GPIO17, GPIO18)
  *

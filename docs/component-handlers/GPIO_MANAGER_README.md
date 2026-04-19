@@ -12,11 +12,11 @@
 
 ## 📋 Overview
 
-The `GpioManager` is a singleton component handler that provides unified, thread-safe access to GPIO pins across multiple hardware sources. It integrates with the platform mapping system to automatically manage GPIOs from ESP32-C6, PCAL95555 GPIO expanders, and TMC9660 motor controllers through a single, consistent API using string-based pin identification.
+The `GpioManager` is a singleton component handler that provides unified, thread-safe access to GPIO pins across multiple hardware sources. It integrates with the platform mapping system to automatically manage GPIOs from ESP32, PCAL95555 GPIO expanders, and TMC9660 motor controllers through a single, consistent API using string-based pin identification.
 
 ### ✨ Key Features
 
-- **🔗 Multi-Source GPIO Management**: ESP32-C6, PCAL95555, TMC9660
+- **🔗 Multi-Source GPIO Management**: ESP32, PCAL95555, TMC9660
 - **🔒 Thread-Safe Operations**: Concurrent access from multiple tasks
 - **📍 String-Based Pin Identification**: Flexible, extensible pin naming
 - **🛡️ Platform Mapping Integration**: Automatic hardware discovery
@@ -333,14 +333,14 @@ struct GpioBatchResult {
 
 | Hardware | Pins Available | Features |
 |----------|----------------|----------|
-| **ESP32-C6** | 40+ GPIO pins | Native GPIO, interrupts, pull-up/down |
+| **ESP32** | 40+ GPIO pins | Native GPIO, interrupts, pull-up/down |
 | **PCAL95555** | 32 GPIO pins (2×16) | I2C expander, interrupt support |
 | **TMC9660** | 18 GPIO pins | Motor controller GPIOs, fault monitoring |
 
 ### Pin Naming Convention
 
 ```cpp
-// ESP32-C6 pins
+// ESP32 pins
 "ESP32_GPIO_0" to "ESP32_GPIO_21"    // Standard GPIO pins
 "ESP32_GPIO_BOOT"                    // Boot button
 "ESP32_GPIO_EN"                      // Enable pin

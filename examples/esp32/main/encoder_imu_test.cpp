@@ -1,6 +1,6 @@
 /**
  * @file encoder_imu_test.cpp
- * @brief Encoder & IMU manager focused test for ESP32-C6
+ * @brief Encoder & IMU manager focused test for ESP32
  *
  * Deep-dive testing of EncoderManager and ImuManager:
  *   - Handler access and device enumeration

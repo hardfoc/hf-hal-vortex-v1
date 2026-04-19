@@ -365,12 +365,12 @@ Advanced GPIO management system for the HardFOC platform.
 ### Overview
 The GpioManager provides a comprehensive GPIO management system that integrates
 with the platform mapping system to automatically manage GPIOs from multiple
-hardware sources (ESP32-C6, PCAL95555, TMC9660) based on functional pin
+hardware sources (ESP32, PCAL95555, TMC9660) based on functional pin
 identifiers and hardware chip mappings.
 
 ### Key Features
 - **Platform Mapping Integration**: Automatic pin discovery via platform mapping
-- **Multi-Chip Support**: ESP32-C6, PCAL95555, TMC9660 GPIO management
+- **Multi-Chip Support**: ESP32, PCAL95555, TMC9660 GPIO management
 - **Functional Abstraction**: Hardware-agnostic API using string identifiers
 - **Thread Safety**: Thread-safe operations with comprehensive error handling
 - **Automatic Registration**: Pin registration based on platform configuration
@@ -482,7 +482,7 @@ Brief introduction to the HardFOC HAL and its capabilities.
 
 ## Prerequisites
 - ESP-IDF v5.0 or later
-- ESP32-C6 development board
+- ESP32 development board
 - HardFOC Vortex V1 board (optional)
 - Basic C++ knowledge
 
@@ -650,22 +650,22 @@ Performance optimization techniques used.
 
 #### Platform-Specific Documentation
 ```markdown
-# ESP32-C6 Implementation
+# ESP32 Implementation
 
 ## Overview
-ESP32-C6 specific implementation details.
+ESP32 specific implementation details.
 
 ## Hardware Integration
-How the HAL integrates with ESP32-C6 hardware.
+How the HAL integrates with ESP32 hardware.
 
 ## Performance Characteristics
-ESP32-C6 specific performance information.
+ESP32 specific performance information.
 
 ## Limitations
-ESP32-C6 specific limitations and constraints.
+ESP32 specific limitations and constraints.
 
 ## Configuration
-ESP32-C6 specific configuration options.
+ESP32 specific configuration options.
 ```
 
 ### Maintenance Documentation

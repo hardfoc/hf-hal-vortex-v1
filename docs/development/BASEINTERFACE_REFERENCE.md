@@ -8,11 +8,11 @@ This reference guide provides detailed information about the BaseGpio and BaseAd
 
 ## 🔧 BaseGpio Interface Reference
 
-The BaseGpio interface provides standardized access to GPIO functionality across different hardware sources (ESP32-C6, PCAL95555, TMC9660). This interface is implemented by:
+The BaseGpio interface provides standardized access to GPIO functionality across different hardware sources (ESP32, PCAL95555, TMC9660). This interface is implemented by:
 
 - **PCAL95555Handler::Pcal95555GpioPin** - For PCAL95555 GPIO expander pins
 - **Tmc9660Handler::Gpio** - For TMC9660 motor controller GPIO pins
-- **ESP32 GPIO drivers** - For native ESP32-C6 GPIO pins
+- **ESP32 GPIO drivers** - For native ESP32 GPIO pins
 
 ### Core Interface Methods
 
@@ -129,7 +129,7 @@ The BaseAdc interface provides standardized access to ADC functionality. This in
 
 - **Tmc9660Handler::Adc** - For TMC9660 motor controller ADC channels
 - **Tmc9660AdcWrapper** - Wrapper for TMC9660 ADC access
-- **ESP32 ADC drivers** - For native ESP32-C6 ADC channels
+- **ESP32 ADC drivers** - For native ESP32 ADC channels
 
 ### Core Interface Methods
 
