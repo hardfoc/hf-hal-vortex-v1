@@ -85,7 +85,7 @@ static bool test_motor_dump_statistics() noexcept {
 }
 
 static bool test_motor_get_last_error() noexcept {
-  // GetLastError() should return MotorError::kSuccess if no errors occurred
+  // GetLastError() should return MotorError::SUCCESS if no errors occurred
   [[maybe_unused]] MotorError err = MOTORS().GetLastError();
   return true;
 }
@@ -93,7 +93,7 @@ static bool test_motor_get_last_error() noexcept {
 static bool test_motor_system_diagnostics() noexcept {
   MotorSystemDiagnostics diag{};
   auto err = MOTORS().GetSystemDiagnostics(diag);
-  if (err != MotorError::kSuccess) return false;
+  if (err != MotorError::SUCCESS) return false;
   // active_device_count should be <= max (4)
   return (diag.active_device_count <= 4);
 }
