@@ -18,9 +18,7 @@
 #include "managers/LedManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "OsUtility.h"
 static const char* TAG = "VortexLedExample";
 
 static void example_solid_colours() {
@@ -30,22 +28,22 @@ static void example_solid_colours() {
     // Red
     leds.SetColor(LedColors::RED);
     ESP_LOGI(TAG, "Red");
-    vTaskDelay(pdMS_TO_TICKS(500));
+    os_delay_msec(500);
 
     // Green
     leds.SetColor(LedColors::GREEN);
     ESP_LOGI(TAG, "Green");
-    vTaskDelay(pdMS_TO_TICKS(500));
+    os_delay_msec(500);
 
     // Blue
     leds.SetColor(LedColors::BLUE);
     ESP_LOGI(TAG, "Blue");
-    vTaskDelay(pdMS_TO_TICKS(500));
+    os_delay_msec(500);
 
     // Custom RGB value
     leds.SetColor(LedColor(255, 165, 0));  // Orange
     ESP_LOGI(TAG, "Orange");
-    vTaskDelay(pdMS_TO_TICKS(500));
+    os_delay_msec(500);
 }
 
 static void example_brightness() {
@@ -56,7 +54,7 @@ static void example_brightness() {
     for (uint8_t pct = 10; pct <= 100; pct += 10) {
         leds.SetBrightnessPercent(pct);
         ESP_LOGI(TAG, "Brightness: %u%%", pct);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        os_delay_msec(100);
     }
     leds.SetBrightnessPercent(50);
 }
@@ -69,14 +67,14 @@ static void example_animations() {
     ESP_LOGI(TAG, "Rainbow (2 s)");
     for (int i = 0; i < 20; ++i) {
         leds.UpdateAnimation();
-        vTaskDelay(pdMS_TO_TICKS(100));
+        os_delay_msec(100);
     }
 
     leds.StartAnimation(LedAnimation::BREATH, LedColors::CYAN);
     ESP_LOGI(TAG, "Breath cyan (2 s)");
     for (int i = 0; i < 20; ++i) {
         leds.UpdateAnimation();
-        vTaskDelay(pdMS_TO_TICKS(100));
+        os_delay_msec(100);
     }
 
     leds.StopAnimation();
@@ -90,22 +88,22 @@ static void example_status_indication() {
     leds.IndicateBoot();
     leds.UpdateAnimation();
     ESP_LOGI(TAG, "BOOT");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    os_delay_msec(1000);
 
     leds.IndicateReady();
     leds.UpdateAnimation();
     ESP_LOGI(TAG, "READY");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    os_delay_msec(1000);
 
     leds.IndicateWarning();
     leds.UpdateAnimation();
     ESP_LOGI(TAG, "WARNING");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    os_delay_msec(1000);
 
     leds.IndicateError();
     leds.UpdateAnimation();
     ESP_LOGI(TAG, "ERROR");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    os_delay_msec(1000);
 
     leds.StopAnimation();
 }

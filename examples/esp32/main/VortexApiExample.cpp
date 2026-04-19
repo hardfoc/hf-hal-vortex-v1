@@ -37,9 +37,7 @@
 #include "managers/TemperatureManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "OsUtility.h"
 static const char* TAG = "VortexApiExample";
 
 //=============================================================================
@@ -219,7 +217,7 @@ static void phase_health_monitoring() {
         bool healthy = vortex.PerformHealthCheck();
         ESP_LOGI(TAG, "  PerformHealthCheck: %s", healthy ? "PASS" : "FAIL");
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        os_delay_msec(1000);
     }
 }
 
@@ -255,28 +253,28 @@ extern "C" void app_main(void) {
 
     bool ok = phase_boot();
     if (!ok) ESP_LOGW(TAG, "Boot with warnings — continuing");
-    vTaskDelay(pdMS_TO_TICKS(200));
+    os_delay_msec(200);
 
     VORTEX_API.leds.IndicateBoot();
     VORTEX_API.leds.UpdateAnimation();
 
     phase_motor_check();
-    vTaskDelay(pdMS_TO_TICKS(200));
+    os_delay_msec(200);
 
     phase_adc_monitoring();
-    vTaskDelay(pdMS_TO_TICKS(200));
+    os_delay_msec(200);
 
     phase_imu_encoder();
-    vTaskDelay(pdMS_TO_TICKS(200));
+    os_delay_msec(200);
 
     phase_temperature();
-    vTaskDelay(pdMS_TO_TICKS(200));
+    os_delay_msec(200);
 
     VORTEX_API.leds.IndicateReady();
     VORTEX_API.leds.UpdateAnimation();
 
     phase_health_monitoring();
-    vTaskDelay(pdMS_TO_TICKS(200));
+    os_delay_msec(200);
 
     phase_shutdown();
 

@@ -17,10 +17,8 @@
 #include "managers/ImuManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 #include <array>
+#include "OsUtility.h"
 
 static const char* TAG = "VortexImuExample";
 
@@ -76,9 +74,9 @@ extern "C" void app_main(void) {
     Vortex::GetInstance().EnsureInitialized();
 
     example_discovery();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_sensor_access();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_diagnostics();
 
     VORTEX_API.imu.Deinitialize();

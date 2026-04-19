@@ -19,9 +19,6 @@
 #include "managers/MotorController.h"
 #include "TestFramework.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 static const char* TAG = "MotorCtrlTest";
 static TestResults g_test_results;
 

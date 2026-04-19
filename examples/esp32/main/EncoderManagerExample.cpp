@@ -17,10 +17,8 @@
 #include "managers/EncoderManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 #include <array>
+#include "OsUtility.h"
 
 static const char* TAG = "VortexEncoderExample";
 
@@ -114,9 +112,9 @@ extern "C" void app_main(void) {
     Vortex::GetInstance().EnsureInitialized();
 
     example_discovery();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_single_read();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_batch_read();
     example_init_batch();
     example_diagnostics();

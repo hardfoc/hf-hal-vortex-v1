@@ -20,9 +20,7 @@
 #include "managers/GpioManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "OsUtility.h"
 static const char* TAG = "VortexGpioExample";
 
 static void example_pin_lookup() {
@@ -49,7 +47,7 @@ static void example_digital_io() {
 
     // Toggle test pin
     gpio.Toggle("GPIO_USER_LED");
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     gpio.Toggle("GPIO_USER_LED");
 }
 
@@ -72,9 +70,9 @@ extern "C" void app_main(void) {
     Vortex::GetInstance().EnsureInitialized();
 
     example_pin_lookup();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_digital_io();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_diagnostics();
 
     ESP_LOGI(TAG, "GpioManager example complete");

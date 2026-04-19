@@ -21,9 +21,6 @@
 #include "TestFramework.h"
 #include "handlers/bno08x/Bno08xHandler.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 static const char* TAG = "EncImuTest";
 static TestResults g_test_results;
 

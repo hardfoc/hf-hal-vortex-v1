@@ -19,9 +19,7 @@
 #include "managers/TemperatureManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "OsUtility.h"
 static const char* TAG = "VortexTempExample";
 
 static void example_internal_sensor() {
@@ -89,11 +87,11 @@ extern "C" void app_main(void) {
     Vortex::GetInstance().EnsureInitialized();
 
     example_internal_sensor();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_ntc_sensor();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_motor_temperature();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_diagnostics();
 
     ESP_LOGI(TAG, "TemperatureManager example complete");

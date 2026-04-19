@@ -21,9 +21,7 @@
 #include "managers/AdcManager.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include "OsUtility.h"
 static const char* TAG = "VortexAdcExample";
 
 static void example_channel_registry() {
@@ -76,11 +74,11 @@ extern "C" void app_main(void) {
     Vortex::GetInstance().EnsureInitialized();
 
     example_channel_registry();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_voltage_reading();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_raw_reading();
-    vTaskDelay(pdMS_TO_TICKS(100));
+    os_delay_msec(100);
     example_diagnostics();
 
     ESP_LOGI(TAG, "AdcManager example complete");
