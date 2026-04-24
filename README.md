@@ -399,7 +399,7 @@ if (encoder_handler) {
 
 ### Engineering handbook
 
-Cross-HAL **coding standards, architecture, CMake contract, testing, and agent playbooks** are in the [hf-development-handbook](https://github.com/hardfoc/hf-development-handbook) Git submodule at [`docs/hf-development-handbook/`](docs/hf-development-handbook/). After clone, run `git submodule update --init --recursive`. Quick links: [`docs/development/README.md`](docs/development/README.md).
+Cross-HAL **coding standards, architecture, CMake contract, testing, and agent playbooks** are in the [hf-development-handbook](https://github.com/hardfoc/hf-development-handbook) Git submodule at [`docs/hf-development-handbook/`](docs/hf-development-handbook/). After clone, run `git submodule update --init --recursive`. Start from [`docs/hf-development-handbook/README.md`](docs/hf-development-handbook/README.md).
 
 ### 📖 Complete Documentation Index
 - **[📋 Documentation Index](DOCUMENTATION_INDEX.md)** - Complete guide to all documentation
