@@ -22,7 +22,7 @@ This documentation index provides comprehensive access to all HardFOC HAL system
 - **[🏠 Main README](README.md)** - Project overview and quick start guide
 - **[⚡ Quick Start Examples](#quick-start-examples)** - Get up and running in minutes
 - **[🔧 System Integration](lib/api/README.md)** - Integration with existing projects
-- **[⚙️ Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md)** - Hardware configuration guide
+- **[⚙️ Architecture Guidelines](docs/hf-development-handbook/process/architecture.md)** - Hardware configuration guide
 
 ### Quick Start Examples
 
@@ -164,7 +164,7 @@ Driver handlers provide hardware-specific interfaces for individual devices. Eac
 ## 🏗️ Architecture Documentation
 
 ### Core System Architecture
-- **[🏗️ Hardware Abstraction Architecture](docs/development/ARCHITECTURE_GUIDELINES.md)** - Complete HAL architecture
+- **[🏗️ Hardware Abstraction Architecture](docs/hf-development-handbook/process/architecture.md)** - Complete HAL architecture
 - **[⚡ GPIO System Architecture](docs/component-handlers/GPIO_MANAGER_README.md)** - GPIO system design and implementation
 
 ### System Integration Guides
@@ -235,7 +235,7 @@ uint16_t angle = encoder.ReadAngle(0);
 ## 🔗 Hardware Integration
 
 ### Board Configuration
-- **[🏗️ Hardware Architecture](docs/development/ARCHITECTURE_GUIDELINES.md)** - Board-specific configuration
+- **[🏗️ Hardware Architecture](docs/hf-development-handbook/process/architecture.md)** - Board-specific configuration
 
 ### Device Documentation
 - **[🔌 PCAL95555 Handler](docs/driver-handlers/PCAL95555_HANDLER_README.md)** - GPIO expander documentation
@@ -305,12 +305,12 @@ Doxygen API docs and Jekyll site are configured under `_config/`:
 ## �🛠️ Development and Contributing
 
 ### Development Guidelines
-- **[📝 Coding Standards](docs/development/CODING_STANDARDS.md)** - Code style and conventions
-- **[🏗️ Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md)** - System design principles
-- **[⚡ Performance Optimization Guide](docs/development/PERFORMANCE_OPTIMIZATION_GUIDE.md)** - String lookups vs cached access
-- **[🔧 Base Interface Reference](docs/development/BASEINTERFACE_REFERENCE.md)** - BaseGpio and BaseAdc detailed API
-- **[🧪 Testing Requirements](docs/development/TESTING_REQUIREMENTS.md)** - Test coverage and quality
-- **[📚 Documentation Standards](docs/development/DOCUMENTATION_STANDARDS.md)** - Documentation requirements
+- **[📝 Coding Standards](docs/hf-development-handbook/standards/coding-style.md)** - Code style and conventions
+- **[🏗️ Architecture Guidelines](docs/hf-development-handbook/process/architecture.md)** - System design principles
+- **[⚡ Performance Optimization Guide](docs/hf-development-handbook/process/performance.md)** - String lookups vs cached access
+- **[🔧 Base Interface Reference](docs/hf-development-handbook/process/base-interfaces.md)** - BaseGpio and BaseAdc detailed API
+- **[🧪 Testing Requirements](docs/hf-development-handbook/process/testing-requirements.md)** - Test coverage and quality
+- **[📚 Documentation Standards](docs/hf-development-handbook/standards/documentation-style.md)** - Documentation requirements
 
 ### Documentation Corrections
 - **[📋 Documentation Corrections Summary](DOCUMENTATION_CORRECTIONS.md)** - Summary of base interface corrections made

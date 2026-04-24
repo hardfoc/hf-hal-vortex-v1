@@ -397,6 +397,10 @@ if (encoder_handler) {
 
 ## 📚 Documentation
 
+### Engineering handbook
+
+Cross-HAL **coding standards, architecture, CMake contract, testing, and agent playbooks** are in the [hf-development-handbook](https://github.com/hardfoc/hf-development-handbook) Git submodule at [`docs/hf-development-handbook/`](docs/hf-development-handbook/). After clone, run `git submodule update --init --recursive`. Quick links: [`docs/development/README.md`](docs/development/README.md).
+
 ### 📖 Complete Documentation Index
 - **[📋 Documentation Index](DOCUMENTATION_INDEX.md)** - Complete guide to all documentation
 
@@ -408,7 +412,7 @@ if (encoder_handler) {
 ### 🎯 Core System Documentation
 - **[🔧 GPIO Manager](docs/component-handlers/GPIO_MANAGER_README.md)** - GPIO system guide
 - **[📊 ADC Manager](docs/component-handlers/ADC_MANAGER_README.md)** - ADC system guide
-- **[🏗️ Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md)** - Core architecture
+- **[🏗️ Architecture Guidelines](docs/hf-development-handbook/process/architecture.md)** - Core architecture
 
 ### 📚 Component Handler Documentation
 - **[🎛️ GPIO Manager](docs/component-handlers/GPIO_MANAGER_README.md)** - GPIO management system
@@ -883,7 +887,7 @@ void DemonstrateMotors(Vortex& vortex) {
 ## 🔗 Hardware Integration
 
 ### HardFOC Vortex V1 Board Configuration
-- **[🏗️ Hardware Architecture](docs/development/ARCHITECTURE_GUIDELINES.md)** - Board-specific configuration and features
+- **[🏗️ Hardware Architecture](docs/hf-development-handbook/process/architecture.md)** - Board-specific configuration and features
 
 ### Device Configuration for HardFOC Vortex V1
 - **[🔌 PCAL95555 Handler](docs/driver-handlers/PCAL95555_HANDLER_README.md)** - GPIO expander documentation
@@ -915,10 +919,10 @@ idf.py flash monitor
 ## 🤝 Contributing
 
 ### Development Guidelines
-- **[📝 Coding Standards](docs/development/CODING_STANDARDS.md)**
-- **[🏗️ Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md)**
-- **[🧪 Testing Requirements](docs/development/TESTING_REQUIREMENTS.md)**
-- **[📚 Documentation Standards](docs/development/DOCUMENTATION_STANDARDS.md)**
+- **[📝 Coding Standards](docs/hf-development-handbook/standards/coding-style.md)**
+- **[🏗️ Architecture Guidelines](docs/hf-development-handbook/process/architecture.md)**
+- **[🧪 Testing Requirements](docs/hf-development-handbook/process/testing-requirements.md)**
+- **[📚 Documentation Standards](docs/hf-development-handbook/standards/documentation-style.md)**
 
 ### Getting Started
 1. Fork the repository
@@ -936,7 +940,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **📚 Documentation**: Start with [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)
 - **🔌 Vortex API**: See [lib/api/README.md](lib/api/README.md) for unified API guide
-- **🏗️ HardFOC Vortex V1**: See [Architecture Guidelines](docs/development/ARCHITECTURE_GUIDELINES.md) for board details
+- **🏗️ HardFOC Vortex V1**: See [Architecture Guidelines](docs/hf-development-handbook/process/architecture.md) for board details
 - **🐛 Issues**: Report bugs via GitHub Issues
 - **💬 Discussions**: Use GitHub Discussions for questions
 - **📧 Contact**: HardFOC Team
