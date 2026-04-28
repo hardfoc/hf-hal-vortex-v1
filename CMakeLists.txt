@@ -8,6 +8,8 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(HF_HAL_ROOT ${CMAKE_CURRENT_LIST_DIR})
+# Upstream CANopenNode checkout (git submodule); consumed by hf_core when enabled.
+set(HF_CORE_CANOPENNODE_ROOT "${HF_HAL_ROOT}/third_party/CANopenNode")
 
 # Include the API directory for Vortex API component
 list(APPEND EXTRA_COMPONENT_DIRS "${HF_HAL_ROOT}/lib/api")
@@ -33,6 +35,8 @@ set(HF_CORE_ENABLE_SE050          OFF)
 
 # ── Optional Utilities ────────────────────────────────────────────────────
 set(HF_CORE_ENABLE_UTILS_CANOPEN  ON)   # CANopen protocol helpers
+# Vortex board CAN protocol (NMT + expedited SDO helpers; wire VortexCanTransport → BaseCan in app)
+set(HF_CORE_ENABLE_VORTEX_DRIVER  ON)
 
 # ── Optional Interfaces ──────────────────────────────────────────────────
 # UART auto-enabled by TMC9660, but explicit for clarity
@@ -41,8 +45,27 @@ set(HF_CORE_ENABLE_CAN            ON)
 set(HF_CORE_ENABLE_PWM            ON)
 set(HF_CORE_ENABLE_PIO            ON)
 
+# CANopenNode CiA 301 stack — default OFF; enable via `idf.py menuconfig` → HardFOC Vortex HAL.
+if(COMMAND idf_component_register)
+    if(CONFIG_HARDFOC_HAL_CANOPENNODE_SLAVE)
+        set(HF_CORE_ENABLE_CANOPENNODE ON)
+    else()
+        set(HF_CORE_ENABLE_CANOPENNODE OFF)
+    endif()
+elseif(NOT DEFINED HF_CORE_ENABLE_CANOPENNODE)
+    set(HF_CORE_ENABLE_CANOPENNODE OFF)
+endif()
+
 # ── Include core build settings (collects sources, includes, IDF deps) ───
 include("${HF_HAL_ROOT}/lib/core/cmake/hf_core_build_settings.cmake")
+
+# Third-party C sources: relax warnings that HAL treats as errors on this component.
+if(HF_CORE_ENABLE_CANOPENNODE AND HF_CORE_CANOPENNODE_SOURCES)
+    set_source_files_properties(${HF_CORE_CANOPENNODE_SOURCES}
+        PROPERTIES
+            COMPILE_OPTIONS "-Wno-unused-parameter;-Wno-sign-compare;-Wno-missing-field-initializers"
+    )
+endif()
 
 #==============================================================================
 # 2. HAL-SPECIFIC SOURCES

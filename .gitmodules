@@ -10,3 +10,6 @@
 [submodule "docs/hf-development-handbook"]
 	path = docs/hf-development-handbook
 	url = https://github.com/hardfoc/hf-development-handbook.git
+[submodule "third_party/CANopenNode"]
+	path = third_party/CANopenNode
+	url = https://github.com/CANopenNode/CANopenNode.git

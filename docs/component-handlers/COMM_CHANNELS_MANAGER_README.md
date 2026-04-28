@@ -70,15 +70,15 @@ void comm_basic_example() {
         logger.Info("COMM", "BNO08x I2C device available\n");
     }
     
-    // Access UART
-    BaseUart* uart;
-    if (comm.GetUart(0, uart)) {
-        logger.Info("COMM", "UART0 interface available\n");
+    // Access UART (TMC9660 TMCL bus on Vortex)
+    BaseUart* uart = comm.GetUartBus();
+    if (uart) {
+        logger.Info("COMM", "UART bus available\n");
     }
     
-    // Access CAN
-    BaseCan* can;
-    if (comm.GetCan(0, can)) {
+    // Access CAN (TWAI); use GetCanOpenBus() for CANopen framing symmetry with main/
+    BaseCan* can = comm.GetCanOpenBus();
+    if (can) {
         logger.Info("COMM", "CAN interface available\n");
     }
 }
@@ -365,8 +365,8 @@ void can_example() {
     comm.EnsureInitialized();
     
     // Access CAN interface
-    BaseCan* can;
-    if (comm.GetCan(0, can)) {
+    BaseCan* can = comm.GetCanOpenBus();
+    if (can) {
         logger.Info("COMM", "CAN interface ready\n");
         
         // Configure CAN
@@ -469,10 +469,8 @@ void multi_interface_example() {
     // Access multiple interfaces simultaneously
     auto* tmc9660_spi = comm.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
     auto* imu_i2c = comm.GetI2cDevice(I2cDeviceId::BNO08X_IMU);
-    BaseUart* uart;
-    comm.GetUart(0, uart);
-    BaseCan* can;
-    comm.GetCan(0, can);
+    BaseUart* uart = comm.GetUartBus();
+    BaseCan* can = comm.GetCanOpenBus();
     
     // Perform operations on all interfaces
     if (tmc9660_spi && imu_i2c && uart && can) {

@@ -278,6 +278,14 @@ public:
      */
     BaseCan* GetCanBus() noexcept;
 
+    /**
+     * @brief TWAI bus used for CANopen / `hf-utils-canopen` framing (`HfUtilsCanOpenTransport`).
+     * @details Vortex V1: same instance as `GetCanBus()`. Prefer this name in app code that wires
+     *          `CANOpenBLDCThread` / `CanOpenHostServiceThread` so ownership stays with
+     *          `CommChannelsManager`.
+     */
+    BaseCan* GetCanOpenBus() noexcept { return GetCanBus(); }
+
     //==========================================================================
     // DIAGNOSTICS
     //==========================================================================
