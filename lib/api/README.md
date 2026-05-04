@@ -20,21 +20,23 @@ The Vortex API provides a unified singleton interface to all component handlers 
 The initialization order is carefully managed to handle dependencies:
 
 ```
-1. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
+1. NvsManager (flash — `vortex` / `vortex_cal` / `vortex_cfg`)
    ↓
-2. GpioManager (depends on CommChannelsManager)
+2. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
    ↓
-3. MotorController (depends on CommChannelsManager)
+3. GpioManager (depends on CommChannelsManager)
    ↓
-4. AdcManager (depends on MotorController)
+4. MotorController (depends on CommChannelsManager)
    ↓
-5. ImuManager (depends on CommChannelsManager, GpioManager)
+5. AdcManager (depends on MotorController)
    ↓
-6. EncoderManager (depends on CommChannelsManager, GpioManager)
+6. ImuManager (depends on CommChannelsManager, GpioManager)
    ↓
-7. LedManager (independent)
+7. EncoderManager (depends on CommChannelsManager, GpioManager)
    ↓
-8. TemperatureManager (depends on AdcManager, MotorController)
+8. LedManager (independent)
+   ↓
+9. TemperatureManager (depends on AdcManager, MotorController)
 ```
 
 ## 🚀 Quick Start
@@ -197,6 +199,7 @@ All components are accessed by reference:
 
 ```cpp
 CommChannelsManager& comms;      // Communication channels
+NvsManager& nvs;                 // NVS (`vortex` / `vortex_cal` / `vortex_cfg`)
 GpioManager& gpio;              // GPIO management
 MotorController& motors;        // Motor controllers
 AdcManager& adc;                // ADC management

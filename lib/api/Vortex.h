@@ -30,14 +30,15 @@
  * - Exception-free design with noexcept methods
  * 
  * Initialization Order:
- * 1. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
- * 2. GpioManager (depends on CommChannelsManager)
- * 3. AdcManager (depends on MotorController)
- * 4. MotorController (depends on CommChannelsManager)
- * 5. ImuManager (depends on CommChannelsManager, GpioManager)
- * 6. EncoderManager (depends on CommChannelsManager, GpioManager)
- * 7. LedManager (independent)
- * 8. TemperatureManager (depends on AdcManager, MotorController)
+ * 1. NvsManager (flash key-value — before buses so config/cal is available early)
+ * 2. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
+ * 3. GpioManager (depends on CommChannelsManager)
+ * 4. AdcManager (depends on MotorController)
+ * 5. MotorController (depends on CommChannelsManager)
+ * 6. ImuManager (depends on CommChannelsManager, GpioManager)
+ * 7. EncoderManager (depends on CommChannelsManager, GpioManager)
+ * 8. LedManager (independent)
+ * 9. TemperatureManager (depends on AdcManager, MotorController)
  * 
  * Usage Example:
  * @code
@@ -95,6 +96,7 @@
 
 // Forward declarations for all component handlers
 class CommChannelsManager;
+class NvsManager;
 class GpioManager;
 class AdcManager;
 class MotorController;
@@ -105,6 +107,10 @@ class TemperatureManager;
 
 // Include the unified Logger
 #include "handlers/logger/Logger.h"
+#include "VortexVersion.h"
+
+/** @brief Number of subsystem managers on `Vortex` (including NVS). */
+inline constexpr size_t kVortexManagerCount = 9;
 
 //==============================================================================
 // VORTEX SYSTEM DIAGNOSTICS
@@ -115,6 +121,7 @@ class TemperatureManager;
  */
 struct VortexSystemDiagnostics {
     bool system_healthy;                    ///< Overall system health
+    bool nvs_initialized;                   ///< NvsManager ready
     bool comms_initialized;                 ///< Communication channels status
     bool gpio_initialized;                  ///< GPIO management status
     bool adc_initialized;                   ///< ADC management status
@@ -131,7 +138,7 @@ struct VortexSystemDiagnostics {
     uint64_t initialization_time_ms;        ///< Total initialization time
     uint64_t system_uptime_ms;              ///< System uptime
     
-    static constexpr size_t kMaxDiagEntries = 8;     ///< Max diagnostic entries
+    static constexpr size_t kMaxDiagEntries = kVortexManagerCount;  ///< Max diagnostic entries
 
     const char* failed_components_list[kMaxDiagEntries]{};  ///< Failed component names
     size_t failed_components_list_count{0};                  ///< Number of failed entries
@@ -142,10 +149,10 @@ struct VortexSystemDiagnostics {
      * @brief Constructor for VortexSystemDiagnostics
      */
     VortexSystemDiagnostics() noexcept
-        : system_healthy(false), comms_initialized(false), gpio_initialized(false),
+        : system_healthy(false), nvs_initialized(false), comms_initialized(false), gpio_initialized(false),
           adc_initialized(false), motors_initialized(false), imu_initialized(false),
           encoders_initialized(false), leds_initialized(false), temp_initialized(false),
-          total_components(8), initialized_components(0), failed_components(0),
+          total_components(static_cast<uint32_t>(kVortexManagerCount)), initialized_components(0), failed_components(0),
           initialization_time_ms(0), system_uptime_ms(0) {}
 };
 
@@ -174,6 +181,7 @@ struct ManagerHealthEntry {
  *          of the originating manager's error enum.
  *
  * Supported error sources per manager:
+ *   NVS           — hf_nvs_err_t   via GetLastError()
  *   CommChannels  — CommError      via GetLastError()
  *   GPIO          — hf_gpio_err_t  via GetLastError()
  *   Motors        — MotorError     via GetLastError()
@@ -184,7 +192,7 @@ struct ManagerHealthEntry {
  *   Temperature   — hf_temp_err_t  via GetLastError()
  */
 struct ManagerHealthSnapshot {
-    static constexpr size_t kMaxManagers = 8;
+    static constexpr size_t kMaxManagers = kVortexManagerCount;
 
     ManagerHealthEntry entries[kMaxManagers];    ///< Per-manager entries
     size_t count;                                ///< Number of populated entries
@@ -256,7 +264,7 @@ public:
      * @brief Get initialization status for each component
      * @return Array of initialization status (true/false) for each component
      */
-    [[nodiscard]] std::array<bool, 8> GetComponentInitializationStatus() const noexcept;
+    [[nodiscard]] std::array<bool, kVortexManagerCount> GetComponentInitializationStatus() const noexcept;
 
     /**
      * @brief Get list of failed components during initialization
@@ -286,8 +294,11 @@ public:
     //**                  COMPONENT ACCESS                                    **//
     //**************************************************************************//
 
-    /** @brief Communication channels (SPI, I²C, UART, CAN). Initialised first. */
+    /** @brief Communication channels (SPI, I²C, UART, CAN). After NVS. */
     CommChannelsManager& comms;
+
+    /** @brief Non-volatile storage (`vortex` / `vortex_cal` / `vortex_cfg`). Init before comms. */
+    NvsManager& nvs;
 
     /** @brief ESP32 + I/O-expander GPIO pins. Depends on comms. */
     GpioManager& gpio;
@@ -369,50 +380,52 @@ private:
      */
     bool InitializeAllComponents() noexcept;
 
+    bool InitializeNvs() noexcept;
+
     /**
-     * @brief Initialize communication channels (step 1)
+     * @brief Initialize communication channels (step 2)
      * @return true if successful, false otherwise
      */
     bool InitializeComms() noexcept;
 
     /**
-     * @brief Initialize GPIO management (step 2)
+     * @brief Initialize GPIO management (step 3)
      * @return true if successful, false otherwise
      */
     bool InitializeGpio() noexcept;
 
     /**
-     * @brief Initialize motor controllers (step 3)
+     * @brief Initialize motor controllers (step 4)
      * @return true if successful, false otherwise
      */
     bool InitializeMotors() noexcept;
 
     /**
-     * @brief Initialize ADC management (step 4)
+     * @brief Initialize ADC management (step 5)
      * @return true if successful, false otherwise
      */
     bool InitializeAdc() noexcept;
 
     /**
-     * @brief Initialize IMU management (step 5)
+     * @brief Initialize IMU management (step 6)
      * @return true if successful, false otherwise
      */
     bool InitializeImu() noexcept;
 
     /**
-     * @brief Initialize encoder management (step 6)
+     * @brief Initialize encoder management (step 7)
      * @return true if successful, false otherwise
      */
     bool InitializeEncoders() noexcept;
 
     /**
-     * @brief Initialize LED management (step 7)
+     * @brief Initialize LED management (step 8)
      * @return true if successful, false otherwise
      */
     bool InitializeLeds() noexcept;
 
     /**
-     * @brief Initialize temperature management (step 8)
+     * @brief Initialize temperature management (step 9)
      * @return true if successful, false otherwise
      */
     bool InitializeTemperature() noexcept;
@@ -437,6 +450,7 @@ private:
     std::atomic<uint64_t> initialization_end_time_;    ///< Initialization end timestamp
     
     // Component initialization status
+    std::atomic<bool> nvs_initialized_;
     std::atomic<bool> comms_initialized_;
     std::atomic<bool> gpio_initialized_;
     std::atomic<bool> motors_initialized_;

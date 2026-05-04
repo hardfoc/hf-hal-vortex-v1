@@ -12,7 +12,7 @@
 
 # ─── Component Metadata ───────────────────────────────────────────────────────
 name: hf-hal-vortex-v1
-version: "1.0.0"
+version: "1.1.0"
 description: |
   HardFOC Hardware Abstraction Layer for Vortex V1 platform - comprehensive 
   motor control, sensor management, and communication interface. Provides 
@@ -22,9 +22,9 @@ description: |
 
 # ─── External Links ───────────────────────────────────────────────────────────
 url: "https://github.com/hardfoc/hf-hal-vortex-v1"
-repository: "https://github.com/hardfoc/hf-hal-vortex-v1.git"
-documentation: "https://hardfoc.dev/docs/hal"
-issues: "https://github.com/hardfoc/hf-hal-vortex-v1/issues"
+repository: "https://github.com/hardfoc/hf-all-hals.git"
+documentation: "https://github.com/hardfoc/hf-all-hals/blob/main/hf-hal-vortex-v1/README.md"
+issues: "https://github.com/hardfoc/hf-all-hals/issues"
 discussion: "https://github.com/hardfoc/hf-hal-vortex-v1/discussions"
 
 # ─── Licensing and Maintenance ───────────────────────────────────────────────
@@ -131,6 +131,7 @@ files:
 #     - Initialization order management
 #
 #  2. Managers (lib/managers/)
+#     - NvsManager: ESP-IDF NVS (`vortex` / `vortex_cal` / `vortex_cfg`)
 #     - CommChannelsManager: SPI, I2C, UART, CAN interfaces
 #     - GpioManager: Multi-source GPIO management (ESP32, PCAL95555, TMC9660)
 #     - AdcManager: ADC channel management (ESP32, TMC9660)

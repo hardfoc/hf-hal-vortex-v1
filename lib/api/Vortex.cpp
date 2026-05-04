@@ -16,6 +16,7 @@
 #include <cstring>
 
 // Include all component handler headers
+#include "managers/NvsManager.h"
 #include "managers/CommChannelsManager.h"
 #include "managers/GpioManager.h"
 #include "managers/AdcManager.h"
@@ -43,6 +44,7 @@ Vortex& Vortex::GetInstance() noexcept {
 
 Vortex::Vortex() noexcept
     : comms(CommChannelsManager::GetInstance()),
+      nvs(NvsManager::GetInstance()),
       gpio(GpioManager::GetInstance()),
       motors(MotorController::GetInstance()),
       adc(AdcManager::GetInstance()),
@@ -53,6 +55,7 @@ Vortex::Vortex() noexcept
       initialized_(false),
       initialization_start_time_(0),
       initialization_end_time_(0),
+      nvs_initialized_(false),
       comms_initialized_(false),
       gpio_initialized_(false),
       motors_initialized_(false),
@@ -70,7 +73,7 @@ Vortex::Vortex() noexcept
     // Initialize Logger first (this is always available)
     Logger::GetInstance().Initialize();
     
-    Logger::GetInstance().Info("Vortex", "Vortex API singleton created");
+    Logger::GetInstance().Info("Vortex", "Vortex API singleton created (%s)", VORTEX_HAL_VERSION_STRING);
 }
 
 //==============================================================================
@@ -101,7 +104,8 @@ bool Vortex::EnsureInitialized() noexcept {
         Logger::GetInstance().Info("Vortex", "Vortex API initialization completed successfully in %llu ms", init_time_ms);
         
         // Log component status
-        Logger::GetInstance().Info("Vortex", "Component Status - Comms: %s, GPIO: %s, Motors: %s, ADC: %s, IMU: %s, Encoders: %s, LEDs: %s, Temp: %s",
+        Logger::GetInstance().Info("Vortex", "Component Status - NVS: %s, Comms: %s, GPIO: %s, Motors: %s, ADC: %s, IMU: %s, Encoders: %s, LEDs: %s, Temp: %s",
+            nvs_initialized_ ? "OK" : "FAIL",
             comms_initialized_ ? "OK" : "FAIL",
             gpio_initialized_ ? "OK" : "FAIL",
             motors_initialized_ ? "OK" : "FAIL",
@@ -149,8 +153,9 @@ bool Vortex::GetSystemDiagnostics(VortexSystemDiagnostics& diagnostics) const no
     return true;
 }
 
-std::array<bool, 8> Vortex::GetComponentInitializationStatus() const noexcept {
+std::array<bool, kVortexManagerCount> Vortex::GetComponentInitializationStatus() const noexcept {
     return {{
+        nvs_initialized_.load(),
         comms_initialized_.load(),
         gpio_initialized_.load(),
         motors_initialized_.load(),
@@ -186,7 +191,7 @@ bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
     if (!initialized_) return false;
 
     snapshot = ManagerHealthSnapshot{};
-    snapshot.count = 8;
+    snapshot.count = kVortexManagerCount;
     snapshot.all_healthy = true;
     snapshot.managers_with_errors = 0;
 
@@ -204,47 +209,50 @@ bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
         }
     };
 
-    // 1. CommChannelsManager — direct GetLastError()
-    addEntry(0, "CommChannels", comms_initialized_.load(),
+    addEntry(0, "NVS", nvs_initialized_.load(),
+             static_cast<uint8_t>(nvs.GetLastError()));
+
+    // 2. CommChannelsManager — direct GetLastError()
+    addEntry(1, "CommChannels", comms_initialized_.load(),
              static_cast<uint8_t>(comms.GetLastError()));
 
-    // 2. GpioManager — extract from diagnostics
+    // 3. GpioManager — extract from diagnostics
     {
         GpioSystemDiagnostics gdiag{};
         gpio.GetSystemDiagnostics(gdiag);
-        addEntry(1, "GPIO", gpio_initialized_.load(),
+        addEntry(2, "GPIO", gpio_initialized_.load(),
                  static_cast<uint8_t>(gdiag.last_error));
     }
 
-    // 3. MotorController — direct GetLastError()
-    addEntry(2, "Motors", motors_initialized_.load(),
+    // 4. MotorController — direct GetLastError()
+    addEntry(3, "Motors", motors_initialized_.load(),
              static_cast<uint8_t>(motors.GetLastError()));
 
-    // 4. AdcManager — extract from diagnostics
+    // 5. AdcManager — extract from diagnostics
     {
         AdcSystemDiagnostics adiag{};
         adc.GetSystemDiagnostics(adiag);
-        addEntry(3, "ADC", adc_initialized_.load(),
+        addEntry(4, "ADC", adc_initialized_.load(),
                  static_cast<uint8_t>(adiag.last_error));
     }
 
-    // 5. ImuManager — direct GetLastError()
-    addEntry(4, "IMU", imu_initialized_.load(),
+    // 6. ImuManager — direct GetLastError()
+    addEntry(5, "IMU", imu_initialized_.load(),
              static_cast<uint8_t>(imu.GetLastError()));
 
-    // 6. EncoderManager — direct GetLastError()
-    addEntry(5, "Encoders", encoders_initialized_.load(),
+    // 7. EncoderManager — direct GetLastError()
+    addEntry(6, "Encoders", encoders_initialized_.load(),
              static_cast<uint8_t>(encoders.GetLastError()));
 
-    // 7. LedManager — typed GetLastError()
-    addEntry(6, "LEDs", leds_initialized_.load(),
+    // 8. LedManager — typed GetLastError()
+    addEntry(7, "LEDs", leds_initialized_.load(),
              static_cast<uint8_t>(leds.GetLastError()));
 
-    // 8. TemperatureManager — extract from diagnostics
+    // 9. TemperatureManager — extract from diagnostics
     {
         TempSystemDiagnostics tdiag{};
         temp.GetSystemDiagnostics(tdiag);
-        addEntry(7, "Temperature", temp_initialized_.load(),
+        addEntry(8, "Temperature", temp_initialized_.load(),
                  static_cast<uint8_t>(tdiag.last_error));
     }
 
@@ -269,10 +277,12 @@ void Vortex::DumpSystemStatistics() const noexcept {
     }
     
     Logger::GetInstance().Info("Vortex", "=== Vortex API System Statistics ===");
+    Logger::GetInstance().Info("Vortex", "Version: %s  Board: %s  MCU: %s",
+        VORTEX_HAL_VERSION_STRING, VORTEX_HAL_BOARD_NAME, VORTEX_HAL_MCU);
     Logger::GetInstance().Info("Vortex", "System Uptime: %llu ms", GetSystemUptimeMs());
     Logger::GetInstance().Info("Vortex", "Initialization Time: %llu ms", GetInitializationTimeMs());
-    
-    // Dump statistics from all component handlers
+
+    nvs.DumpStatistics();
     comms.DumpStatistics();
     gpio.DumpStatistics();
     motors.DumpStatistics();
@@ -318,7 +328,7 @@ bool Vortex::PerformHealthCheck() noexcept {
 }
 
 const char* Vortex::GetSystemVersion() const noexcept {
-    return "Vortex API v2.0.0 - HardFOC Platform";
+    return "Vortex API v" VORTEX_HAL_VERSION_STRING " - " VORTEX_HAL_BOARD_NAME;
 }
 
 bool Vortex::Shutdown() noexcept {
@@ -329,7 +339,7 @@ bool Vortex::Shutdown() noexcept {
 
     Logger::GetInstance().Info("Vortex", "Shutting down Vortex API (reverse init order)");
 
-    // Reverse initialization order: Temp → LEDs → Encoders → IMU → ADC → Motors → GPIO → Comms
+    // Reverse initialization order: Temp → … → Comms → NVS
     if (temp_initialized_) {
         temp.Deinitialize();
         temp_initialized_ = false;
@@ -362,6 +372,10 @@ bool Vortex::Shutdown() noexcept {
         comms.Deinitialize();
         comms_initialized_ = false;
     }
+    if (nvs_initialized_) {
+        nvs.Deinitialize();
+        nvs_initialized_ = false;
+    }
 
     initialized_ = false;
     failed_components_count_ = 0;
@@ -377,50 +391,55 @@ bool Vortex::Shutdown() noexcept {
 
 bool Vortex::InitializeAllComponents() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing all Vortex components in dependency order");
-    
-    // Step 1: Initialize communication channels (foundation)
+
+    if (!InitializeNvs()) {
+        Logger::GetInstance().Error("Vortex", "Failed to initialize NVS");
+        return false;
+    }
+
+    // Step 2: Initialize communication channels (foundation)
     if (!InitializeComms()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize communication channels");
         return false;
     }
     
-    // Step 2: Initialize GPIO management (depends on CommChannelsManager)
+    // Step 3: Initialize GPIO management (depends on CommChannelsManager)
     if (!InitializeGpio()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize GPIO management");
         return false;
     }
     
-    // Step 3: Initialize motor controllers (depends on CommChannelsManager)
+    // Step 4: Initialize motor controllers (depends on CommChannelsManager)
     if (!InitializeMotors()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize motor controllers");
         return false;
     }
     
-    // Step 4: Initialize ADC management (depends on MotorController)
+    // Step 5: Initialize ADC management (depends on MotorController)
     if (!InitializeAdc()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize ADC management");
         return false;
     }
     
-    // Step 5: Initialize IMU management (depends on CommChannelsManager, GpioManager)
+    // Step 6: Initialize IMU management (depends on CommChannelsManager, GpioManager)
     if (!InitializeImu()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize IMU management");
         return false;
     }
     
-    // Step 6: Initialize encoder management (depends on CommChannelsManager, GpioManager)
+    // Step 7: Initialize encoder management (depends on CommChannelsManager, GpioManager)
     if (!InitializeEncoders()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize encoder management");
         return false;
     }
     
-    // Step 7: Initialize LED management (independent)
+    // Step 8: Initialize LED management (independent)
     if (!InitializeLeds()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize LED management");
         return false;
     }
     
-    // Step 8: Initialize temperature management (depends on AdcManager, MotorController)
+    // Step 9: Initialize temperature management (depends on AdcManager, MotorController)
     if (!InitializeTemperature()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize temperature management");
         return false;
@@ -428,6 +447,24 @@ bool Vortex::InitializeAllComponents() noexcept {
     
     Logger::GetInstance().Info("Vortex", "All Vortex components initialized successfully");
     return true;
+}
+
+bool Vortex::InitializeNvs() noexcept {
+    Logger::GetInstance().Info("Vortex", "Initializing NVS");
+
+    const bool success = nvs.EnsureInitialized();
+    nvs_initialized_ = success;
+
+    if (success) {
+        Logger::GetInstance().Info("Vortex", "NVS initialized successfully");
+    } else {
+        Logger::GetInstance().Error("Vortex", "NVS initialization failed");
+        if (failed_components_count_ < kMaxFailedComponents) {
+            failed_components_[failed_components_count_++] = "NvsManager";
+        }
+    }
+
+    return success;
 }
 
 bool Vortex::InitializeComms() noexcept {
@@ -572,6 +609,7 @@ bool Vortex::InitializeTemperature() noexcept {
 
 void Vortex::UpdateSystemDiagnostics() noexcept {
     // Update component status
+    diagnostics_.nvs_initialized = nvs_initialized_;
     diagnostics_.comms_initialized = comms_initialized_;
     diagnostics_.gpio_initialized = gpio_initialized_;
     diagnostics_.motors_initialized = motors_initialized_;
@@ -583,6 +621,7 @@ void Vortex::UpdateSystemDiagnostics() noexcept {
     
     // Count initialized components
     diagnostics_.initialized_components = 0;
+    if (nvs_initialized_) diagnostics_.initialized_components++;
     if (comms_initialized_) diagnostics_.initialized_components++;
     if (gpio_initialized_) diagnostics_.initialized_components++;
     if (motors_initialized_) diagnostics_.initialized_components++;
