@@ -2,6 +2,9 @@
  * @file motor_controller_test.cpp
  * @brief Motor controller focused test for ESP32
  *
+ * Build twice from the same source: `motor_controller_test` (onboard SPI, default) and
+ * `motor_controller_uart_test` (UART before `EnsureInitialized()` via `Vortex` API).
+ *
  * Deep-dive testing of MotorController:
  *   - Handler access for onboard + external devices
  *   - visitDriver callback pattern
@@ -29,6 +32,28 @@ static auto& MOTORS() noexcept { return VORTEX_API.motors; }
 static bool test_motor_ensure_initialized() noexcept {
   VORTEX_API.EnsureInitialized();
   return MOTORS().EnsureInitialized();
+}
+
+/** After init, onboard handler comm mode must match the build's transport policy (if a device exists). */
+static bool test_onboard_comm_mode_matches_policy() noexcept {
+#if defined(EXAMPLE_TYPE_motor_controller_uart_test) && EXAMPLE_TYPE_motor_controller_uart_test
+  const tmc9660::CommMode expected = tmc9660::CommMode::UART;
+#else
+  const tmc9660::CommMode expected = tmc9660::CommMode::SPI;
+#endif
+  const auto mode = MOTORS().TryGetOnboardCommMode();
+  if (!mode) {
+    return true;  // No onboard TMC9660 — policy check N/A
+  }
+  return (*mode == expected);
+}
+
+static bool test_onboard_transport_matches_build() noexcept {
+#if defined(EXAMPLE_TYPE_motor_controller_uart_test) && EXAMPLE_TYPE_motor_controller_uart_test
+  return Vortex::GetOnboardTmc9660Transport() == VortexOnboardTmc9660Transport::Uart;
+#else
+  return Vortex::GetOnboardTmc9660Transport() == VortexOnboardTmc9660Transport::Spi;
+#endif
 }
 
 static bool test_motor_handler_0() noexcept {
@@ -101,12 +126,23 @@ static bool test_motor_system_diagnostics() noexcept {
 // ── Entry Point ───────────────────────────────────────────────────────────
 
 extern "C" void app_main(void) {
+#if defined(EXAMPLE_TYPE_motor_controller_uart_test) && EXAMPLE_TYPE_motor_controller_uart_test
+  Vortex::SetOnboardTmc9660Transport(VortexOnboardTmc9660Transport::Uart);
+#endif
+
   ESP_LOGI(TAG, "\n");
   ESP_LOGI(TAG, "========================================");
   ESP_LOGI(TAG, "  Motor Controller — Focused Test");
+#if defined(EXAMPLE_TYPE_motor_controller_uart_test) && EXAMPLE_TYPE_motor_controller_uart_test
+  ESP_LOGI(TAG, "  (APP_TYPE=motor_controller_uart_test — onboard UART)");
+#else
+  ESP_LOGI(TAG, "  (APP_TYPE=motor_controller_test — onboard SPI)");
+#endif
   ESP_LOGI(TAG, "========================================\n");
 
+  RUN_TEST(test_onboard_transport_matches_build);
   RUN_TEST(test_motor_ensure_initialized);
+  RUN_TEST(test_onboard_comm_mode_matches_policy);
   RUN_TEST(test_motor_handler_0);
   RUN_TEST(test_motor_handler_1);
   RUN_TEST(test_motor_visit_driver_slot0);

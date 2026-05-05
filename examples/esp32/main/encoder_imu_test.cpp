@@ -21,6 +21,8 @@
 #include "TestFramework.h"
 #include "handlers/bno08x/Bno08xHandler.h"
 
+#include <array>
+
 static const char* TAG = "EncImuTest";
 static TestResults g_test_results;
 
@@ -58,8 +60,10 @@ static bool test_encoder_device_count() noexcept {
 }
 
 static bool test_encoder_active_devices() noexcept {
-  auto active = ENC().GetActiveDeviceIndices();
-  return (active.size() <= 4);
+  std::array<uint8_t, EncoderManager::MAX_ENCODER_DEVICES> indices{};
+  size_t count = 0;
+  ENC().GetActiveDeviceIndices(indices, count);
+  return (count <= 4);
 }
 
 static bool test_encoder_null_safety() noexcept {

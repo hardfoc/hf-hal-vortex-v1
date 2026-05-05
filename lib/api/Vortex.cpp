@@ -29,13 +29,33 @@
 // Include OS abstraction for timing
 #include "RtosMutex.h"
 
+#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
+
 //==============================================================================
 // SINGLETON IMPLEMENTATION
 //==============================================================================
 
+std::atomic<std::uint8_t> Vortex::onboard_tmc9660_transport_{
+    static_cast<std::uint8_t>(VortexOnboardTmc9660Transport::Spi)};
+
 Vortex& Vortex::GetInstance() noexcept {
     static Vortex instance;
     return instance;
+}
+
+void Vortex::SetOnboardTmc9660Transport(VortexOnboardTmc9660Transport transport) noexcept {
+    if (GetInstance().initialized_.load(std::memory_order_acquire)) {
+        Logger::GetInstance().Warn(
+            "Vortex",
+            "SetOnboardTmc9660Transport ignored — call before EnsureInitialized()");
+        return;
+    }
+    onboard_tmc9660_transport_.store(static_cast<std::uint8_t>(transport), std::memory_order_relaxed);
+}
+
+VortexOnboardTmc9660Transport Vortex::GetOnboardTmc9660Transport() noexcept {
+    return static_cast<VortexOnboardTmc9660Transport>(
+        onboard_tmc9660_transport_.load(std::memory_order_relaxed));
 }
 
 //==============================================================================
@@ -408,44 +428,49 @@ bool Vortex::InitializeAllComponents() noexcept {
         Logger::GetInstance().Error("Vortex", "Failed to initialize GPIO management");
         return false;
     }
-    
-    // Step 4: Initialize motor controllers (depends on CommChannelsManager)
-    if (!InitializeMotors()) {
-        Logger::GetInstance().Error("Vortex", "Failed to initialize motor controllers");
-        return false;
-    }
-    
-    // Step 5: Initialize ADC management (depends on MotorController)
-    if (!InitializeAdc()) {
-        Logger::GetInstance().Error("Vortex", "Failed to initialize ADC management");
-        return false;
-    }
-    
-    // Step 6: Initialize IMU management (depends on CommChannelsManager, GpioManager)
-    if (!InitializeImu()) {
-        Logger::GetInstance().Error("Vortex", "Failed to initialize IMU management");
-        return false;
-    }
-    
-    // Step 7: Initialize encoder management (depends on CommChannelsManager, GpioManager)
-    if (!InitializeEncoders()) {
-        Logger::GetInstance().Error("Vortex", "Failed to initialize encoder management");
-        return false;
-    }
-    
-    // Step 8: Initialize LED management (independent)
+
+    // Step 4: LED / status (early — allows WS2812 bench when TMC9660 or sensors are absent)
     if (!InitializeLeds()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize LED management");
         return false;
     }
     
-    // Step 9: Initialize temperature management (depends on AdcManager, MotorController)
+    // Remaining subsystems: best-effort for bench bring-up (log warnings, do not fail API init)
+    if (!InitializeMotors()) {
+        Logger::GetInstance().Warn("Vortex", "Motor controllers not ready (optional for LED-only bench)");
+    }
+    if (!InitializeAdc()) {
+        Logger::GetInstance().Warn("Vortex", "ADC management not ready (TMC9660-dependent)");
+    }
+    if (!InitializeImu()) {
+        Logger::GetInstance().Warn("Vortex", "IMU management not ready");
+    }
+    if (!InitializeEncoders()) {
+        Logger::GetInstance().Warn("Vortex", "Encoder management not ready");
+    }
     if (!InitializeTemperature()) {
-        Logger::GetInstance().Error("Vortex", "Failed to initialize temperature management");
+        Logger::GetInstance().Warn("Vortex", "Temperature management not ready");
+    }
+
+    const bool core_ok =
+        nvs_initialized_ && comms_initialized_ && gpio_initialized_ && leds_initialized_;
+    if (!core_ok) {
+        Logger::GetInstance().Error("Vortex", "Core subsystems incomplete (NVS+Comms+GPIO+LEDs required)");
         return false;
     }
-    
-    Logger::GetInstance().Info("Vortex", "All Vortex components initialized successfully");
+
+    if (!motors_initialized_ || !adc_initialized_ || !imu_initialized_ || !encoders_initialized_ ||
+        !temp_initialized_) {
+        Logger::GetInstance().Warn(
+            "Vortex", "Initialized in degraded mode — Motors:%s ADC:%s IMU:%s Enc:%s Temp:%s",
+            motors_initialized_ ? "OK" : "OFF",
+            adc_initialized_ ? "OK" : "OFF",
+            imu_initialized_ ? "OK" : "OFF",
+            encoders_initialized_ ? "OK" : "OFF",
+            temp_initialized_ ? "OK" : "OFF");
+    } else {
+        Logger::GetInstance().Info("Vortex", "All Vortex components initialized successfully");
+    }
     return true;
 }
 
@@ -502,11 +527,75 @@ bool Vortex::InitializeGpio() noexcept {
 }
 
 bool Vortex::InitializeMotors() noexcept {
-    Logger::GetInstance().Info("Vortex", "Initializing motor controllers");
-    
+    const VortexOnboardTmc9660Transport transport = GetOnboardTmc9660Transport();
+    Logger::GetInstance().Info(
+        "Vortex",
+        "Initializing motor controllers (onboard TMC9660 transport: %s)",
+        transport == VortexOnboardTmc9660Transport::Uart ? "UART" : "SPI");
+
+    // Register onboard TMC9660 once GpioManager has created expander pins — mirrors
+    // hf_functional_pin_config_vortex_v1.hpp. SPI path muxes host SPI to the IC via PCAL;
+    // UART path keeps the mux released (MotorController applies gate from handler comm mode).
+    if (motors.handler(MotorController::ONBOARD_TMC9660_INDEX) == nullptr) {
+        auto rst = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_RST_CTRL);
+        auto drv = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_DRV_EN);
+        auto fault = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_FAULT_STATUS);
+        auto wake = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_WAKE_CTRL);
+        if (rst && drv && fault && wake) {
+            Tmc9660ControlPins pins{*rst, *drv, *fault, *wake};
+            if (transport == VortexOnboardTmc9660Transport::Uart) {
+                BaseUart* uart = comms.GetUartBus();
+                if (uart != nullptr) {
+                    const MotorError reg = motors.CreateOnboardDevice(*uart, 0, pins, nullptr);
+                    if (reg != MotorError::SUCCESS) {
+                        Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(UART) returned %s",
+                            MotorErrorToString(reg));
+                    }
+                } else {
+                    Logger::GetInstance().Warn("Vortex", "TMC9660 UART bus not registered — skip onboard motor");
+                }
+            } else {
+                BaseSpi* spi = comms.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
+                if (spi != nullptr) {
+                    const MotorError reg = motors.CreateOnboardDevice(*spi, 0, pins, nullptr);
+                    if (reg != MotorError::SUCCESS) {
+                        Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(SPI) returned %s",
+                            MotorErrorToString(reg));
+                    }
+                } else {
+                    Logger::GetInstance().Warn("Vortex", "TMC9660 SPI device not registered — skip onboard motor");
+                }
+            }
+        } else {
+            Logger::GetInstance().Warn("Vortex", "PCAL control GPIOs incomplete — skip onboard TMC9660");
+        }
+    }
+
+    // GPIO table is built before motors; TMC9660Handler GPIO17/18 aliases register here.
+    gpio.RegisterTmc9660BridgePinsIfNeeded();
+
     bool success = motors.EnsureInitialized();
     motors_initialized_ = success;
-    
+
+    if (success) {
+        if (motors.GetDeviceCount() == 0) {
+            if (transport == VortexOnboardTmc9660Transport::Uart) {
+                Logger::GetInstance().Warn(
+                    "Vortex",
+                    "UART transport selected but no onboard motor device — "
+                    "check UART wiring and PCAL RST/DRV_EN/FAULT/WAKE");
+            } else {
+                BaseSpi* const tmc_spi = comms.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
+                if (tmc_spi != nullptr) {
+                    Logger::GetInstance().Warn(
+                        "Vortex",
+                        "TMC9660 SPI is configured but no motor device is registered — "
+                        "check PCAL95555 on I2C (0x20) and that RST/DRV_EN/FAULT/WAKE GPIOs registered");
+                }
+            }
+        }
+    }
+
     if (success) {
         Logger::GetInstance().Info("Vortex", "Motor controllers initialized successfully");
     } else {

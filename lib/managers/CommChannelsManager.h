@@ -263,6 +263,32 @@ public:
     bool RemoveI2cDevice(int device_index) noexcept;
 
     //==========================================================================
+    // I2C BUS DIAGNOSTICS — bring-up helpers
+    //==========================================================================
+
+    /**
+     * @brief Probe a single 7-bit address on the primary I²C bus.
+     * @param address 7-bit slave address (0x08 .. 0x77).
+     * @param timeout_ms Per-probe timeout in ms (default 25 ms).
+     * @return true if the device ACKs.
+     */
+    [[nodiscard]] bool I2cProbeAddress(uint8_t address, uint32_t timeout_ms = 25) noexcept;
+
+    /**
+     * @brief Scan the primary I²C bus and copy ACKing addresses into @p out.
+     * @param out Buffer to receive the discovered addresses.
+     * @param max_results Maximum number of entries to write into @p out.
+     * @return Number of devices that ACKed (also size of @p out written).
+     */
+    size_t I2cScanBus(uint8_t* out, size_t max_results) noexcept;
+
+    /**
+     * @brief Reset the I²C peripheral / clear-bus sequence (only attempts when bus is up).
+     * @return true on success.
+     */
+    bool I2cResetBus() noexcept;
+
+    //==========================================================================
     // UART / CAN ACCESSORS
     //==========================================================================
 

@@ -89,7 +89,7 @@ if (vortex.EnsureInitialized()) {
     // GPIO operations with string lookup
     vortex.gpio.Set("GPIO_EXT_GPIO_CS_1", true);
     bool state;
-    vortex.gpio.Read("GPIO_PCAL_GPIO17", state);
+    vortex.gpio.Read("GPIO_PCAL_TMC_GPIO17_EXP_IN", state);
     
     // ADC operations with string lookup
     float voltage, current;
@@ -287,7 +287,7 @@ struct VortexSystemDiagnostics {
 
 ### Complete Example
 
-See `examples/VortexApiExample.cpp` for a comprehensive demonstration of all Vortex API features.
+See `examples/esp32/main/vortex_api_test.cpp` for the hardware integration test that exercises the full Vortex API surface.
 
 ### Minimal Example
 
@@ -387,12 +387,10 @@ The API is designed for extensibility:
 - Specialized diagnostic information
 - Platform-specific optimizations
 
-## 📚 Related Documentation
+## Related documentation
 
-- [Component Handlers Documentation](../component-handlers/)
-- [Driver Handlers Documentation](../utils-and-drivers/driver-handlers/)
-- [Core Utils Documentation](../utils-and-drivers/hf-core-utils/)
-- [Core Drivers Documentation](../utils-and-drivers/hf-core-drivers/)
+- [HAL documentation hub](../hal/README.md) — architecture and manager ↔ handler map
+- [hf-core](https://github.com/hardfoc/hf-core) submodule under `lib/core/` — handlers, drivers, utils
 
 ## 🤝 Contributing
 

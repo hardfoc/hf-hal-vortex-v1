@@ -182,8 +182,12 @@ LedError LedManager::StartAnimation(LedAnimation animation, const LedColor& colo
         default: break;
     }
 
-    UpdateStatistics(true);
-    return LedError::SUCCESS;
+    // First frame: UpdateAnimation() rate-limits to ANIMATION_UPDATE_INTERVAL, so without
+    // this STATUS_OK / SOLID never hit the strip and the previous test colour could stick.
+    const LedError first = UpdateAnimationStep();
+    last_animation_update_ = GetSystemUptimeMs();
+    UpdateStatistics(first == LedError::SUCCESS);
+    return first;
 }
 
 LedError LedManager::StopAnimation() noexcept {
@@ -313,6 +317,9 @@ LedError LedManager::UpdateAnimationStep() noexcept {
         }
         case LedAnimation::SOLID:
         case LedAnimation::STATUS_OK:
+            led_strip_->SetPixel(0, current_color_.ToRgb());
+            if (led_strip_->Show() != ESP_OK) return LedError::ANIMATION_FAILED;
+            break;
         default:
             break;
     }

@@ -54,6 +54,8 @@ bool AdcManager::Deinitialize() noexcept {
     tmc9660_adc_.reset();
     motor_controller_ = nullptr;
     last_error_.store(hf_adc_err_t::ADC_SUCCESS, std::memory_order_release);
+    warned_motor_controller_not_ready_.store(false, std::memory_order_release);
+    warned_tmc_handler_missing_.store(false, std::memory_order_release);
     initialized_.store(false, std::memory_order_release);
     return true;
 }
@@ -67,13 +69,23 @@ bool AdcManager::Initialize() noexcept {
 
     motor_controller_ = &MotorController::GetInstance();
     if (!motor_controller_ || !motor_controller_->IsInitialized()) {
-        Logger::GetInstance().Error(TAG, "MotorController not available or not initialized");
+        if (!warned_motor_controller_not_ready_.exchange(true, std::memory_order_acq_rel)) {
+            Logger::GetInstance().Warn(
+                TAG,
+                "MotorController not ready — TMC9660-hosted ADC unavailable (expected in degraded "
+                "bring-up)");
+        }
         return false;
     }
 
     Tmc9660Handler* handler = motor_controller_->handler(0);
     if (!handler) {
-        Logger::GetInstance().Error(TAG, "TMC9660 handler not available from MotorController");
+        if (!warned_tmc_handler_missing_.exchange(true, std::memory_order_acq_rel)) {
+            Logger::GetInstance().Warn(
+                TAG,
+                "TMC9660 handler unavailable — TMC-hosted ADC disabled (often missing PCAL95555 on "
+                "I²C 0x20 or motor comm GPIOs)");
+        }
         return false;
     }
 

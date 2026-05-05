@@ -2,6 +2,9 @@
  * @file led_temp_test.cpp
  * @brief LED & Temperature manager focused test for ESP32
  *
+ * For full-board HAL integration patterns (GPIO, ADC, comms, motors, IMU,
+ * encoders, LEDs, temperature in one run), build and flash `vortex_api_test`.
+ *
  * Deep-dive testing of LedManager and TemperatureManager:
  *   - LED status, color, brightness, animation APIs
  *   - Temperature multi-sensor reads (ESP32, NTC, motor)
@@ -66,13 +69,13 @@ static bool test_temp_ensure_initialized() noexcept {
 
 static bool test_temp_read_esp32_internal() noexcept {
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("ESP32_INTERNAL", &celsius);
+  [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("ESP32_INTERNAL", celsius);
   return true;
 }
 
 static bool test_temp_read_ntc() noexcept {
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("NTC_THERMISTOR", &celsius);
+  [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("NTC_THERMISTOR", celsius);
   return true;
 }
 
@@ -84,7 +87,7 @@ static bool test_temp_read_motor() noexcept {
 
 static bool test_temp_read_invalid_sensor() noexcept {
   float celsius = 0.0f;
-  auto err = TEMP().ReadTemperatureCelsius("NONEXISTENT_SENSOR_XYZ", &celsius);
+  auto err = TEMP().ReadTemperatureCelsius("NONEXISTENT_SENSOR_XYZ", celsius);
   (void)err;
   return true;
 }
@@ -93,14 +96,14 @@ static bool test_temp_rapid_read_stress() noexcept {
   constexpr int kIterations = 200;
   float celsius = 0.0f;
   for (int i = 0; i < kIterations; ++i) {
-    [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("ESP32_INTERNAL", &celsius);
+    [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("ESP32_INTERNAL", celsius);
   }
   return true;
 }
 
 static bool test_temp_range_sanity() noexcept {
   float celsius = -999.0f;
-  auto err = TEMP().ReadTemperatureCelsius("ESP32_INTERNAL", &celsius);
+  auto err = TEMP().ReadTemperatureCelsius("ESP32_INTERNAL", celsius);
   if (err == hf_temp_err_t::TEMP_SUCCESS && (celsius < -40.0f || celsius > 125.0f)) {
     return false;  // Wildly out of range
   }

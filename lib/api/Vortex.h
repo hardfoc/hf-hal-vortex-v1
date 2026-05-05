@@ -33,12 +33,16 @@
  * 1. NvsManager (flash key-value — before buses so config/cal is available early)
  * 2. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
  * 3. GpioManager (depends on CommChannelsManager)
- * 4. AdcManager (depends on MotorController)
- * 5. MotorController (depends on CommChannelsManager)
- * 6. ImuManager (depends on CommChannelsManager, GpioManager)
- * 7. EncoderManager (depends on CommChannelsManager, GpioManager)
- * 8. LedManager (independent)
+ * 4. LedManager (WS2812 / status — early so LED-only benches work without TMC9660)
+ * 5. MotorController (depends on CommChannelsManager; onboard SPI vs UART via
+ *    `SetOnboardTmc9660Transport()` before `EnsureInitialized()`)
+ * 6. AdcManager (depends on MotorController)
+ * 7. ImuManager (depends on CommChannelsManager, GpioManager)
+ * 8. EncoderManager (depends on CommChannelsManager, GpioManager)
  * 9. TemperatureManager (depends on AdcManager, MotorController)
+ *
+ * @note Steps 5–9 are best-effort: `EnsureInitialized()` succeeds when NVS, comms, GPIO,
+ *       and LEDs are up; motor / sensor failures produce warnings and degraded diagnostics.
  * 
  * Usage Example:
  * @code
@@ -91,6 +95,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 
@@ -111,6 +116,19 @@ class TemperatureManager;
 
 /** @brief Number of subsystem managers on `Vortex` (including NVS). */
 inline constexpr size_t kVortexManagerCount = 9;
+
+/**
+ * @brief Host physical layer used for the onboard TMC9660 during `Vortex::InitializeMotors()`.
+ *
+ * @details Vortex always exposes a UART to the TMC9660. SPI to the motor IC is muxed
+ *          (`PCAL_TMC_SPI_COMM_EN`); `MotorController` asserts it only for SPI handlers.
+ *          Call `SetOnboardTmc9660Transport()` before `EnsureInitialized()` to pick UART
+ *          (bootloader/TMCL over UART, SPI segment released) vs SPI (default).
+ */
+enum class VortexOnboardTmc9660Transport : std::uint8_t {
+    Spi = 0,
+    Uart = 1,
+};
 
 //==============================================================================
 // VORTEX SYSTEM DIAGNOSTICS
@@ -224,6 +242,15 @@ public:
      */
     static Vortex& GetInstance() noexcept;
 
+    /**
+     * @brief Select onboard TMC9660 transport before the first `EnsureInitialized()`.
+     * @note If `EnsureInitialized()` has already completed, the call is ignored and a warning is logged.
+     */
+    static void SetOnboardTmc9660Transport(VortexOnboardTmc9660Transport transport) noexcept;
+
+    /** @brief Effective transport for `InitializeMotors()` (default: Spi). */
+    [[nodiscard]] static VortexOnboardTmc9660Transport GetOnboardTmc9660Transport() noexcept;
+
     // Non-copyable, non-movable
     Vortex(const Vortex&) = delete;
     Vortex& operator=(const Vortex&) = delete;
@@ -306,7 +333,7 @@ public:
     /** @brief TMC9660 motor controllers. Depends on comms. */
     MotorController& motors;
 
-    /** @brief ADC channels (ADS7952 + ESP32). Depends on motors. */
+    /** @brief ADC channels (Vortex: TMC9660-hosted path; see AdcManager). Depends on motors. */
     AdcManager& adc;
 
     /** @brief BNO08x IMU sensors. Depends on comms and gpio. */
@@ -395,31 +422,31 @@ private:
     bool InitializeGpio() noexcept;
 
     /**
-     * @brief Initialize motor controllers (step 4)
+     * @brief Initialize motor controllers (step 5 — after GPIO + LEDs)
      * @return true if successful, false otherwise
      */
     bool InitializeMotors() noexcept;
 
     /**
-     * @brief Initialize ADC management (step 5)
+     * @brief Initialize ADC management (step 6)
      * @return true if successful, false otherwise
      */
     bool InitializeAdc() noexcept;
 
     /**
-     * @brief Initialize IMU management (step 6)
+     * @brief Initialize IMU management (step 7)
      * @return true if successful, false otherwise
      */
     bool InitializeImu() noexcept;
 
     /**
-     * @brief Initialize encoder management (step 7)
+     * @brief Initialize encoder management (step 8)
      * @return true if successful, false otherwise
      */
     bool InitializeEncoders() noexcept;
 
     /**
-     * @brief Initialize LED management (step 8)
+     * @brief Initialize LED management (step 4 — early for LED-only benches)
      * @return true if successful, false otherwise
      */
     bool InitializeLeds() noexcept;
@@ -469,6 +496,9 @@ private:
     mutable size_t system_warnings_count_{0};
     mutable const char* failed_components_[kMaxFailedComponents]{};
     mutable size_t failed_components_count_{0};
+
+    /** 0 = Spi, 1 = Uart — must match `VortexOnboardTmc9660Transport` enumerators. */
+    static std::atomic<std::uint8_t> onboard_tmc9660_transport_;
     
     // Component references (these are references to singletons, not owned)
     // NOTE: Removed duplicate _ref_ members - public refs serve both roles

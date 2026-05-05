@@ -4,8 +4,13 @@
  *
  * @details Multi-chip GPIO initialization:
  *          - ESP32 internal: make_shared<EspGpio>(...)
- *          - PCAL95555 expander: Pcal95555Handler::CreateGpioPin(...)
- *          - TMC9660 controller: non-owning alias to handler->gpio(pin_id)
+ *          - PCAL95555 expander: Pcal95555Handler::CreateGpioPin(...) — includes host→TMC control
+ *            outputs (`PCAL_TMC_DRV_EN`, `PCAL_TMC_RST_CTRL`, `PCAL_TMC_SPI_COMM_EN`,
+ *            `PCAL_TMC_SHARED_FLASH_HOLD`, `PCAL_TMC_WAKE_CTRL`) and inputs (`PCAL_TMC_FAULT_STATUS`,
+ *            `PCAL_PWR_GOOD`, `PCAL_IMU_INT`), plus TMC GPIO17/18 on PCAL P1–P2 as `PCAL_TMC_GPIO17_EXP_IN` /
+ *            `PCAL_TMC_GPIO18_EXP_IN`.
+ *          - TMC9660 controller: non-owning alias to handler->gpio(17|18), registered after
+ *            MotorController::CreateOnboardDevice() via RegisterTmc9660BridgePinsIfNeeded()
  *
  * @version 2.0
  */
@@ -19,7 +24,25 @@
 #include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 static constexpr const char* TAG = "VortexGpio";
+
+/** PCAL95555 lines that are inputs on Vortex (fault, power-good, IMU INT, TMC GPIO17/18 feeds). */
+static hf_gpio_direction_t pcal_pin_direction(size_t map_index) noexcept {
+    const auto pin = static_cast<HfFunctionalGpioPin>(map_index);
+    switch (pin) {
+        case HfFunctionalGpioPin::PCAL_TMC_FAULT_STATUS:
+        case HfFunctionalGpioPin::PCAL_PWR_GOOD:
+        case HfFunctionalGpioPin::PCAL_IMU_INT:
+        case HfFunctionalGpioPin::PCAL_TMC_GPIO17_EXP_IN:
+        case HfFunctionalGpioPin::PCAL_TMC_GPIO18_EXP_IN:
+            return hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT;
+        default:
+            return hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT;
+    }
+}
 
 //==============================================================================
 // SINGLETON
@@ -63,7 +86,11 @@ bool GpioManager::Deinitialize() noexcept {
     successful_ops_ = 0;
     failed_ops_ = 0;
     last_error_ = hf_gpio_err_t::GPIO_SUCCESS;
+    if (pcal95555_handler_) {
+        (void)pcal95555_handler_->EnsureDeinitialized();
+    }
     pcal95555_handler_.reset();
+    pcal_host_int_gpio_.reset();
     motor_controller_ = nullptr;
     initialized_.store(false, std::memory_order_release);
     return true;
@@ -82,11 +109,18 @@ bool GpioManager::Initialize() noexcept {
         return false;
     }
 
-    // Obtain MotorController for TMC9660 GPIO bridge
-    motor_controller_ = &MotorController::GetInstance();
-    if (!motor_controller_->EnsureInitialized()) {
-        Logger::GetInstance().Warn(TAG, "MotorController init failed — TMC9660 GPIO will be unavailable");
+    // Bring up PCAL95555 on I²C before MotorController so the first expander traffic is
+    // not interleaved with long SPI/TMCL bring-up (matches hf-pcal95555-driver examples).
+    if (!EnsurePcal95555Handler()) {
+        Logger::GetInstance().Warn(
+            TAG,
+            "PCAL95555 early init failed — expander GPIO will be unavailable until bus is fixed");
     }
+
+    // MotorController onboard handler is created later in Vortex::InitializeMotors() — do not call
+    // EnsureInitialized() here (no device slots yet). TMC9660 GPIO17/18 are registered then via
+    // RegisterTmc9660BridgePinsIfNeeded().
+    motor_controller_ = &MotorController::GetInstance();
 
     // Iterate all pins defined in the platform pin config
     for (size_t i = 0; i < HF_GPIO_MAPPING_SIZE; ++i) {
@@ -153,7 +187,7 @@ bool GpioManager::Initialize() noexcept {
 
                 gpio = pcal95555_handler_->CreateGpioPin(
                     static_cast<hf_pin_num_t>(m.physical_pin),
-                    hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT,
+                    pcal_pin_direction(i),
                     active, out, pull);
                 break;
             }
@@ -161,8 +195,8 @@ bool GpioManager::Initialize() noexcept {
             case HfGpioChipType::TMC9660_CONTROLLER: {
                 Tmc9660Handler* handler = GetTmc9660Handler(m.chip_unit);
                 if (!handler) {
-                    Logger::GetInstance().Error(TAG, "TMC9660 handler unavailable for %.*s",
-                                               static_cast<int>(m.name.size()), m.name.data());
+                    // Expected on first boot: Vortex runs GPIO init before CreateOnboardDevice().
+                    // RegisterTmc9660BridgePinsIfNeeded() fills these slots after motors are wired up.
                     break;
                 }
                 if (m.physical_pin != 17 && m.physical_pin != 18) {
@@ -194,8 +228,13 @@ bool GpioManager::Initialize() noexcept {
                                       static_cast<int>(m.name.size()), m.name.data(),
                                       m.chip_type, m.physical_pin);
         } else {
-            Logger::GetInstance().Error(TAG, "Failed to create GPIO: %.*s",
-                                       static_cast<int>(m.name.size()), m.name.data());
+            const auto chip_fail = static_cast<HfGpioChipType>(m.chip_type);
+            if (chip_fail == HfGpioChipType::TMC9660_CONTROLLER && !GetTmc9660Handler(m.chip_unit)) {
+                // TMC bridge pins: no handler yet (Vortex GPIO phase before motors) — no error.
+            } else {
+                Logger::GetInstance().Error(TAG, "Failed to create GPIO: %.*s",
+                                           static_cast<int>(m.name.size()), m.name.data());
+            }
         }
     }
 
@@ -223,9 +262,46 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
         return false;
     }
 
-    pcal95555_handler_ = std::make_unique<Pcal95555Handler>(*i2c_device);
+    // Host GPIO for expander /INT (open-drain, active low). Vortex pincfg: GPIO23.
+    if (!pcal_host_int_gpio_) {
+        const HfGpioMapping* m = GetGpioMapping(HfFunctionalGpioPin::I2C_PCAL95555_INT);
+        if (m != nullptr) {
+            const hf_gpio_pull_mode_t pull =
+                m->has_pull ? (m->pull_is_up ? hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP
+                                             : hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_DOWN)
+                            : hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_FLOATING;
+            const hf_gpio_active_state_t active =
+                m->is_inverted ? hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW
+                               : hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH;
+            const hf_gpio_output_mode_t out_mode =
+                m->is_push_pull ? hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL
+                                : hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_OPEN_DRAIN;
+            auto esp = std::make_shared<EspGpio>(static_cast<hf_pin_num_t>(m->physical_pin),
+                                                 hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT, active,
+                                                 out_mode, pull);
+            if (esp->EnsureInitialized()) {
+                pcal_host_int_gpio_ = std::move(esp);
+                Logger::GetInstance().Info(
+                    TAG,
+                    "PCAL95555 host INT: GPIO%u (COMM_I2C_PCAL95555_INT); A0–A2 tied GND → 7-bit 0x20",
+                    static_cast<unsigned>(m->physical_pin));
+            } else {
+                Logger::GetInstance().Warn(
+                    TAG,
+                    "PCAL95555 host INT GPIO%u init failed — handler uses polling for expander IRQ",
+                    static_cast<unsigned>(m->physical_pin));
+            }
+        }
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(1));
+
+    BaseGpio* const int_pin = pcal_host_int_gpio_ ? pcal_host_int_gpio_.get() : nullptr;
+    pcal95555_handler_ = std::make_unique<Pcal95555Handler>(*i2c_device, int_pin);
     if (!pcal95555_handler_->EnsureInitialized()) {
-        Logger::GetInstance().Error(TAG, "PCAL95555 handler initialization failed");
+        Logger::GetInstance().Error(
+            TAG,
+            "PCAL95555 handler initialization failed (I2C 0x20, pull-ups, INT GPIO23, chip power)");
         pcal95555_handler_.reset();
         return false;
     }
@@ -233,14 +309,76 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
     return true;
 }
 
+hf_gpio_err_t GpioManager::DebugReadPcal95555Pin(uint8_t expander_pin, bool& out_level) noexcept {
+    if (expander_pin >= 16) {
+        return hf_gpio_err_t::GPIO_ERR_INVALID_PIN;
+    }
+    if (!EnsurePcal95555Handler()) {
+        return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    }
+    if (!pcal95555_handler_->EnsureInitialized()) {
+        return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    }
+    return pcal95555_handler_->ReadInput(expander_pin, out_level);
+}
+
 Tmc9660Handler* GpioManager::GetTmc9660Handler(uint8_t device_index) noexcept {
     if (!motor_controller_) {
         motor_controller_ = &MotorController::GetInstance();
     }
-    if (!motor_controller_->EnsureInitialized()) {
-        return nullptr;
-    }
+    // Do not require MotorController::EnsureInitialized() here: that waits for a
+    // successful TMC9660 bootloader bring-up. GPIO code only needs the handler object
+    // once MotorController has registered the onboard device (even if init failed).
     return motor_controller_->handler(device_index);
+}
+
+void GpioManager::RegisterTmc9660BridgePinsIfNeeded() noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) {
+        return;
+    }
+    if (!motor_controller_) {
+        motor_controller_ = &MotorController::GetInstance();
+    }
+    Tmc9660Handler* const h = motor_controller_->handler(0);
+    if (!h) {
+        return;
+    }
+
+    for (size_t i = 0; i < HF_GPIO_MAPPING_SIZE; ++i) {
+        const auto& m = HF_GPIO_MAPPING[i];
+        const auto category = static_cast<HfPinCategory>(m.category);
+        if (!should_register_as_gpio(category)) {
+            continue;
+        }
+        if (m.chip_unit != 0 || m.gpio_bank != 0) {
+            continue;
+        }
+        if (static_cast<HfGpioChipType>(m.chip_type) != HfGpioChipType::TMC9660_CONTROLLER) {
+            continue;
+        }
+        if (m.physical_pin != 17 && m.physical_pin != 18) {
+            continue;
+        }
+        if (entries_[i].registered) {
+            continue;
+        }
+
+        BaseGpio& ref = h->gpio(static_cast<uint8_t>(m.physical_pin));
+        std::shared_ptr<BaseGpio> gpio = std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, &ref);
+        if (m.is_inverted) {
+            gpio->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+        }
+
+        auto& entry = entries_[i];
+        entry.driver = std::move(gpio);
+        entry.functional_pin = static_cast<HfFunctionalGpioPin>(i);
+        entry.registered = true;
+        ++registered_count_;
+        Logger::GetInstance().Info(TAG, "Registered GPIO: %.*s (chip=%u, pin=%u) (TMC bridge, deferred)",
+                                  static_cast<int>(m.name.size()), m.name.data(), m.chip_type,
+                                  m.physical_pin);
+    }
 }
 
 //==============================================================================
@@ -266,7 +404,19 @@ std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
 std::shared_ptr<BaseGpio> GpioManager::Get(HfFunctionalGpioPin pin) noexcept {
     if (!initialized_.load(std::memory_order_acquire)) return nullptr;
     size_t idx = static_cast<size_t>(pin);
-    if (idx >= kMaxEntries || !entries_[idx].registered) return nullptr;
+    if (idx >= kMaxEntries) return nullptr;
+
+    if (!entries_[idx].registered &&
+        (pin == HfFunctionalGpioPin::TMC_GPIO17 || pin == HfFunctionalGpioPin::TMC_GPIO18)) {
+        Tmc9660Handler* h = GetTmc9660Handler(0);
+        if (h) {
+            const int tmc_pin = (pin == HfFunctionalGpioPin::TMC_GPIO17) ? 17 : 18;
+            BaseGpio& ref = h->gpio(tmc_pin);
+            return std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, &ref);
+        }
+    }
+
+    if (!entries_[idx].registered) return nullptr;
     return entries_[idx].driver;
 }
 

@@ -561,6 +561,12 @@ private:
      */
     GpioManager* gpio_manager_ = nullptr;
 
+    /**
+     * @brief PCAL95555 nets for onboard BNO08x (Vortex): RSTN and INT — kept alive for handler lifetime.
+     */
+    std::shared_ptr<BaseGpio> onboard_bno_reset_gpio_shared_{};
+    std::shared_ptr<BaseGpio> onboard_bno_int_gpio_shared_{};
+
     // ===============================
     // INTERRUPT SUPPORT
     // ===============================

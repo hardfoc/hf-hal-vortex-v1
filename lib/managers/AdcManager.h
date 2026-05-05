@@ -256,6 +256,10 @@ private:
 
     std::atomic<bool> initialized_{false};
     std::atomic<hf_adc_err_t> last_error_{hf_adc_err_t::ADC_SUCCESS};
+    /// Avoid repeating the same dependency warning when EnsureInitialized() is called from
+    /// multiple subsystems (e.g. Vortex API then TemperatureManager) after a failed boot.
+    std::atomic<bool> warned_motor_controller_not_ready_{false};
+    std::atomic<bool> warned_tmc_handler_missing_{false};
     mutable RtosMutex mutex_;
 };
 

@@ -57,7 +57,7 @@ set(MAIN_REQUIRES
 # =============================================================================
 idf_component_register(
     SRCS "${APP_SOURCE_FILE}"
-    INCLUDE_DIRS "."
+    INCLUDE_DIRS "." "common"
     REQUIRES ${MAIN_REQUIRES}
 )
 

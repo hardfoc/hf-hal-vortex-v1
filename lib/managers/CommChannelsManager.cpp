@@ -20,6 +20,9 @@
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 #include "handlers/logger/Logger.h"
 
+#include <algorithm>
+#include <vector>
+
 static constexpr const char* TAG = "VortexComm";
 
 /// CS pin configuration — order matches SpiDeviceId enum.
@@ -182,41 +185,63 @@ bool CommChannelsManager::Initialize() noexcept {
             i2c_cfg.flags.enable_internal_pullup = sda_map->has_pull && scl_map->has_pull;
             i2c_cfg.clk_source = hf_i2c_clock_source_t::HF_I2C_CLK_SRC_DEFAULT;
             i2c_cfg.glitch_ignore_cnt = hf_i2c_glitch_filter_t::HF_I2C_GLITCH_FILTER_7_CYCLES;
-            i2c_cfg.trans_queue_depth = 8;
-            i2c_cfg.intr_priority = 5;
+            // SYNC mode → trans_queue_depth must be 0 (EspI2cBus enforces this and
+            // logs a warning when non-zero). ESP-IDF v5.5 returns ESP_ERR_INVALID_STATE
+            // from i2c_master_transmit_receive when sync APIs run on an async-configured
+            // bus, which manifests as the "clear bus failed / reset hardware failed"
+            // chain we previously saw on hardware.
+            i2c_cfg.trans_queue_depth = 0;
+            // ESP32-C6 / IDF: priority 5 is rejected by i2c_new_master_bus ("invalid interrupt priority").
+            // 0 selects the driver default (matches EspI2c comprehensive tests on this platform).
+            i2c_cfg.intr_priority = 0;
             i2c_cfg.flags.allow_pd = false;
 
             i2c_bus_ = std::make_unique<EspI2cBus>(i2c_cfg);
             if (i2c_bus_ && i2c_bus_->Initialize()) {
                 i2c_bus_valid_ = true;
-                Logger::GetInstance().Info(TAG, "I2C bus configured (SDA=GPIO%d, SCL=GPIO%d, 400kHz)",
+                Logger::GetInstance().Info(TAG, "I2C bus configured (SDA=GPIO%d, SCL=GPIO%d, sync mode)",
                                           sda_map->physical_pin, scl_map->physical_pin);
+                // EspI2cBus::Initialize() already ran i2c_master_bus_reset once. A second
+                // reset here often logs "clear bus failed" / ESP_ERR_INVALID_STATE on
+                // ESP32-C6 without improving bring-up — skip to keep the first PCAL xfer clean.
+
+                // 100 kHz for the shared I²C bus by default — matches the proven
+                // PCAL95555 / BNO08x bring-up examples and is far more tolerant of
+                // weak (internal) pull-ups during board bring-up.
+                constexpr uint32_t kBuiltinSclHz = 100000;
+
+                auto add_builtin_device = [&](I2cDeviceId id, uint8_t addr,
+                                              const char* name) noexcept {
+                    hf_i2c_device_config_t dev = {};
+                    dev.device_address    = addr;
+                    dev.dev_addr_length   = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
+                    dev.scl_speed_hz      = kBuiltinSclHz;
+                    dev.disable_ack_check = false;
+
+                    int idx = i2c_bus_->CreateDevice(dev);
+                    i2c_builtin_indices_[static_cast<uint8_t>(id)] = idx;
+                    if (idx < 0) {
+                        Logger::GetInstance().Error(TAG,
+                                                    "%s I2C device add FAILED (addr=0x%02X)",
+                                                    name, addr);
+                        return;
+                    }
+
+                    BaseI2c* dev_iface = i2c_bus_->GetDevice(idx);
+                    bool inited = dev_iface && dev_iface->EnsureInitialized();
+                    Logger::GetInstance().Info(
+                        TAG,
+                        "%s I2C device added (addr=0x%02X, idx=%d, scl=%lu Hz, ready=%s)",
+                        name, addr, idx, static_cast<unsigned long>(kBuiltinSclHz),
+                        inited ? "yes" : "no");
+                };
 
                 // Device 0: BNO08x IMU @ 0x4A
-                {
-                    hf_i2c_device_config_t dev = {};
-                    dev.device_address   = 0x4A;
-                    dev.dev_addr_length  = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
-                    dev.scl_speed_hz     = 400000;
-                    dev.disable_ack_check = false;
-
-                    int idx = i2c_bus_->CreateDevice(dev);
-                    i2c_builtin_indices_[static_cast<uint8_t>(I2cDeviceId::BNO08X_IMU)] = idx;
-                    Logger::GetInstance().Info(TAG, "BNO08x IMU I2C device added (addr=0x4A, idx=%d)", idx);
-                }
+                add_builtin_device(I2cDeviceId::BNO08X_IMU, 0x4A, "BNO08x IMU");
 
                 // Device 1: PCAL95555 GPIO expander @ 0x20
-                {
-                    hf_i2c_device_config_t dev = {};
-                    dev.device_address   = 0x20;
-                    dev.dev_addr_length  = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
-                    dev.scl_speed_hz     = 400000;
-                    dev.disable_ack_check = false;
-
-                    int idx = i2c_bus_->CreateDevice(dev);
-                    i2c_builtin_indices_[static_cast<uint8_t>(I2cDeviceId::PCAL9555_GPIO_EXPANDER)] = idx;
-                    Logger::GetInstance().Info(TAG, "PCAL95555 I2C device added (addr=0x20, idx=%d)", idx);
-                }
+                add_builtin_device(I2cDeviceId::PCAL9555_GPIO_EXPANDER, 0x20,
+                                   "PCAL95555");
             } else {
                 Logger::GetInstance().Error(TAG, "I2C bus initialization failed");
                 i2c_bus_.reset();
@@ -408,6 +433,42 @@ bool CommChannelsManager::RemoveI2cDevice(int device_index) noexcept {
 
     Logger::GetInstance().Error(TAG, "I2C device index %d not found", device_index);
     return false;
+}
+
+//==============================================================================
+// I2C BUS DIAGNOSTICS
+//==============================================================================
+
+bool CommChannelsManager::I2cProbeAddress(uint8_t address, uint32_t timeout_ms) noexcept {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+        return false;
+    }
+    return i2c_bus_->ProbeDevice(static_cast<uint16_t>(address),
+                                 static_cast<uint32_t>(timeout_ms));
+}
+
+size_t CommChannelsManager::I2cScanBus(uint8_t* out, size_t max_results) noexcept {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+        return 0;
+    }
+    if (out == nullptr || max_results == 0) {
+        return 0;
+    }
+
+    std::vector<uint16_t> found;
+    const size_t total = i2c_bus_->ScanDevices(found, 0x08, 0x77, /*timeout_ms*/ 25);
+    const size_t copy_count = std::min(total, max_results);
+    for (size_t i = 0; i < copy_count; ++i) {
+        out[i] = static_cast<uint8_t>(found[i] & 0x7F);
+    }
+    return copy_count;
+}
+
+bool CommChannelsManager::I2cResetBus() noexcept {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+        return false;
+    }
+    return i2c_bus_->ResetBus();
 }
 
 //==============================================================================

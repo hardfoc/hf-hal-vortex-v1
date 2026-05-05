@@ -7,6 +7,7 @@
 #include <memory>
 #include <array>
 #include <atomic>
+#include <optional>
 
 /**
  * @file MotorController.h
@@ -65,6 +66,20 @@ enum class MotorError : uint8_t {
     INVALID_PARAMETER,        ///< Null pointer or out-of-range argument
     HANDLER_CREATION_FAILED,  ///< Heap allocation or handler init failed
     MUTEX_LOCK_FAILED         ///< RTOS mutex acquire timed out
+};
+
+/**
+ * @brief Vortex-style host SPI steering to the onboard TMC9660 (PCAL95555 outputs).
+ *
+ * @details On Vortex, `PCAL_TMC_SPI_COMM_EN` (TMC_COMM_ENn, active-low) connects the ESP32 SPI
+ *          master to the TMC9660 when asserted (`SetActive`). When deasserted, the motor IC
+ *          can use its side of the bus (e.g. toward external flash) while the host uses UART.
+ *          Optional `PCAL_TMC_SHARED_FLASH_HOLD` asserts active-low HOLD on shared SPI flash
+ *          while the host talks to the motor over SPI so the flash does not interpret traffic.
+ */
+enum class Tmc9660HostSpiGateMode : uint8_t {
+    Disabled = 0,                 ///< Gate off, flash HOLD released (UART / idle / TMC↔flash).
+    EnabledForHostSpiMotor = 1    ///< Host SPI to TMC9660; assert shared flash HOLD if mapped.
 };
 
 /**
@@ -185,6 +200,23 @@ public:
      * @return MotorError::SUCCESS on success, MotorError::NOT_INITIALIZED if not init
      */
     [[nodiscard]] MotorError GetSystemDiagnostics(MotorSystemDiagnostics& diagnostics) const noexcept;
+
+    /**
+     * @brief Drive the onboard TMC9660 host SPI gate (and optional shared flash HOLD) on Vortex.
+     *
+     * @param mode `Disabled` for UART motor comms or to free the exported SPI segment;
+     *             `EnabledForHostSpiMotor` before TMCL/bootloader over SPI.
+     * @return MotorError::SUCCESS after applying drive levels (warnings only if a line is missing).
+     * @note Thread-safe. Call from application code when switching between SPI and UART transports
+     *       without tearing down the handler (requires coordinated handler re-creation today).
+     */
+    [[nodiscard]] MotorError ApplyOnboardTmc9660HostSpiGateMode(Tmc9660HostSpiGateMode mode) noexcept;
+
+    /**
+     * @brief Physical comm mode for the onboard handler (slot 0), if present.
+     * @return `CommMode::SPI` or `::UART` from the active `Tmc9660Handler`, or nullopt when no device.
+     */
+    [[nodiscard]] std::optional<tmc9660::CommMode> TryGetOnboardCommMode() const noexcept;
 
     //**************************************************************************//
     //**                  HANDLER AND DRIVER MANAGEMENT                       **//
@@ -382,6 +414,12 @@ private:
      * @param deviceIndex Optional device index to bump its error counter
      */
     void UpdateLastError(MotorError error, int deviceIndex = -1) noexcept;
+
+    /** @pre `deviceMutex_` held. Applies PCAL gate/HOLD for slot @p device_index before handler init. */
+    void configureOnboardHostBusBeforeHandlerInitLocked(uint8_t device_index) noexcept;
+
+    /** @pre `deviceMutex_` held. */
+    [[nodiscard]] MotorError applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660HostSpiGateMode mode) noexcept;
 
     std::array<std::unique_ptr<Tmc9660Handler>, MAX_TMC9660_DEVICES> tmcHandlers_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceInitialized_;

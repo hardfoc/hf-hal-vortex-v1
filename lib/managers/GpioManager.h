@@ -8,8 +8,13 @@
  *          - TMC9660 motor-controller GPIO bridge (GPIO17, GPIO18)
  *
  *          Uses a fixed-size std::array indexed by the platform mapping index
- *          (all 32 pins known at compile time) instead of a heap-allocated
+ *          (all pins known at compile time) instead of a heap-allocated
  *          unordered_map. String lookups iterate the constexpr mapping table.
+ *
+ *          Vortex TMC9660 / PCAL: motor-facing lines use `PCAL_TMC_*` (e.g. DRV_EN, RST, SPI gate,
+ *          flash HOLD, WAKE). TMC9660 GPIO17/18 are duplicated — read via PCAL inputs
+ *          `PCAL_TMC_GPIO17_EXP_IN` / `PCAL_TMC_GPIO18_EXP_IN` (I²C expander), or configure/read
+ *          the same nets through `TMC_GPIO17` / `TMC_GPIO18` once the handler bridge is registered.
  *
  *          Each entry stores a shared_ptr<BaseGpio> to accommodate the three
  *          different ownership models:
@@ -144,6 +149,28 @@ public:
 
     /** @brief Number of registered GPIO pins. */
     [[nodiscard]] size_t Size() const noexcept;
+
+    /**
+     * @brief Read one PCAL95555 expander pin by hardware index (0–15), independent of
+     *        whether that line is registered in the GPIO table.
+     * @details For bench / bring-up only. Uses the shared Pcal95555Handler after I²C init.
+     *          @p out_level follows the same convention as Pcal95555Handler::ReadInput.
+     */
+    [[nodiscard]] hf_gpio_err_t DebugReadPcal95555Pin(uint8_t expander_pin_0_to_15,
+                                                      bool& out_level) noexcept;
+
+    /**
+     * @brief After MotorController::CreateOnboardDevice(), register TMC9660 GPIO17/18 in the table.
+     *
+     * @details Vortex initializes GPIO before motors, so `Tmc9660Handler` does not exist during the
+     *          first `EnsureInitialized()` scan. Call this from `Vortex::InitializeMotors()` once the
+     *          onboard handler exists; idempotent if pins are already registered.
+     *
+     *          Those pins are the same physical lines as `PCAL_TMC_GPIO17_EXP_IN` / `PCAL_TMC_GPIO18_EXP_IN`
+     *          (expander inputs P1–P2): use the PCAL aliases for passive read without TMCL; use
+     *          `TMC_GPIO17` / `TMC_GPIO18` for driver-backed direction and output updates over SPI/UART.
+     */
+    void RegisterTmc9660BridgePinsIfNeeded() noexcept;
 
     //==========================================================================
     // BASIC GPIO OPERATIONS — string-based routing
@@ -320,6 +347,8 @@ private:
     //--------------------------------------------------------------------------
 
     std::unique_ptr<Pcal95555Handler> pcal95555_handler_;
+    /// ESP32 GPIO for PCAL95555 /INT (COMM_I2C_PCAL95555_INT); not in the GPIO registry table.
+    std::shared_ptr<BaseGpio> pcal_host_int_gpio_;
     MotorController* motor_controller_{nullptr};
 };
 

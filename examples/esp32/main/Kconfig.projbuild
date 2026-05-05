@@ -1,0 +1,24 @@
+menu "Vortex API test (vortex_api_test)"
+
+    config VORTEX_API_TEST_STRICT_HW
+        bool "Strict hardware checks (bench power + critical nets)"
+        default n
+        help
+            When enabled, vortex_api_test fails if the Vortex V1 bench does not look
+            electrically healthy: VM rail in range, TMC FAULT_n released, expected
+            GPIO names registered, comms initialized, WS2812 diagnostics healthy, and
+            ESP32 die temperature reads succeed.
+
+            Expect nominal DC bus per docs/BENCH_MATRIX.md (e.g. 24 V). USB-only or
+            unpowered boards should keep this disabled.
+
+    config VORTEX_API_TEST_STRICT_SENSORS
+        bool "Strict populated sensors (IMU, encoder, motor stack)"
+        default n
+        depends on VORTEX_API_TEST_STRICT_HW
+        help
+            Additionally require BNO08x and AS5047U stacks to enumerate, encoder angle
+            read to succeed, and at least one motor controller device. Enable only when
+            the full assembly is populated and wired.
+
+endmenu

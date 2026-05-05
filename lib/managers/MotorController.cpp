@@ -1,7 +1,10 @@
 #include "MotorController.h"
 #include "CommChannelsManager.h"
+#include "GpioManager.h"
 #include "RtosMutex.h"
 #include "handlers/logger/Logger.h"
+#include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
+#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 #include <algorithm>
 
 MotorController& MotorController::GetInstance() noexcept {
@@ -34,6 +37,7 @@ bool MotorController::Initialize() {
     bool allSuccess = true;
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         if (deviceActive_[i] && tmcHandlers_[i]) {
+            configureOnboardHostBusBeforeHandlerInitLocked(i);
             deviceInitialized_[i] = tmcHandlers_[i]->Initialize();
             if (!deviceInitialized_[i]) {
                 UpdateLastError(MotorError::INITIALIZATION_FAILED, i);
@@ -49,6 +53,8 @@ bool MotorController::Deinitialize() noexcept {
     MutexLockGuard lock(deviceMutex_);
     static constexpr const char* TAG = "MotorController";
     Logger::GetInstance().Info(TAG, "Deinitializing motor controller");
+
+    (void)applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660HostSpiGateMode::Disabled);
 
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         tmcHandlers_[i].reset();
@@ -92,6 +98,7 @@ MotorError MotorController::CreateOnboardDevice(BaseSpi& spiInterface,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
+        configureOnboardHostBusBeforeHandlerInitLocked(ONBOARD_TMC9660_INDEX);
         deviceInitialized_[ONBOARD_TMC9660_INDEX] = tmcHandlers_[ONBOARD_TMC9660_INDEX]->Initialize();
         if (!deviceInitialized_[ONBOARD_TMC9660_INDEX]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, ONBOARD_TMC9660_INDEX);
@@ -131,6 +138,7 @@ MotorError MotorController::CreateOnboardDevice(BaseUart& uartInterface,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
+        configureOnboardHostBusBeforeHandlerInitLocked(ONBOARD_TMC9660_INDEX);
         deviceInitialized_[ONBOARD_TMC9660_INDEX] = tmcHandlers_[ONBOARD_TMC9660_INDEX]->Initialize();
         if (!deviceInitialized_[ONBOARD_TMC9660_INDEX]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, ONBOARD_TMC9660_INDEX);
@@ -188,6 +196,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
+        configureOnboardHostBusBeforeHandlerInitLocked(csDeviceIndex);
         deviceInitialized_[csDeviceIndex] = tmcHandlers_[csDeviceIndex]->Initialize();
         if (!deviceInitialized_[csDeviceIndex]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, csDeviceIndex);
@@ -232,6 +241,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     
     // If system is already initialized, initialize this device immediately
     if (IsInitialized()) {
+        configureOnboardHostBusBeforeHandlerInitLocked(csDeviceIndex);
         deviceInitialized_[csDeviceIndex] = tmcHandlers_[csDeviceIndex]->Initialize();
         if (!deviceInitialized_[csDeviceIndex]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, csDeviceIndex);
@@ -339,6 +349,7 @@ size_t MotorController::InitializeAllDevices(std::array<bool, MAX_TMC9660_DEVICE
     
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         if (deviceActive_[i] && tmcHandlers_[i]) {
+            configureOnboardHostBusBeforeHandlerInitLocked(i);
             deviceInitialized_[i] = tmcHandlers_[i]->Initialize();
             results[i] = deviceInitialized_[i];
             if (deviceInitialized_[i]) ++success_count;
@@ -365,6 +376,87 @@ void MotorController::UpdateLastError(MotorError error, int deviceIndex) noexcep
     if (deviceIndex >= 0 && deviceIndex < MAX_TMC9660_DEVICES && error != MotorError::SUCCESS) {
         deviceErrorCounts_[deviceIndex].fetch_add(1, std::memory_order_relaxed);
     }
+}
+
+// ---------------------------------------------------------------------------
+// Vortex onboard host SPI gate (PCAL95555) — shared SPI / UART policy
+// ---------------------------------------------------------------------------
+
+void MotorController::configureOnboardHostBusBeforeHandlerInitLocked(uint8_t device_index) noexcept {
+    if (device_index != ONBOARD_TMC9660_INDEX) {
+        return;
+    }
+    auto& h = tmcHandlers_[device_index];
+    if (!h || !deviceActive_[device_index]) {
+        return;
+    }
+    const Tmc9660HostSpiGateMode mode =
+        (h->GetCommMode() == tmc9660::CommMode::SPI) ? Tmc9660HostSpiGateMode::EnabledForHostSpiMotor
+                                                     : Tmc9660HostSpiGateMode::Disabled;
+    (void)applyOnboardTmc9660HostSpiGateModeLocked(mode);
+}
+
+std::optional<tmc9660::CommMode> MotorController::TryGetOnboardCommMode() const noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (!deviceActive_[ONBOARD_TMC9660_INDEX] || !tmcHandlers_[ONBOARD_TMC9660_INDEX]) {
+        return std::nullopt;
+    }
+    return tmcHandlers_[ONBOARD_TMC9660_INDEX]->GetCommMode();
+}
+
+MotorError MotorController::applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660HostSpiGateMode mode) noexcept {
+    static constexpr const char* TAG = "MotorController";
+    auto& gpio = GpioManager::GetInstance();
+    if (!gpio.IsInitialized()) {
+        Logger::GetInstance().Warn(TAG, "GpioManager not initialized — skipping TMC9660 host SPI gate");
+        UpdateLastError(MotorError::DEPENDENCY_NOT_READY);
+        return MotorError::DEPENDENCY_NOT_READY;
+    }
+
+    auto comm = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_SPI_COMM_EN);
+    auto hold = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_SHARED_FLASH_HOLD);
+
+    if (mode == Tmc9660HostSpiGateMode::EnabledForHostSpiMotor) {
+        // Assert flash HOLD first (active-low), then steer mux to TMC9660 so shared MOSI/MISO
+        // does not corrupt external flash while TMCL/bootloader runs on the host SPI port.
+        if (hold && hold->EnsureInitialized()) {
+            const hf_gpio_err_t hr = hold->SetActive();
+            if (hr != hf_gpio_err_t::GPIO_SUCCESS) {
+                Logger::GetInstance().Warn(TAG, "PCAL_TMC_SHARED_FLASH_HOLD SetActive failed (%d)",
+                                           static_cast<int>(hr));
+            }
+        }
+        if (comm && comm->EnsureInitialized()) {
+            const hf_gpio_err_t cr = comm->SetActive();
+            if (cr != hf_gpio_err_t::GPIO_SUCCESS) {
+                Logger::GetInstance().Warn(TAG, "PCAL_TMC_SPI_COMM_EN SetActive failed (%d)",
+                                           static_cast<int>(cr));
+            }
+        } else if (!comm) {
+            Logger::GetInstance().Warn(TAG, "PCAL_TMC_SPI_COMM_EN not registered");
+        }
+#if defined(HF_RTOS_FREERTOS)
+        os_delay_msec(2);
+#endif
+        return MotorError::SUCCESS;
+    }
+
+    // Disabled: release mux toward motor first, then release flash HOLD (UART / TMC↔flash path).
+    if (comm && comm->EnsureInitialized()) {
+        (void)comm->SetInactive();
+    }
+    if (hold && hold->EnsureInitialized()) {
+        (void)hold->SetInactive();
+    }
+#if defined(HF_RTOS_FREERTOS)
+    os_delay_msec(1);
+#endif
+    return MotorError::SUCCESS;
+}
+
+MotorError MotorController::ApplyOnboardTmc9660HostSpiGateMode(Tmc9660HostSpiGateMode mode) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    return applyOnboardTmc9660HostSpiGateModeLocked(mode);
 }
 
 MotorError MotorController::GetSystemDiagnostics(MotorSystemDiagnostics& diagnostics) const noexcept {

@@ -29,6 +29,8 @@ set(HF_CORE_ENABLE_AS5047U        ON)   # SPI magnetic encoder
 set(HF_CORE_ENABLE_BNO08X         ON)   # I2C/SPI IMU
 set(HF_CORE_ENABLE_NTC_THERMISTOR ON)   # ADC temperature sensor
 set(HF_CORE_ENABLE_WS2812         ON)   # RMT LED strip
+# PCA9685: populated on Vortex V1 I2C bus (shared with PCAL95555 / BNO08x).
+set(HF_CORE_ENABLE_PCA9685        ON)
 set(HF_CORE_ENABLE_LOGGER         ON)   # Logging system
 # SE050 secure element (I²C): OFF on Vortex until a board wires SE050 + enables in product CMake.
 set(HF_CORE_ENABLE_SE050          OFF)

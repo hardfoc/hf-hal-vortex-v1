@@ -1,6 +1,6 @@
 version: "1.0"
 metadata:
-  project: "ESP32 Vortex HAL Examples"
+  project: "ESP32 Vortex HAL firmware apps"
   default_app: "vortex_api_test"
   target: "esp32c6"
   idf_versions: ["release/v5.5", "release/v5.4"]
@@ -23,6 +23,10 @@ apps:
     source_file: "motor_controller_test.cpp"
     category: "component"
     ci_enabled: true
+  motor_controller_uart_test:
+    source_file: "motor_controller_test.cpp"
+    category: "component"
+    ci_enabled: true
   encoder_imu_test:
     source_file: "encoder_imu_test.cpp"
     category: "component"
@@ -31,41 +35,50 @@ apps:
     source_file: "led_temp_test.cpp"
     category: "component"
     ci_enabled: true
-  vortex_api_example:
-    source_file: "VortexApiExample.cpp"
-    category: "example"
+
+  vortex_led_ws2812_smoke:
+    source_file: "vortex_led_ws2812_smoke.cpp"
+    category: "component"
+    ci_enabled: true
+  vortex_led_ws2812_cycle:
+    source_file: "vortex_led_ws2812_cycle.cpp"
+    category: "component"
     ci_enabled: false
-  adc_manager_example:
-    source_file: "AdcManagerExample.cpp"
-    category: "example"
+  vortex_i2c_scan_pcal_bno_pca:
+    source_file: "vortex_i2c_scan_pcal_bno_pca.cpp"
+    category: "component"
+    ci_enabled: true
+  vortex_pcal_gpio_imu_bringup:
+    source_file: "vortex_pcal_gpio_imu_bringup.cpp"
+    category: "component"
+    ci_enabled: true
+  vortex_i2c_la_trace:
+    source_file: "vortex_i2c_la_trace.cpp"
+    category: "component"
+    ci_enabled: true
+  vortex_motor_comms_smoke:
+    source_file: "vortex_motor_comms_smoke.cpp"
+    category: "component"
+    ci_enabled: true
+  vortex_bldc_open_loop:
+    source_file: "vortex_bldc_open_loop.cpp"
+    category: "component"
     ci_enabled: false
-  gpio_manager_example:
-    source_file: "GpioManagerExample.cpp"
-    category: "example"
+  vortex_bldc_velocity_foc_hall:
+    source_file: "vortex_bldc_velocity_foc_hall.cpp"
+    category: "component"
     ci_enabled: false
-  led_manager_example:
-    source_file: "LedManagerExample.cpp"
-    category: "example"
+  vortex_bldc_velocity_foc_abn:
+    source_file: "vortex_bldc_velocity_foc_abn.cpp"
+    category: "component"
     ci_enabled: false
-  temperature_example:
-    source_file: "TemperatureManagerExample.cpp"
-    category: "example"
+  vortex_bldc_position_foc_as5047:
+    source_file: "vortex_bldc_position_foc_as5047.cpp"
+    category: "component"
     ci_enabled: false
-  motor_controller_example:
-    source_file: "MotorControllerExample.cpp"
-    category: "example"
-    ci_enabled: false
-  encoder_manager_example:
-    source_file: "EncoderManagerExample.cpp"
-    category: "example"
-    ci_enabled: false
-  imu_manager_example:
-    source_file: "ImuManagerExample.cpp"
-    category: "example"
-    ci_enabled: false
-  comm_channels_example:
-    source_file: "CommChannelsManagerExample.cpp"
-    category: "example"
+  vortex_brake_dissipator_gpio:
+    source_file: "vortex_brake_dissipator_gpio.cpp"
+    category: "component"
     ci_enabled: false
 
 build_config:

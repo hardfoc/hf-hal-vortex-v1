@@ -48,11 +48,11 @@ The API design mirrors the **Vortex V1** board's philosophy of integrated operat
 ├─────────────────────────────────────────────────────────────────┤
 │                        Vortex API                              │
 ├─────────────────────────────────────────────────────────────────┤
-│  Component Handlers  │ Managers: GPIO, ADC, Comm, IMU, Motor  │
+│  HAL managers        │ NVS, Comms, GPIO, Motors, ADC, IMU, …   │
 ├─────────────────────────────────────────────────────────────────┤
-│  Driver Handlers     │ TMC9660, PCAL95555, AS5047U, BNO08x    │
+│  hf-core handlers    │ TMC9660, PCAL95555, AS5047U, BNO08x, …  │
 ├─────────────────────────────────────────────────────────────────┤
-│  Hardware Drivers    │ ESP32 interfaces & external drivers    │
+│  Hardware / IDF      │ ESP32-C6 + external IC drivers          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,7 +67,7 @@ extern "C" void app_main(void) {
     
     // Initialize all systems with proper dependency management
     if (vortex.EnsureInitialized()) {
-        // Access all component handlers through unified interface
+        // Access all managers through the unified interface
         auto& comms = vortex.comms;      // Communication channels
         auto& gpio = vortex.gpio;        // GPIO management
         auto& motors = vortex.motors;    // Motor controllers
@@ -136,27 +136,31 @@ for (const auto& component : failed_components) {
 vortex.DumpSystemStatistics();
 ```
 
-### 🔄 Initialization Order and Dependencies
+### Initialization order and dependencies
 
-The Vortex API manages initialization in the correct dependency order for the HardFOC Vortex V1 board:
+The real sequence is implemented in `Vortex::InitializeAllComponents()` (`lib/api/Vortex.cpp`) and summarized in `lib/api/Vortex.h`:
 
 ```
-1. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
+1. NvsManager
    ↓
-2. GpioManager (depends on CommChannelsManager)
+2. CommChannelsManager (SPI, I2C, UART, CAN)
    ↓
-3. MotorController (depends on CommChannelsManager)
+3. GpioManager
    ↓
-4. AdcManager (depends on MotorController)
+4. LedManager (early — LED-only benches without TMC9660)
    ↓
-5. ImuManager (depends on CommChannelsManager, GpioManager)
+5. MotorController (best-effort if hardware absent)
    ↓
-6. EncoderManager (depends on CommChannelsManager, GpioManager)
+6. AdcManager (best-effort; TMC9660-dependent on Vortex)
    ↓
-7. LedManager (independent)
+7. ImuManager (best-effort)
    ↓
-8. TemperatureManager (depends on AdcManager, MotorController)
+8. EncoderManager (best-effort)
+   ↓
+9. TemperatureManager (best-effort)
 ```
+
+`EnsureInitialized()` succeeds when **NVS, comms, GPIO, and LEDs** are up; other subsystems may be degraded. See [`docs/hal/architecture.md`](docs/hal/architecture.md).
 
 ## ⚡ Performance Considerations
 
@@ -322,11 +326,11 @@ gpio.Set("GPIO_EXT_GPIO_CS_1", true);         // Set pin high
 
 // Read input pins from PCAL95555 expander
 bool state;
-gpio.Read("GPIO_PCAL_GPIO17", state);
+gpio.Read("GPIO_PCAL_TMC_GPIO17_EXP_IN", state);
 
 // Batch operations for performance
-std::array<std::string_view, 4> pins = {"GPIO_EXT_GPIO_CS_1", "GPIO_EXT_GPIO_CS_2", 
-                                        "GPIO_PCAL_GPIO17", "GPIO_PCAL_GPIO18"};
+std::array<std::string_view, 4> pins = {"GPIO_EXT_GPIO_CS_1", "GPIO_EXT_GPIO_CS_2",
+                                        "GPIO_PCAL_TMC_GPIO17_EXP_IN", "GPIO_PCAL_TMC_GPIO18_EXP_IN"};
 auto states = gpio.BatchRead(pins);
 ```
 
@@ -395,40 +399,28 @@ if (encoder_handler) {
 }
 ```
 
-## 📚 Documentation
+## Documentation
 
 ### Engineering handbook
 
 Cross-HAL **coding standards, architecture, CMake contract, testing, and agent playbooks** are in the [hf-development-handbook](https://github.com/hardfoc/hf-development-handbook) Git submodule at [`docs/hf-development-handbook/`](docs/hf-development-handbook/). After clone, run `git submodule update --init --recursive`. Start from [`docs/hf-development-handbook/README.md`](docs/hf-development-handbook/README.md).
 
-### 📖 Complete Documentation Index
-- **[📋 Documentation Index](DOCUMENTATION_INDEX.md)** - Complete guide to all documentation
+### HAL hub (canonical)
 
-### 🔌 Vortex API Documentation
-- **[🔌 Vortex API Guide](lib/api/README.md)** - Comprehensive Vortex API documentation
-- **[🚀 Vortex API Example](examples/VortexApiExample.cpp)** - Complete usage example
-- **[🏗️ Vortex API Architecture](lib/api/Vortex.h)** - API design and implementation
+- **[`docs/hal/README.md`](docs/hal/README.md)** — architecture, manager ↔ handler map, links into example docs  
+- **[`docs/hal/architecture.md`](docs/hal/architecture.md)** — init order and degraded bring-up (matches `Vortex.cpp`)  
+- **[`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md)** — short index and correct `Vortex` usage pattern  
 
-### 🎯 Core System Documentation
-- **[🔧 GPIO Manager](docs/component-handlers/GPIO_MANAGER_README.md)** - GPIO system guide
-- **[📊 ADC Manager](docs/component-handlers/ADC_MANAGER_README.md)** - ADC system guide
-- **[🏗️ Architecture Guidelines](docs/hf-development-handbook/process/architecture.md)** - Core architecture
+### API and on-target tests
 
-### 📚 Component Handler Documentation
-- **[🎛️ GPIO Manager](docs/component-handlers/GPIO_MANAGER_README.md)** - GPIO management system
-- **[📊 ADC Manager](docs/component-handlers/ADC_MANAGER_README.md)** - ADC management system
-- **[📡 Communication Manager](docs/component-handlers/COMM_CHANNELS_MANAGER_README.md)** - Communication interfaces
-- **[🧭 IMU Manager](docs/component-handlers/IMU_MANAGER_README.md)** - IMU sensor management
-- **[🎛️ Motor Controller](docs/component-handlers/MOTOR_CONTROLLER_README.md)** - Motor control system
-- **[📐 Encoder Manager](docs/component-handlers/ENCODER_MANAGER_README.md)** - Encoder management
-- **[💡 LED Manager](docs/component-handlers/LED_MANAGER_README.md)** - LED management
-- **[🌡️ Temperature Manager](docs/component-handlers/TEMPERATURE_MANAGER_README.md)** - Temperature monitoring
+- **[`lib/api/README.md`](lib/api/README.md)** — integration notes  
+- **[`lib/api/Vortex.h`](lib/api/Vortex.h)** — façade API and diagnostics types  
+- **[`examples/esp32/docs/README.md`](examples/esp32/docs/README.md)** — every `APP_TYPE` and entry `.cpp`  
+- **[`examples/esp32/main/vortex_api_test.cpp`](examples/esp32/main/vortex_api_test.cpp)** — primary full-HAL integration app  
 
-### 🔧 Driver Handler Documentation
-- **[🎛️ TMC9660 Handler](docs/driver-handlers/TMC9660_HANDLER_README.md)** - Motor controller driver
-- **[🔌 PCAL95555 Handler](docs/driver-handlers/PCAL95555_HANDLER_README.md)** - GPIO expander driver
-- **[📐 AS5047U Handler](docs/driver-handlers/AS5047U_HANDLER_README.md)** - Position encoder driver
-- **[🧭 BNO08x Handler](docs/driver-handlers/BNO08X_HANDLER_README.md)** - IMU sensor driver
+### Legacy per-topic READMEs
+
+The old `docs/component-handlers/` and `docs/driver-handlers/` trees only keep redirect READMEs; prefer [`docs/hal/`](docs/hal/README.md) and [`lib/managers/`](lib/managers/).
 
 ## 🏗️ Architecture
 
@@ -451,8 +443,8 @@ The Vortex API is specifically designed for the **HardFOC Vortex V1** board, pro
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Handlers (Managers)
-High-level singleton managers providing unified interfaces for the HardFOC Vortex V1 board:
+### HAL managers
+Singleton managers in `lib/managers/` for the Vortex V1 board:
 
 | Manager | Vortex Access | Purpose | Hardware Sources |
 |---------|---------------|---------|------------------|
@@ -465,8 +457,8 @@ High-level singleton managers providing unified interfaces for the HardFOC Vorte
 | **LedManager** | `vortex.leds` | LED management | WS2812 LED |
 | **TemperatureManager** | `vortex.temp` | Temperature monitoring | TMC9660, NTC |
 
-### Driver Handlers
-Hardware-specific drivers providing device interfaces for the HardFOC Vortex V1 board:
+### hf-core handlers (device facades)
+Device-level facades from `lib/core/handlers/` composed by the managers above:
 
 | Handler | Device | Interface | Purpose |
 |---------|--------|-----------|---------|
@@ -494,18 +486,22 @@ Hardware-specific drivers providing device interfaces for the HardFOC Vortex V1 
 - `GPIO_EXT_GPIO_CS_2` - External GPIO chip select 2
 
 #### PCAL95555 GPIO Expander Pins
-- `GPIO_PCAL_GPIO17` - General purpose GPIO 17
-- `GPIO_PCAL_GPIO18` - General purpose GPIO 18
-- `GPIO_PCAL_FAULT_STATUS` - Fault status indicator
-- `GPIO_PCAL_DRV_EN` - Driver enable control
-- `GPIO_PCAL_RST_CTRL` - Reset control
-- `GPIO_PCAL_PWR_GOOD` - Power good indicator
-- `GPIO_PCAL_CAN_HS_STB_OP` - CAN high-speed standby operation
-- `GPIO_PCAL_IMU_BOOT` - IMU boot control
-- `GPIO_PCAL_IMU_INT` - IMU interrupt
-- `GPIO_PCAL_IMU_RST` - IMU reset
-- `GPIO_PCAL_SPI_COMM_EN` - SPI communication enable
-- `GPIO_PCAL_WAKE_CTRL` - Wake control
+- `GPIO_PCAL_TMC_FAULT_STATUS` - TMC9660 / rail fault status (input to host)
+- `GPIO_PCAL_TMC_DRV_EN` - Driver enable toward TMC9660 (host output)
+- `GPIO_PCAL_TMC_RST_CTRL` - Reset control toward TMC9660 (host output)
+- `GPIO_PCAL_PWR_GOOD` - Power-good sense (input)
+- `GPIO_PCAL_CAN_HS_STB_OP` - CAN transceiver standby (host output)
+- `GPIO_PCAL_IMU_BOOT` - BNO08x boot (host output)
+- `GPIO_PCAL_IMU_INT` - BNO08x interrupt (input)
+- `GPIO_PCAL_IMU_RST` - BNO08x reset (host output)
+- `GPIO_PCAL_TMC_SPI_COMM_EN` - Host SPI→TMC9660 mux (TMC_COMM_ENn, host output)
+- `GPIO_PCAL_TMC_SHARED_FLASH_HOLD` - Shared SPI flash HOLDn (host output)
+- `GPIO_PCAL_TMC_WAKE_CTRL` - TMC9660 wake (host output)
+- `GPIO_PCAL_TMC_GPIO17_EXP_IN` - TMC9660 GPIO17 wired to PCAL port bit 1 (input / status)
+- `GPIO_PCAL_TMC_GPIO18_EXP_IN` - TMC9660 GPIO18 wired to PCAL port bit 2 (input / status)
+
+#### TMC9660 bridge (same nets as PCAL EXP_IN above, via motor handler)
+- `GPIO_TMC_GPIO17` / `GPIO_TMC_GPIO18` — TMCL-backed GPIO after `RegisterTmc9660BridgePinsIfNeeded()`
 
 ### Available ADC Channels on HardFOC Vortex V1
 
@@ -581,7 +577,7 @@ auto& motors = MotorController::GetInstance();
 // GPIO Operations
 gpio.Set("GPIO_EXT_GPIO_CS_1", true);                    // Set pin high
 bool state;
-gpio.Read("GPIO_PCAL_GPIO17", state);                    // Read pin state
+gpio.Read("GPIO_PCAL_TMC_GPIO17_EXP_IN", state);         // Read TMC GPIO17 at expander
 gpio.SetDirection("GPIO_EXT_GPIO_CS_1", hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT);
 
 // ADC Operations
@@ -675,8 +671,8 @@ gpio.SetOutputMode("GPIO_EXT_GPIO_CS_1", hf_gpio_output_mode_t::HF_GPIO_OUTPUT_M
 gpio.SetPullMode("GPIO_EXT_GPIO_CS_1", hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP);
 
 // Configure pin as input with pull-up
-gpio.SetDirection("GPIO_PCAL_GPIO17", hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
-gpio.SetPullMode("GPIO_PCAL_GPIO17", hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP);
+gpio.SetDirection("GPIO_PCAL_TMC_GPIO17_EXP_IN", hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT);
+gpio.SetPullMode("GPIO_PCAL_TMC_GPIO17_EXP_IN", hf_gpio_pull_mode_t::HF_GPIO_PULL_MODE_UP);
 ```
 
 #### **3. Interrupt Configuration**
@@ -806,9 +802,9 @@ void DemonstrateGpio(Vortex& vortex) {
     
     // Read PCAL95555 GPIO pins
     bool gpio17_state;
-    gpio.Read("GPIO_PCAL_GPIO17", gpio17_state);
+    gpio.Read("GPIO_PCAL_TMC_GPIO17_EXP_IN", gpio17_state);
     bool gpio18_state;
-    gpio.Read("GPIO_PCAL_GPIO18", gpio18_state);
+    gpio.Read("GPIO_PCAL_TMC_GPIO18_EXP_IN", gpio18_state);
     logger.Info("MAIN", "PCAL95555 GPIO17: %s, GPIO18: %s\n", 
            gpio17_state ? "HIGH" : "LOW", 
            gpio18_state ? "HIGH" : "LOW");
@@ -889,32 +885,16 @@ void DemonstrateMotors(Vortex& vortex) {
 ### HardFOC Vortex V1 Board Configuration
 - **[🏗️ Hardware Architecture](docs/hf-development-handbook/process/architecture.md)** - Board-specific configuration and features
 
-### Device Configuration for HardFOC Vortex V1
-- **[🔌 PCAL95555 Handler](docs/driver-handlers/PCAL95555_HANDLER_README.md)** - GPIO expander documentation
-- **[🎛️ TMC9660 Handler](docs/driver-handlers/TMC9660_HANDLER_README.md)** - Motor controller documentation
-- **[📐 AS5047U Handler](docs/driver-handlers/AS5047U_HANDLER_README.md)** - Position encoder documentation
-- **[🧭 BNO08x Handler](docs/driver-handlers/BNO08X_HANDLER_README.md)** - IMU sensor documentation
+### Device and manager sources
 
-### Communication Interface
-- **[📡 Communication Manager](docs/component-handlers/COMM_CHANNELS_MANAGER_README.md)** - SPI, I2C, UART, CAN communication
+- **[HAL manager ↔ handler map](docs/hal/managers-and-handlers.md)** — links into `lib/managers/` and `lib/core/handlers/`
+- **Handlers (hf-core):** e.g. `lib/core/handlers/tmc9660/`, `lib/core/handlers/as5047u/`, `lib/core/handlers/bno08x/`, expanders under `lib/core/handlers/` as used by `GpioManager`
+- **Comms:** [`lib/managers/CommChannelsManager.h`](lib/managers/CommChannelsManager.h)
+- **Published core docs:** [hf-core GitHub Pages](https://hardfoc.github.io/hf-core/)
 
-## 🧪 Testing
+## Testing
 
-### Test Suite
-```bash
-# Build and run tests for HardFOC Vortex V1
-cd tests
-idf.py build
-idf.py flash monitor
-```
-
-### Test Coverage
-- **[🧪 Test Documentation](tests/README.md)** - Complete test suite guide
-- **Vortex API Tests** - Unified API validation for HardFOC Vortex V1
-- **Component Handler Tests** - Manager class validation
-- **Driver Handler Tests** - Hardware driver validation  
-- **Integration Tests** - System-level testing
-- **Hardware-in-Loop Tests** - Real hardware validation
+On-target firmware apps live under **`examples/esp32/`** (not a legacy top-level `tests/` tree). See **[`examples/esp32/README.md`](examples/esp32/README.md)** and the full app catalog **[`examples/esp32/docs/README.md`](examples/esp32/docs/README.md)**.
 
 ## 🤝 Contributing
 

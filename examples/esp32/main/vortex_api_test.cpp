@@ -1,21 +1,27 @@
 /**
  * @file vortex_api_test.cpp
- * @brief Comprehensive Vortex HAL API test suite for ESP32 (noexcept)
+ * @brief Primary hardware integration test for the Vortex HAL on ESP32 (noexcept)
  *
- * This file exercises every public surface of the Vortex singleton:
- *   - Full initialization sequence via EnsureInitialized()
- *   - System diagnostics & health-check validation
- *   - CommChannelsManager: SPI / I2C device enumeration
- *   - GpioManager: pin-name lookup (Contains)
- *   - MotorController: handler access, visitDriver, device count
- *   - AdcManager: multi-source voltage reads (ReadVoltage)
- *   - ImuManager: BNO08x handler & sensor access
- *   - EncoderManager: AS5047U angle & velocity reads
- *   - LedManager: animation, colour, brightness queries
- *   - TemperatureManager: multi-sensor reads (ESP32, NTC, motor)
- *   - Utility methods: uptime, version, statistics dump
+ * This is the default app (`app_config.yml`) and the main place to learn correct
+ * Vortex API usage patterns that are also verified on real boards: init order,
+ * diagnostics, comms/GPIO/ADC/IMU/encoder/motor/LED/temperature surfaces, and
+ * board-relevant pin/channel names (see `main/common/vortex_board_pins.hpp`).
  *
- * All functions are noexcept – no exception handling used.
+ * Coverage intentionally subsumes the retired per-manager “documentation examples”:
+ * GPIO registry + fault/user lines, ADC VM averaged/raw + diagnostics, comms
+ * health dumps, LED solids/brightness/animations/status frames, and temperature
+ * diagnostics alongside named sensor reads.
+ *
+ * For deeper single-subsystem runs, flash `led_temp_test`, `encoder_imu_test`,
+ * `motor_controller_test`, or smoke apps listed in `docs/BENCH_MATRIX.md`.
+ *
+ * **Strict hardware mode:** `idf.py menuconfig` → *Component config* → *Main* →
+ * *Vortex API test* → enable
+ * `CONFIG_VORTEX_API_TEST_STRICT_HW` (and optionally `..._STRICT_SENSORS`) when
+ * the bench matches `docs/BENCH_MATRIX.md` so failing wiring or supply shows up
+ * as test failures instead of silent passes.
+ *
+ * All test bodies are noexcept.
  *
  * @author HardFOC Team
  * @date 2025
@@ -37,6 +43,11 @@
 
 // Handlers needed for type visibility in tests
 #include "handlers/bno08x/Bno08xHandler.h"
+
+#include "common/vortex_api_test_strict_hw.hpp"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 static const char* TAG = "VortexApiTest";
 static TestResults g_test_results;
@@ -96,8 +107,7 @@ static bool test_get_system_diagnostics() noexcept {
   bool ok = vortex.GetSystemDiagnostics(diag);
   if (!ok) return false;
 
-  // total_components should be 8 for Vortex
-  if (diag.total_components != 8) return false;
+  if (diag.total_components != static_cast<uint32_t>(kVortexManagerCount)) return false;
 
   // initialized_components must be <= total
   if (diag.initialized_components > diag.total_components) return false;
@@ -110,8 +120,7 @@ static bool test_component_init_status() noexcept {
   vortex.EnsureInitialized();
 
   auto status = vortex.GetComponentInitializationStatus();
-  // Should return exactly 8 entries
-  return (status.size() == 8);
+  return (status.size() == kVortexManagerCount);
 }
 
 static bool test_perform_health_check() noexcept {
@@ -149,8 +158,7 @@ static bool test_collect_manager_health() noexcept {
   bool ok = vortex.CollectManagerHealth(health);
   if (!ok) return false;
 
-  // Should report 8 managers for Vortex
-  if (health.count != 8) return false;
+  if (health.count != kVortexManagerCount) return false;
 
   // Every entry should have a non-null name
   for (size_t i = 0; i < health.count; ++i) {
@@ -191,6 +199,15 @@ static bool test_comms_i2c_device_lookup() noexcept {
   return true;
 }
 
+static bool test_comms_initialized_and_statistics_dump() noexcept {
+  auto& comms = VORTEX_API.comms;
+  if (vortex_api_test_strict::kHwChecks && !comms.IsInitialized()) {
+    return false;
+  }
+  comms.DumpStatistics();
+  return true;
+}
+
 //=============================================================================
 // GPIO TESTS
 //=============================================================================
@@ -204,6 +221,58 @@ static bool test_gpio_contains() noexcept {
   return true;
 }
 
+static bool test_gpio_registry_size_sane() noexcept {
+  auto& gpio = VORTEX_API.gpio;
+  const size_t n = gpio.Size();
+  return (n > 0U && n < 512U);
+}
+
+static bool test_gpio_contains_board_routing_names() noexcept {
+  auto& gpio = VORTEX_API.gpio;
+  const bool has_fault = gpio.Contains("GPIO_TMC_FAULTN_0");
+  const bool has_enc_cs = gpio.Contains("GPIO_ENCODER_CSN");
+  const bool has_user = gpio.Contains("GPIO_USER_LED");
+  if (vortex_api_test_strict::kHwChecks) {
+    return has_fault && has_enc_cs && has_user;
+  }
+  (void)has_fault;
+  (void)has_enc_cs;
+  (void)has_user;
+  return true;
+}
+
+static bool test_gpio_read_optional_fault_line() noexcept {
+  auto& gpio = VORTEX_API.gpio;
+  // Same convention as the old GpioManager example: true => line high => not faulted.
+  bool not_faulted_line_high = false;
+  const auto err = gpio.Read("GPIO_TMC_FAULTN_0", not_faulted_line_high);
+  if (vortex_api_test_strict::kHwChecks) {
+    return (err == hf_gpio_err_t::GPIO_SUCCESS) && not_faulted_line_high;
+  }
+  return true;
+}
+
+static bool test_gpio_toggle_user_led_best_effort() noexcept {
+  auto& gpio = VORTEX_API.gpio;
+  if (!gpio.Contains("GPIO_USER_LED")) {
+    return !vortex_api_test_strict::kHwChecks;
+  }
+  const auto e1 = gpio.Toggle("GPIO_USER_LED");
+  const auto e2 = gpio.Toggle("GPIO_USER_LED");
+  if (vortex_api_test_strict::kHwChecks) {
+    return (e1 == hf_gpio_err_t::GPIO_SUCCESS) && (e2 == hf_gpio_err_t::GPIO_SUCCESS);
+  }
+  return true;
+}
+
+static bool test_gpio_system_diagnostics_and_dump() noexcept {
+  auto& gpio = VORTEX_API.gpio;
+  GpioSystemDiagnostics diag{};
+  (void)gpio.GetSystemDiagnostics(diag);
+  gpio.DumpStatistics();
+  return true;
+}
+
 //=============================================================================
 // MOTOR TESTS
 //=============================================================================
@@ -211,7 +280,9 @@ static bool test_gpio_contains() noexcept {
 static bool test_motor_handler_access() noexcept {
   auto& motors = VORTEX_API.motors;
   auto* handler = motors.handler(0);
-  (void)handler;
+  if (vortex_api_test_strict::kSensorChecks && handler == nullptr) {
+    return false;
+  }
   return true;
 }
 
@@ -229,8 +300,13 @@ static bool test_motor_visit_driver() noexcept {
 static bool test_motor_device_count() noexcept {
   auto& motors = VORTEX_API.motors;
   uint8_t count = motors.GetDeviceCount();
-  // Sanity: shouldn't exceed some reasonable max
-  return (count <= 8);
+  if (count > 8) {
+    return false;
+  }
+  if (vortex_api_test_strict::kSensorChecks && count < 1) {
+    return false;
+  }
+  return true;
 }
 
 static bool test_motor_get_last_error() noexcept {
@@ -261,6 +337,46 @@ static bool test_adc_read_channel() noexcept {
   return true;
 }
 
+static bool test_adc_registry_and_vm_lookup() noexcept {
+  auto& adc = VORTEX_API.adc;
+  const size_t n = adc.Size();
+  const bool has_vm = adc.Contains("ADC_VM");
+  if (vortex_api_test_strict::kHwChecks) {
+    return (n > 0U) && has_vm;
+  }
+  (void)n;
+  (void)has_vm;
+  return true;
+}
+
+static bool test_adc_read_vm_averaged_and_raw() noexcept {
+  auto& adc = VORTEX_API.adc;
+  float vm = 0.0f;
+  uint32_t raw = 0U;
+  const auto rv = adc.ReadVoltage("ADC_VM", vm, 4, 0);
+  const auto rr = adc.ReadRaw("ADC_VM", raw, 4, 0);
+  if (vortex_api_test_strict::kHwChecks) {
+    if (rv != hf_adc_err_t::ADC_SUCCESS || rr != hf_adc_err_t::ADC_SUCCESS) {
+      return false;
+    }
+    if (vm < vortex_api_test_strict::kVmVoltsMin || vm > vortex_api_test_strict::kVmVoltsMax) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool test_adc_system_diagnostics_and_dump() noexcept {
+  auto& adc = VORTEX_API.adc;
+  AdcSystemDiagnostics diag{};
+  const auto err = adc.GetSystemDiagnostics(diag);
+  adc.DumpStatistics();
+  if (vortex_api_test_strict::kHwChecks) {
+    return (err == hf_adc_err_t::ADC_SUCCESS) && diag.system_healthy;
+  }
+  return true;
+}
+
 //=============================================================================
 // IMU TESTS
 //=============================================================================
@@ -275,14 +391,22 @@ static bool test_imu_handler_access() noexcept {
 static bool test_imu_sensor_access() noexcept {
   auto& imu = VORTEX_API.imu;
   IBno08xDriverOps* sensor = imu.GetSensor(0);
-  (void)sensor;
+  if (vortex_api_test_strict::kSensorChecks && sensor == nullptr) {
+    return false;
+  }
   return true;
 }
 
 static bool test_imu_device_count() noexcept {
   auto& imu = VORTEX_API.imu;
   uint8_t count = imu.GetDeviceCount();
-  return (count <= 4);
+  if (count > 4) {
+    return false;
+  }
+  if (vortex_api_test_strict::kSensorChecks && count < 1) {
+    return false;
+  }
+  return true;
 }
 
 static bool test_imu_get_last_error() noexcept {
@@ -312,7 +436,10 @@ static bool test_encoder_handler_access() noexcept {
 static bool test_encoder_read_angle() noexcept {
   auto& enc = VORTEX_API.encoders;
   uint16_t angle = 0;
-  [[maybe_unused]] auto err = enc.ReadAngle(0, angle);
+  const auto err = enc.ReadAngle(0, angle);
+  if (vortex_api_test_strict::kSensorChecks && err != EncoderError::SUCCESS) {
+    return false;
+  }
   return true;
 }
 
@@ -326,7 +453,13 @@ static bool test_encoder_read_velocity() noexcept {
 static bool test_encoder_device_count() noexcept {
   auto& enc = VORTEX_API.encoders;
   uint8_t count = enc.GetDeviceCount();
-  return (count <= 4);
+  if (count > 4) {
+    return false;
+  }
+  if (vortex_api_test_strict::kSensorChecks && count < 1) {
+    return false;
+  }
+  return true;
 }
 
 static bool test_encoder_get_last_error() noexcept {
@@ -366,6 +499,67 @@ static bool test_led_get_brightness() noexcept {
   return true;
 }
 
+static bool test_led_set_solid_palette() noexcept {
+  auto& leds = VORTEX_API.leds;
+  (void)leds.SetColor(LedColors::RED);
+  (void)leds.SetColor(LedColors::GREEN);
+  (void)leds.SetColor(LedColors::BLUE);
+  (void)leds.SetColor(LedColor(255, 165, 0));
+  return true;
+}
+
+static bool test_led_brightness_steps() noexcept {
+  auto& leds = VORTEX_API.leds;
+  (void)leds.SetColor(LedColors::WHITE);
+  for (uint8_t pct = 20; pct <= 100; pct += 20) {
+    (void)leds.SetBrightnessPercent(pct);
+  }
+  (void)leds.SetBrightnessPercent(80);
+  return true;
+}
+
+static bool test_led_animation_rainbow_and_breath_updates() noexcept {
+  auto& leds = VORTEX_API.leds;
+  (void)leds.StartAnimation(LedAnimation::RAINBOW);
+  for (int i = 0; i < 12; ++i) {
+    (void)leds.UpdateAnimation();
+  }
+  (void)leds.StopAnimation();
+  (void)leds.StartAnimation(LedAnimation::BREATH, LedColors::CYAN);
+  for (int i = 0; i < 8; ++i) {
+    (void)leds.UpdateAnimation();
+  }
+  (void)leds.StopAnimation();
+  (void)leds.TurnOff();
+  return true;
+}
+
+static bool test_led_indicate_lifecycle_one_frame_each() noexcept {
+  auto& leds = VORTEX_API.leds;
+  [[maybe_unused]] auto e0 = leds.IndicateBoot();
+  (void)leds.UpdateAnimation();
+  [[maybe_unused]] auto e1 = leds.IndicateReady();
+  (void)leds.UpdateAnimation();
+  [[maybe_unused]] auto e2 = leds.IndicateWarning();
+  (void)leds.UpdateAnimation();
+  [[maybe_unused]] auto e3 = leds.IndicateError();
+  (void)leds.UpdateAnimation();
+  (void)leds.StopAnimation();
+  return true;
+}
+
+static bool test_led_system_diagnostics_dump_and_last_error() noexcept {
+  auto& leds = VORTEX_API.leds;
+  LedSystemDiagnostics diag{};
+  const auto err = leds.GetSystemDiagnostics(diag);
+  leds.DumpStatistics();
+  (void)leds.GetLastError();
+  if (vortex_api_test_strict::kHwChecks) {
+    return (err == LedError::SUCCESS) && diag.system_healthy && diag.led_initialized;
+  }
+  return true;
+}
+
 //=============================================================================
 // TEMPERATURE TESTS
 //=============================================================================
@@ -373,7 +567,15 @@ static bool test_led_get_brightness() noexcept {
 static bool test_temp_read_esp32() noexcept {
   auto& temp = VORTEX_API.temp;
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("ESP32_INTERNAL", celsius);
+  const auto err = temp.ReadTemperatureCelsius("ESP32_INTERNAL", celsius);
+  if (vortex_api_test_strict::kHwChecks) {
+    if (err != hf_temp_err_t::TEMP_SUCCESS) {
+      return false;
+    }
+    if (celsius < -40.0f || celsius > 125.0f) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -388,6 +590,13 @@ static bool test_temp_read_motor() noexcept {
   auto& temp = VORTEX_API.temp;
   float celsius = 0.0f;
   [[maybe_unused]] auto err = temp.ReadTemperatureCelsius("MOTOR_TEMP", celsius);
+  return true;
+}
+
+static bool test_temp_system_diagnostics() noexcept {
+  auto& temp = VORTEX_API.temp;
+  TempSystemDiagnostics diag{};
+  [[maybe_unused]] auto err = temp.GetSystemDiagnostics(diag);
   return true;
 }
 
@@ -422,6 +631,19 @@ static bool test_dump_statistics() noexcept {
   return true;
 }
 
+/** Re-send the last solid colour so a WS2812 re-powered while the MCU stays up can latch again. */
+static void vortex_api_test_led_idle_refresh_task(void* /*param*/) noexcept {
+  for (;;) {
+    vTaskDelay(pdMS_TO_TICKS(750));
+    auto& leds = VORTEX_API.leds;
+    LedColor c{};
+    if (leds.GetCurrentColor(c) != LedError::SUCCESS) {
+      continue;
+    }
+    (void)leds.SetColor(c);
+  }
+}
+
 //=============================================================================
 // ENTRY POINT
 //=============================================================================
@@ -431,6 +653,12 @@ extern "C" void app_main(void) {
   ESP_LOGI(TAG, "========================================");
   ESP_LOGI(TAG, "  Vortex HAL — Comprehensive API Test");
   ESP_LOGI(TAG, "========================================\n");
+#if CONFIG_VORTEX_API_TEST_STRICT_HW
+  ESP_LOGW(TAG, "STRICT_HW: VM rail, TMC fault line, GPIO registry, comms, LED, ESP32 temp — failures indicate bench/wiring.");
+#endif
+#if CONFIG_VORTEX_API_TEST_STRICT_SENSORS
+  ESP_LOGW(TAG, "STRICT_SENSORS: IMU, encoder, motor device presence — requires populated I2C/SPI.");
+#endif
 
   // ── Initialization ──────────────────────────────────────────────────────
   RUN_TEST_SECTION_IF_ENABLED(ENABLE_INIT_TESTS, "INITIALIZATION",
@@ -456,11 +684,17 @@ extern "C" void app_main(void) {
     RUN_TEST(test_comms_system_diagnostics);
     RUN_TEST(test_comms_spi_device_lookup);
     RUN_TEST(test_comms_i2c_device_lookup);
+    RUN_TEST(test_comms_initialized_and_statistics_dump);
   );
 
   // ── GPIO ────────────────────────────────────────────────────────────────
   RUN_TEST_SECTION_IF_ENABLED(ENABLE_GPIO_TESTS, "GPIO",
     RUN_TEST(test_gpio_contains);
+    RUN_TEST(test_gpio_registry_size_sane);
+    RUN_TEST(test_gpio_contains_board_routing_names);
+    RUN_TEST(test_gpio_read_optional_fault_line);
+    RUN_TEST(test_gpio_toggle_user_led_best_effort);
+    RUN_TEST(test_gpio_system_diagnostics_and_dump);
   );
 
   // ── Motors ──────────────────────────────────────────────────────────────
@@ -475,6 +709,9 @@ extern "C" void app_main(void) {
   // ── ADC ─────────────────────────────────────────────────────────────────
   RUN_TEST_SECTION_IF_ENABLED(ENABLE_ADC_TESTS, "ADC",
     RUN_TEST(test_adc_read_channel);
+    RUN_TEST(test_adc_registry_and_vm_lookup);
+    RUN_TEST(test_adc_read_vm_averaged_and_raw);
+    RUN_TEST(test_adc_system_diagnostics_and_dump);
   );
 
   // ── IMU ─────────────────────────────────────────────────────────────────
@@ -501,6 +738,11 @@ extern "C" void app_main(void) {
     RUN_TEST(test_led_set_status);
     RUN_TEST(test_led_get_color);
     RUN_TEST(test_led_get_brightness);
+    RUN_TEST(test_led_set_solid_palette);
+    RUN_TEST(test_led_brightness_steps);
+    RUN_TEST(test_led_animation_rainbow_and_breath_updates);
+    RUN_TEST(test_led_indicate_lifecycle_one_frame_each);
+    RUN_TEST(test_led_system_diagnostics_dump_and_last_error);
   );
 
   // ── Temperature ─────────────────────────────────────────────────────────
@@ -508,6 +750,7 @@ extern "C" void app_main(void) {
     RUN_TEST(test_temp_read_esp32);
     RUN_TEST(test_temp_read_ntc);
     RUN_TEST(test_temp_read_motor);
+    RUN_TEST(test_temp_system_diagnostics);
   );
 
   // ── Utility ─────────────────────────────────────────────────────────────
@@ -521,6 +764,21 @@ extern "C" void app_main(void) {
   // ── Summary ─────────────────────────────────────────────────────────────
   print_test_summary(g_test_results, "VORTEX API", TAG);
   cleanup_test_progress_indicator();
+
+  // Calm idle colour (tests leave bright white on the last brightness step) + background
+  // refresh: if only the LED 5 V rail drops while the MCU keeps running, nothing would
+  // otherwise call RMT again until reset.
+  {
+    auto& leds = VORTEX_API.leds;
+    (void)leds.StopAnimation();
+    (void)leds.SetMaxBrightness(100);
+    (void)leds.SetBrightnessPercent(14);
+    (void)leds.SetColor(LedColor(0, 170, 0));
+    ESP_LOGI(TAG, "Idle LED: dim green + ~750 ms refresh (WS2812 re-latch if LED supply cycles).");
+  }
+  static constexpr uint32_t kLedIdleTaskStack = 3072;
+  (void)xTaskCreate(vortex_api_test_led_idle_refresh_task, "led_idle", kLedIdleTaskStack, nullptr,
+                    tskIDLE_PRIORITY + 1, nullptr);
 
   ESP_LOGI(TAG, "\nVortex HAL API test complete.");
 }

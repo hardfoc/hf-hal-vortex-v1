@@ -92,15 +92,12 @@ bool ImuManager::Deinitialize() noexcept {
         interrupt_semaphore_ = nullptr;
     }
 
-    // Reset interrupt state
-    interrupt_gpio_ = nullptr;
-    interrupt_gpio_shared_.reset();  // Release shared ownership
     interrupt_configured_ = false;
     interrupt_enabled_ = false;
     interrupt_count_.store(0);
     interrupt_callback_ = nullptr;
 
-    // Deinitialize all BNO08x handlers and clean up I2C devices
+    // Destroy handlers while RST/INT BaseGpio* from GpioManager remain valid (shared_ptrs below).
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (device_active_[i] && bno08x_handlers_[i]) {
             // Clean up I2C device if this slot had one
@@ -116,6 +113,11 @@ bool ImuManager::Deinitialize() noexcept {
                          Logger::GetInstance().Info("ImuManager", "BNO08x handler %u deinitialized", i);
         }
     }
+
+    interrupt_gpio_ = nullptr;
+    interrupt_gpio_shared_.reset();
+    onboard_bno_reset_gpio_shared_.reset();
+    onboard_bno_int_gpio_shared_.reset();
 
     initialized_.store(false, std::memory_order_release);
     comm_manager_ = nullptr;
@@ -718,6 +720,23 @@ bool ImuManager::Initialize() noexcept {
         }
     }
 
+    onboard_bno_reset_gpio_shared_.reset();
+    onboard_bno_int_gpio_shared_.reset();
+    if (gpio_manager_ && gpio_manager_->IsInitialized()) {
+        onboard_bno_reset_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_RST);
+        onboard_bno_int_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
+        if (!onboard_bno_reset_gpio_shared_) {
+            Logger::GetInstance().Warn(
+                "ImuManager",
+                "GPIO_PCAL_IMU_RST not registered — onboard BNO08x hardware reset line unavailable");
+        }
+        if (!onboard_bno_int_gpio_shared_) {
+            Logger::GetInstance().Warn(
+                "ImuManager",
+                "GPIO_PCAL_IMU_INT not registered — onboard BNO08x INT-driven I²C reads limited");
+        }
+    }
+
     // Initialize onboard BNO08x IMU device
     bool onboard_ok = InitializeOnboardBno08xDevice();
     if (onboard_ok) {
@@ -758,11 +777,13 @@ bool ImuManager::InitializeOnboardBno08xDevice() noexcept {
         return false;
     }
 
-    // Create onboard BNO08x handler with I2C interface
+    // Create onboard BNO08x handler with I2C interface and optional PCAL control lines
     Bno08xConfig config = Bno08xHandler::GetDefaultConfig();  // Use default configuration
-    
-    // Create the handler with I2C interface
-    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config);
+
+    BaseGpio* const rst = onboard_bno_reset_gpio_shared_ ? onboard_bno_reset_gpio_shared_.get() : nullptr;
+    BaseGpio* const intr = onboard_bno_int_gpio_shared_ ? onboard_bno_int_gpio_shared_.get() : nullptr;
+
+    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config, rst, intr);
     
     if (!bno08x_handlers_[ONBOARD_IMU_INDEX]) {
         Logger::GetInstance().Error("ImuManager", "Failed to create onboard BNO08x handler");
@@ -834,16 +855,15 @@ bool ImuManager::InitializeInterruptGpio() noexcept {
         return false;
     }
 
-    // Get shared GPIO pin for PCAL_IMU_INT (creates if needed)
-    // Configure as input with pull-up since BNO08x INT is active low
-    interrupt_gpio_shared_ = gpio_manager_->Get("PCAL_IMU_INT");
-    if (!interrupt_gpio_shared_) {
-        Logger::GetInstance().Warn("ImuManager", "PCAL_IMU_INT functional pin not available on this platform");
-        return false;
+    // Re-use the same PCAL INT line already wired into Bno08xHandler (pincfg name GPIO_PCAL_IMU_INT).
+    if (!onboard_bno_int_gpio_shared_) {
+        onboard_bno_int_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
     }
-    
+    interrupt_gpio_shared_ = onboard_bno_int_gpio_shared_;
     if (!interrupt_gpio_shared_) {
-        Logger::GetInstance().Error("ImuManager", "Failed to create shared PCAL_IMU_INT pin");
+        Logger::GetInstance().Warn(
+            "ImuManager",
+            "GPIO_PCAL_IMU_INT not available — GPIO interrupt path for BNO08x disabled");
         return false;
     }
 
@@ -859,7 +879,8 @@ bool ImuManager::InitializeInterruptGpio() noexcept {
         return false;
     }
 
-    Logger::GetInstance().Info("ImuManager", "BNO08x interrupt GPIO (PCAL_IMU_INT) initialized successfully with shared pin access");
+    Logger::GetInstance().Info("ImuManager",
+                               "BNO08x interrupt GPIO (GPIO_PCAL_IMU_INT) semaphore ready (shared with handler INT)");
     return true;
 }
 
