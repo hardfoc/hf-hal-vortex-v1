@@ -34,6 +34,8 @@ cd examples/esp32
 | `vortex_bldc_velocity_foc_hall` | [`main/vortex_bldc_velocity_foc_hall.cpp`](../main/vortex_bldc_velocity_foc_hall.cpp) | component | no | FOC + Hall — **motion** |
 | `vortex_bldc_velocity_foc_abn` | [`main/vortex_bldc_velocity_foc_abn.cpp`](../main/vortex_bldc_velocity_foc_abn.cpp) | component | no | FOC + incremental encoder — **motion** |
 | `vortex_bldc_position_foc_as5047` | [`main/vortex_bldc_position_foc_as5047.cpp`](../main/vortex_bldc_position_foc_as5047.cpp) | component | no | Position loop + AS5047 angle — **motion** |
+| `vortex_bldc_telemetry_sweep` | [`main/vortex_bldc_telemetry_sweep.cpp`](../main/vortex_bldc_telemetry_sweep.cpp) | component | yes | TMC9660 full bring-up + DRV_EN + telemetry/fault sweep — **no motion** |
+| `vortex_bldc_torque_foc_hall` | [`main/vortex_bldc_torque_foc_hall.cpp`](../main/vortex_bldc_torque_foc_hall.cpp) | component | no | Hall FOC closed-loop torque (Iq command) — **motion** |
 | `vortex_brake_dissipator_gpio` | [`main/vortex_brake_dissipator_gpio.cpp`](../main/vortex_brake_dissipator_gpio.cpp) | component | no | GPIO toggles for brake/dissipator path |
 
 ## Shared example code

@@ -1,6 +1,35 @@
 # Vortex V1 — bench matrix (ESP32-C6 HAL examples)
 
-Nominal bench supply: **24 V DC**. Phase / torque current ceiling for bring-up examples: **1 A** (`vortex_bench_safety.hpp`). Motion profiles are **time-bounded** in firmware; use an e-stop and a secured shaft.
+Nominal bench supply: **24 V DC**. Phase / torque current cap for the supplied
+24 V / 30 W reference motor: **1.5 A** (`vortex_bench_safety.hpp`). Motion
+profiles are **time-bounded** in firmware; use an e-stop and a secured shaft.
+
+## TMC9660 BLDC bring-up shape
+
+All `vortex_bldc_*` apps share `main/common/vortex_motor_bench_common.hpp`,
+which mirrors the EvKit `bldc_comprehensive_test::configureCompleteBLDCMotor()`
+ordering for parameter mode:
+
+1. `SYSTEM_OFF` → 2. gate driver (`PowerStageProfile`) → 3. current sensing
+(`AutoConfig`) → 4. motor (type, pole pairs, PWM, voltage limit) → 5. FOC PI
+gains (torque/flux + velocity) → 6. protection (OV/UV, OT, OC, I²t) → 7. ramp
+(direct velocity mode by default) → 8. brake (off by default) → 9. stop events →
+10. ADC offset calibration → 11. **`DRV_EN` active**.
+
+After step 11 the chip is **armed but in `SYSTEM_OFF`**. The app then sets the
+commutation mode (`FOC_OPENLOOP_VOLTAGE_MODE`, `FOC_HALL_SENSOR`, `FOC_ABN`,
+…) and writes `setTargetVelocity(...)` or `setTargetTorque(...)`.
+
+Every electrical/mechanical/firmware constant lives in
+`main/common/vortex_bench_safety.hpp` (motor specs, MOSFET specs, shunt R,
+PWM, target velocities/torques, profile durations, encoder CPR).
+
+> **Hall / ABN feedback** also needs the TMC9660 **bootloader** to mux the
+> sensor pins. Vortex's stock `Tmc9660Handler::kDefaultBootConfig` leaves
+> `cfg.hall.enable = false` and `cfg.abn1.enable = false`. To use the
+> Hall/ABN apps, supply a custom `BootloaderConfig*` to
+> `MotorController::CreateOnboardDevice(...)` with those enabled (Hall →
+> GPIO2/3/4, ABN1 → GPIO8/13/14 in the EvKit reference).
 
 ### `vortex_api_test` — strict hardware mode
 
@@ -18,9 +47,11 @@ Defaults are **off** so CI and USB-debug builds stay permissive. Alternatively s
 | `vortex_led_ws2812_smoke` | WS2812 / `LedManager` | yes | GPIO3 data; demo runs boot pulse, RGB sweep, rainbow, breath, blink, status colours, ends dim green (~20 s). |
 | `vortex_i2c_scan_pcal_bno_pca` | Shared I2C + PCAL + BNO + PCA9685 | yes | SDA 21 / SCL 22; runtime slot @ 0x40 for `Pca9685Handler`. |
 | `vortex_motor_comms_smoke` | TMC9660 telemetry, no spin | yes | Uses `MotorController::visitDriver` after `Vortex` registers onboard SPI + PCAL control pins. |
-| `vortex_bldc_open_loop` | Open-loop voltage segment | no | Tunables in `main/common/vortex_bench_safety.hpp` (velocity, spin ms, current cap, pole pairs). **Motion** — secure motor. |
-| `vortex_bldc_velocity_foc_hall` | FOC + Hall velocity | no | Requires Hall wiring; **motion**. |
-| `vortex_bldc_velocity_foc_abn` | FOC + ABN velocity | no | Set CPR to encoder; **motion**. |
+| `vortex_bldc_telemetry_sweep` | Full TMC9660 BLDC config + DRV_EN, **no commutation** — telemetry only | yes | Safe with motor unplugged; exercises gate driver / current sense / protection auto-config and reads supply, chip temp, fault flags. |
+| `vortex_bldc_open_loop` | Open-loop FOC voltage spin (no sensor) | no | Full bring-up + `FOC_OPENLOOP_VOLTAGE_MODE` + `setTargetVelocity` + telemetry sweep. **Motion** — secure shaft, supply 12–24 V. |
+| `vortex_bldc_velocity_foc_hall` | Hall-FOC velocity loop | no | Same bring-up + `configureAuto(HallConfig)` + `FOC_HALL_SENSOR`. Requires Hall enabled in bootloader. **Motion**. |
+| `vortex_bldc_torque_foc_hall` | Hall-FOC closed-loop torque (Iq command) | no | `setTargetTorque(kTorqueModeTargetMa)` instead of velocity. **Motion** — load shaft, motor will speed up freely if unloaded. |
+| `vortex_bldc_velocity_foc_abn` | ABN-FOC velocity loop | no | Same bring-up + `configureAuto(AbnConfig{CPR})` + `FOC_ABN`. Requires ABN enabled in bootloader; encoder runs forced phi_e zero swing on init. **Motion**. |
 | `vortex_bldc_position_foc_as5047` | Position PI + encoder angle log | no | Logs `EncoderManager` AS5047 sample; TMC path uses ABN CPR placeholder — see app header for SPI-enc upgrade. **Motion**. |
 | `vortex_brake_dissipator_gpio` | TMC9660 GPIO17/18 toggles | no | Schematic-dependent loads — GPIO-level only unless qualified. |
 

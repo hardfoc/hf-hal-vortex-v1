@@ -1,22 +1,21 @@
 /**
- * @file vortex_bldc_velocity_foc_hall.cpp
- * @brief Hall-FOC velocity loop bench — full bring-up + velocity profile.
+ * @file vortex_bldc_torque_foc_hall.cpp
+ * @brief Hall-FOC torque-mode bench — direct Iq command (no velocity loop).
  *
  * Sequence:
  *   1. Vortex + MotorController bring-up.
- *   2. Full TMC9660 BLDC config (gate, current sense, motor, FOC PI, protection,
- *      ramp, brake, ADC cal, DRV_EN).
- *   3. `feedbackSense.configureAuto(HallConfig)` — Hall sector 0°, ideal spacing.
- *   4. `setCommutationMode(FOC_HALL_SENSOR)`, command velocity, telemetry sweep.
- *   5. `motor_stop_safe()`.
+ *   2. Full TMC9660 BLDC config with Hall sensor.
+ *   3. `setCommutationMode(FOC_HALL_SENSOR)`.
+ *   4. **Direct** torque command via `torqueFluxControl.setTargetTorque()` with
+ *      `kTorqueModeTargetMa` (mA, signed) — current is closed-loop, velocity floats.
+ *   5. Telemetry poll while running, stop with negative ramp, then `motor_stop_safe`.
  *
- * @note **Bootloader prerequisite:** the TMC9660 must be brought up with
- *       `bootcfg::HallConfig::enable = true` and Hall U/V/W routed to the
- *       expected GPIOs (EvKit defaults: GPIO2/3/4). Vortex's stock
- *       `Tmc9660Handler::kDefaultBootConfig` leaves Hall disabled — pass a
- *       custom `BootloaderConfig*` to `MotorController::CreateOnboardDevice`
- *       enabling Hall before this app will close the loop. Without it the
- *       motor will not commutate (Iq saturates / FOC oscillates).
+ * @note Same bootloader prerequisite as `vortex_bldc_velocity_foc_hall`:
+ *       Hall must be enabled in the TMC9660 bootloader config (GPIO mux).
+ *
+ * @note **Mechanical safety:** in torque mode the motor will spin up freely if
+ *       unloaded and may exceed the rated speed. Always run with a load (or
+ *       low torque + secured shaft).
  */
 #include "api/Vortex.h"
 #include "managers/MotorController.h"
@@ -27,12 +26,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-static const char* TAG = "vortex_bldc_hall";
+#include <cstdint>
+
+static const char* TAG = "vortex_bldc_torq";
 
 extern "C" void app_main(void) {
     ESP_LOGW(TAG,
-             "MOTION APP — Hall FOC velocity, target=%ld units, current cap %u mA, spin %lu ms",
-             static_cast<long>(vortex_bench_safety::kHallFocTargetVelocity),
+             "MOTION APP — Hall FOC torque, target=%d mA, current cap %u mA, run %lu ms",
+             static_cast<int>(vortex_bench_safety::kTorqueModeTargetMa),
              static_cast<unsigned>(vortex_bench_safety::kMaxPhaseCurrentMa),
              static_cast<unsigned long>(vortex_bench_safety::kFocSpinDurationMs));
 
@@ -47,7 +48,6 @@ extern "C" void app_main(void) {
         [&ready](auto& d) {
             ready = vortex_motor_bench::configure_complete_bldc(d, TAG);
             if (!ready) return;
-            // Hall config requires bootloader-level Hall pin mux (GPIO2/3/4 EvKit default).
             (void)vortex_motor_bench::configure_hall(d, TAG);
         },
         MotorController::ONBOARD_TMC9660_INDEX);
@@ -63,7 +63,6 @@ extern "C" void app_main(void) {
                 ESP_LOGE(TAG, "setCommutationMode(FOC_HALL_SENSOR) failed");
                 return;
             }
-            ESP_LOGI(TAG, "Mode: FOC_HALL_SENSOR");
         },
         MotorController::ONBOARD_TMC9660_INDEX);
 
@@ -71,8 +70,11 @@ extern "C" void app_main(void) {
 
     motors.visitDriver(
         [](auto& d) {
-            if (!d.velocityControl.setTargetVelocity(vortex_bench_safety::kHallFocTargetVelocity)) {
-                ESP_LOGE(TAG, "setTargetVelocity failed");
+            const int16_t target = vortex_bench_safety::kTorqueModeTargetMa;
+            if (!d.torqueFluxControl.setTargetTorque(target)) {
+                ESP_LOGE(TAG, "setTargetTorque(%d mA) failed", static_cast<int>(target));
+            } else {
+                ESP_LOGI(TAG, "Iq command = %d mA (closed-loop torque)", static_cast<int>(target));
             }
         },
         MotorController::ONBOARD_TMC9660_INDEX);
@@ -84,11 +86,19 @@ extern "C" void app_main(void) {
         motors.visitDriver(
             [elapsed](auto& d) {
                 char label[24];
-                snprintf(label, sizeof(label), "hall@%lu", static_cast<unsigned long>(elapsed));
+                snprintf(label, sizeof(label), "torq@%lu", static_cast<unsigned long>(elapsed));
                 vortex_motor_bench::log_telemetry(d, TAG, label);
             },
             MotorController::ONBOARD_TMC9660_INDEX);
     }
+
+    motors.visitDriver(
+        [](auto& d) {
+            // Ramp current down before SYSTEM_OFF for a softer stop.
+            (void)d.torqueFluxControl.setTargetTorque(0);
+        },
+        MotorController::ONBOARD_TMC9660_INDEX);
+    vTaskDelay(pdMS_TO_TICKS(150));
 
     motors.visitDriver(
         [](auto& d) {
@@ -97,5 +107,5 @@ extern "C" void app_main(void) {
         },
         MotorController::ONBOARD_TMC9660_INDEX);
 
-    ESP_LOGI(TAG, "Hall-FOC velocity bench finished");
+    ESP_LOGI(TAG, "Hall-FOC torque bench finished");
 }

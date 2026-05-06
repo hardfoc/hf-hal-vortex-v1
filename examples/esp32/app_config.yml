@@ -76,6 +76,14 @@ apps:
     source_file: "vortex_bldc_position_foc_as5047.cpp"
     category: "component"
     ci_enabled: false
+  vortex_bldc_telemetry_sweep:
+    source_file: "vortex_bldc_telemetry_sweep.cpp"
+    category: "component"
+    ci_enabled: true
+  vortex_bldc_torque_foc_hall:
+    source_file: "vortex_bldc_torque_foc_hall.cpp"
+    category: "component"
+    ci_enabled: false
   vortex_brake_dissipator_gpio:
     source_file: "vortex_brake_dissipator_gpio.cpp"
     category: "component"
