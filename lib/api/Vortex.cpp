@@ -434,7 +434,7 @@ bool Vortex::InitializeAllComponents() noexcept {
         Logger::GetInstance().Error("Vortex", "Failed to initialize LED management");
         return false;
     }
-    
+
     // Remaining subsystems: best-effort for bench bring-up (log warnings, do not fail API init)
     if (!InitializeMotors()) {
         Logger::GetInstance().Warn("Vortex", "Motor controllers not ready (optional for LED-only bench)");
@@ -561,6 +561,12 @@ bool Vortex::InitializeMotors() noexcept {
                     if (reg != MotorError::SUCCESS) {
                         Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(SPI) returned %s",
                             MotorErrorToString(reg));
+                    } else {
+                        // Steer shared SPI to the TMC9660 before bridge GPIO registration or handler init.
+                        // Otherwise the PCAL mux line can sit at its default until MotorController::Initialize(),
+                        // so the first TMCL exchange sees open MISO (zeros) while the gate is still released.
+                        (void)motors.ApplyOnboardTmc9660HostSpiGateMode(
+                            Tmc9660HostSpiGateMode::EnabledForHostSpiMotor);
                     }
                 } else {
                     Logger::GetInstance().Warn("Vortex", "TMC9660 SPI device not registered — skip onboard motor");

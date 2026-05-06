@@ -71,15 +71,13 @@ enum class MotorError : uint8_t {
 /**
  * @brief Vortex-style host SPI steering to the onboard TMC9660 (PCAL95555 outputs).
  *
- * @details On Vortex, `PCAL_TMC_SPI_COMM_EN` (TMC_COMM_ENn, active-low) connects the ESP32 SPI
- *          master to the TMC9660 when asserted (`SetActive`). When deasserted, the motor IC
- *          can use its side of the bus (e.g. toward external flash) while the host uses UART.
- *          Optional `PCAL_TMC_SHARED_FLASH_HOLD` asserts active-low HOLD on shared SPI flash
- *          while the host talks to the motor over SPI so the flash does not interpret traffic.
+ * @details On Vortex, `PCAL_TMC_SPI_COMM_EN` (TMC_COMM_ENn, active-low) steers the shared SPI
+ *          segment: asserted (`SetActive`) connects the ESP32 SPI master to the TMC9660;
+ *          deasserted releases that path (e.g. host UART to TMC, or TMC-local SPI) per schematic.
  */
 enum class Tmc9660HostSpiGateMode : uint8_t {
-    Disabled = 0,                 ///< Gate off, flash HOLD released (UART / idle / TMC↔flash).
-    EnabledForHostSpiMotor = 1    ///< Host SPI to TMC9660; assert shared flash HOLD if mapped.
+    Disabled = 0,                 ///< SPI mux released (UART motor path / idle).
+    EnabledForHostSpiMotor = 1    ///< Host SPI to TMC9660 (`PCAL_TMC_SPI_COMM_EN` asserted).
 };
 
 /**
@@ -202,7 +200,7 @@ public:
     [[nodiscard]] MotorError GetSystemDiagnostics(MotorSystemDiagnostics& diagnostics) const noexcept;
 
     /**
-     * @brief Drive the onboard TMC9660 host SPI gate (and optional shared flash HOLD) on Vortex.
+     * @brief Drive the onboard TMC9660 host SPI mux (`PCAL_TMC_SPI_COMM_EN`) on Vortex.
      *
      * @param mode `Disabled` for UART motor comms or to free the exported SPI segment;
      *             `EnabledForHostSpiMotor` before TMCL/bootloader over SPI.
@@ -415,7 +413,7 @@ private:
      */
     void UpdateLastError(MotorError error, int deviceIndex = -1) noexcept;
 
-    /** @pre `deviceMutex_` held. Applies PCAL gate/HOLD for slot @p device_index before handler init. */
+    /** @pre `deviceMutex_` held. Applies PCAL SPI mux for slot @p device_index before handler init. */
     void configureOnboardHostBusBeforeHandlerInitLocked(uint8_t device_index) noexcept;
 
     /** @pre `deviceMutex_` held. */

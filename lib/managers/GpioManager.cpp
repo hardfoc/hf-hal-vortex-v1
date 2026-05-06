@@ -6,7 +6,7 @@
  *          - ESP32 internal: make_shared<EspGpio>(...)
  *          - PCAL95555 expander: Pcal95555Handler::CreateGpioPin(...) — includes host→TMC control
  *            outputs (`PCAL_TMC_DRV_EN`, `PCAL_TMC_RST_CTRL`, `PCAL_TMC_SPI_COMM_EN`,
- *            `PCAL_TMC_SHARED_FLASH_HOLD`, `PCAL_TMC_WAKE_CTRL`) and inputs (`PCAL_TMC_FAULT_STATUS`,
+ *            `PCAL_TMC_WAKE_CTRL`) and inputs (`PCAL_TMC_FAULT_STATUS`,
  *            `PCAL_PWR_GOOD`, `PCAL_IMU_INT`), plus TMC GPIO17/18 on PCAL P1–P2 as `PCAL_TMC_GPIO17_EXP_IN` /
  *            `PCAL_TMC_GPIO18_EXP_IN`.
  *          - TMC9660 controller: non-owning alias to handler->gpio(17|18), registered after
@@ -320,6 +320,17 @@ hf_gpio_err_t GpioManager::DebugReadPcal95555Pin(uint8_t expander_pin, bool& out
         return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     }
     return pcal95555_handler_->ReadInput(expander_pin, out_level);
+}
+
+hf_gpio_err_t GpioManager::DebugReadPcal95555InputSnapshot(uint16_t& out_bits) noexcept {
+    out_bits = 0;
+    if (!EnsurePcal95555Handler()) {
+        return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    }
+    if (!pcal95555_handler_->EnsureInitialized()) {
+        return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
+    }
+    return pcal95555_handler_->ReadAllInputsSnapshot(out_bits);
 }
 
 Tmc9660Handler* GpioManager::GetTmc9660Handler(uint8_t device_index) noexcept {

@@ -2,12 +2,13 @@
  * @file EncoderManager.h
  * @brief Encoder device management for the HardFOC Vortex V1 platform.
  *
- * @details Manages multiple AS5047U position encoder devices. The onboard
- *          encoder (index 0) is auto-created via CommChannelsManager; up to
- *          three external encoder devices (indices 1–3) can be added at
- *          runtime.
+ * @details Manages up to four AS5047U position encoder devices.  The Vortex V1
+ *          board has no onboard encoder — all devices are user-provisioned via
+ *          CreateAs5047uDevice().  The board provides a dedicated SPI CS pin
+ *          (SpiDeviceId::AS5047U_POSITION_ENCODER, GPIO 20) plus two external
+ *          CS slots that can each host an AS5047U or other SPI sensor.
  *
- * @version 2.0
+ * @version 2.1
  */
 
 #pragma once
@@ -105,64 +106,47 @@ struct EncoderSystemDiagnostics {
 
 /**
  * @class EncoderManager
- * @brief Singleton for managing multiple AS5047U encoder devices with indexed access and flexible device management.
+ * @brief Singleton for managing multiple AS5047U encoder devices with indexed access.
  *
- * This manager provides a global singleton for managing AS5047U encoder devices, following the same pattern as ImuManager:
- * - Always creates and manages the onboard AS5047U encoder device (device index 0)
- * - Allows dynamic creation/deletion of external AS5047U devices (indices 1-3)
- * - Array-based access to AS5047U handler instances by device index
- * - Thread-safe device registration and access
- * - Board-aware device management with predefined SPI assignments
- * - Currently supports AS5047U encoder family (extensible for other encoder types)
+ * The Vortex V1 board has **no onboard encoder**.  All AS5047U devices are
+ * user-provisioned at runtime via CreateAs5047uDevice().  The board exposes a
+ * dedicated SPI CS line for the encoder (SpiDeviceId::AS5047U_POSITION_ENCODER,
+ * GPIO 20) plus two external CS slots — any of them can host an AS5047U.
  *
  * **Key Features:**
- * - Multiple AS5047U device support with indexed access
- * - Lazy initialization of onboard AS5047U device
- * - Dynamic external device creation/deletion
+ * - Up to 4 AS5047U devices (indices 0–3), all user-created
+ * - Dynamic device creation/deletion on any slot
  * - Thread-safe singleton pattern with RtosMutex
  * - Exception-free operation with pointer-based returns
- * - Proper device initialization and lifecycle management
  * - ESP-IDF v5.5+ SPI integration
- * - Interrupt support for encoder data ready signals
- *
- * **Device Indexing:**
- * - Index 0: Onboard AS5047U encoder (always available, auto-created)
- * - Index 1: External encoder device 1 (optional, user-created)
- * - Index 2: External encoder device 2 (optional, user-created)
- * - Index 3: External encoder device 3 (optional, user-created)
  *
  * **Usage Example:**
  * @code
- * auto& encoder_mgr = EncoderManager::GetInstance();
- * if (encoder_mgr.EnsureInitialized()) {
- *     // Read encoder angle via manager (index 0 = onboard)
- *     uint16_t angle;
- *     if (encoder_mgr.ReadAngle(0, angle) == EncoderError::SUCCESS) {
- *         printf("Angle: %u LSB (%.2f deg)\n", angle, static_cast<double>(angle) * (360.0 / 16384.0));
- *     }
- *     
- *     // Set zero position via manager
- *     encoder_mgr.SetZeroPosition(0, 0);
- *     
- *     // Create external AS5047U device (index 1) with SPI interface
- *     if (encoder_mgr.CreateExternalAs5047uDevice(1, SpiDeviceId::EXTERNAL_DEVICE_1)) {
- *         // Read angle from external encoder
- *         uint16_t ext_angle;
- *         encoder_mgr.ReadAngle(1, ext_angle);
- *     }
+ * auto& enc = EncoderManager::GetInstance();
+ * enc.EnsureInitialized();
+ *
+ * // Create an AS5047U on the dedicated CS pin (slot 0)
+ * enc.CreateAs5047uDevice(0, SpiDeviceId::AS5047U_POSITION_ENCODER);
+ *
+ * uint16_t angle;
+ * if (enc.ReadAngle(0, angle) == EncoderError::SUCCESS) {
+ *     printf("Angle: %u LSB (%.2f deg)\n",
+ *            angle, static_cast<double>(angle) * (360.0 / 16384.0));
  * }
  * @endcode
- *
- * @note This manager follows the same architectural excellence as ImuManager
- *       for consistent device management across the HardFOC system.
  */
 class EncoderManager {
 public:
     static constexpr uint8_t MAX_ENCODER_DEVICES = 4;           ///< Maximum supported AS5047U devices
-    static constexpr uint8_t ONBOARD_ENCODER_INDEX = 0;         ///< Onboard AS5047U device index
-    static constexpr uint8_t EXTERNAL_ENCODER_1_INDEX = 1;      ///< External encoder device 1 index
-    static constexpr uint8_t EXTERNAL_ENCODER_2_INDEX = 2;      ///< External encoder device 2 index
-    static constexpr uint8_t EXTERNAL_ENCODER_3_INDEX = 3;      ///< External encoder device 3 index
+
+    // Slot indices — all user-provisioned, no onboard encoder.
+    static constexpr uint8_t ENCODER_SLOT_0 = 0;
+    static constexpr uint8_t ENCODER_SLOT_1 = 1;
+    static constexpr uint8_t ENCODER_SLOT_2 = 2;
+    static constexpr uint8_t ENCODER_SLOT_3 = 3;
+
+    /// @deprecated Use ENCODER_SLOT_0. Kept for backward compatibility.
+    static constexpr uint8_t ONBOARD_ENCODER_INDEX = ENCODER_SLOT_0;
 
 public:
     /**
@@ -177,7 +161,7 @@ public:
 
     /**
      * @brief Ensure the encoder manager system is initialized.
-     * @note This automatically creates the onboard AS5047U encoder device using CommChannelsManager
+     * @note No devices are created automatically — call CreateAs5047uDevice() after init.
      * @return true if initialization successful, false otherwise
      */
     bool EnsureInitialized() noexcept;
@@ -213,60 +197,71 @@ public:
 
     /**
      * @brief Get access to AS5047U encoder handler by device index.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @return Pointer to As5047uHandler if valid and active, nullptr otherwise
-     * @note Returns nullptr if deviceIndex is invalid, device not active, or not initialized
      */
-    As5047uHandler* GetAs5047uHandler(uint8_t deviceIndex = ONBOARD_ENCODER_INDEX) noexcept;
+    As5047uHandler* GetAs5047uHandler(uint8_t deviceIndex = ENCODER_SLOT_0) noexcept;
 
     /**
      * @brief Get access to the underlying AS5047U driver by device index.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @return Pointer to AS5047U driver, nullptr if invalid/not ready
-     * @note Returns nullptr if deviceIndex is invalid, device not active/initialized, or driver unavailable
      * @note Caller must not delete the returned pointer; lifetime is owned by the handler.
      */
-    as5047u::AS5047U<As5047uSpiAdapter>* GetAs5047uDriver(uint8_t deviceIndex = ONBOARD_ENCODER_INDEX) noexcept;
+    as5047u::AS5047U<As5047uSpiAdapter>* GetAs5047uDriver(uint8_t deviceIndex = ENCODER_SLOT_0) noexcept;
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//
     //**************************************************************************//
 
     /**
-     * @brief Create an external AS5047U encoder device on SPI interface.
-     * @param deviceIndex External device index (1, 2, or 3 only)
-     * @param spiDeviceId SPI device ID for communication
+     * @brief Create an AS5047U encoder device on a given SPI device slot.
+     * @param deviceIndex Device slot (0–3)
+     * @param spiDeviceId SPI device ID for communication (e.g. AS5047U_POSITION_ENCODER)
      * @param config Optional AS5047U configuration (defaults to default config)
      * @return true if device created successfully, false otherwise
      */
-    bool CreateExternalAs5047uDevice(uint8_t deviceIndex, 
-                                   SpiDeviceId spiDeviceId,
-                                   const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept;
+    bool CreateAs5047uDevice(uint8_t deviceIndex,
+                             SpiDeviceId spiDeviceId,
+                             const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept;
 
     /**
-     * @brief Create an external AS5047U encoder device using direct BaseSpi interface.
-     * @param deviceIndex External device index (1, 2, or 3 only)
+     * @brief Create an AS5047U encoder device using a direct BaseSpi interface.
+     * @param deviceIndex Device slot (0–3)
      * @param spi_interface Direct reference to BaseSpi interface
      * @param config Optional AS5047U configuration (defaults to default config)
      * @return true if device created successfully, false otherwise
-     * @note This is the most flexible method - allows any external SPI interface
      */
-    bool CreateExternalAs5047uDevice(uint8_t deviceIndex, 
-                                   BaseSpi& spi_interface,
-                                   const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept;
+    bool CreateAs5047uDevice(uint8_t deviceIndex,
+                             BaseSpi& spi_interface,
+                             const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept;
+
+    /// @deprecated Use CreateAs5047uDevice(). Kept for backward compatibility.
+    bool CreateExternalAs5047uDevice(uint8_t deviceIndex,
+                                     SpiDeviceId spiDeviceId,
+                                     const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept {
+        return CreateAs5047uDevice(deviceIndex, spiDeviceId, config);
+    }
+    /// @deprecated Use CreateAs5047uDevice(). Kept for backward compatibility.
+    bool CreateExternalAs5047uDevice(uint8_t deviceIndex,
+                                     BaseSpi& spi_interface,
+                                     const As5047uConfig& config = As5047uHandler::GetDefaultConfig()) noexcept {
+        return CreateAs5047uDevice(deviceIndex, spi_interface, config);
+    }
 
     /**
-     * @brief Delete an external encoder device.
-     * @param deviceIndex External device index (1, 2, or 3 only)
+     * @brief Delete an encoder device and free its slot.
+     * @param deviceIndex Device slot (0–3)
      * @return true if device deleted successfully, false otherwise
-     * @note Cannot delete onboard device (index 0). Only external devices can be deleted.
      */
-    bool DeleteExternalDevice(uint8_t deviceIndex) noexcept;
+    bool DeleteDevice(uint8_t deviceIndex) noexcept;
+
+    /// @deprecated Use DeleteDevice(). Kept for backward compatibility.
+    bool DeleteExternalDevice(uint8_t deviceIndex) noexcept { return DeleteDevice(deviceIndex); }
 
     /**
      * @brief Get the number of active encoder devices.
-     * @return Number of active devices (1 to MAX_ENCODER_DEVICES)
-     * @note Always includes onboard device, plus any active external devices
+     * @return Number of active devices (0 to MAX_ENCODER_DEVICES)
      */
     uint8_t GetDeviceCount() const noexcept;
 
@@ -328,7 +323,7 @@ public:
 
     /**
      * @brief Read angle from specific encoder device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @param angle Output angle value (0-16383 LSB, 14-bit)
     * @return EncoderError::SUCCESS if successful
      */
@@ -336,7 +331,7 @@ public:
 
     /**
      * @brief Read angle in degrees from specific encoder device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @param angle_degrees Output angle in degrees (0.0-359.978°)
     * @return EncoderError::SUCCESS if successful
      */
@@ -344,7 +339,7 @@ public:
 
     /**
      * @brief Read velocity from specific encoder device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @param velocity_rpm Output velocity in RPM
     * @return EncoderError::SUCCESS if successful
      */
@@ -352,7 +347,7 @@ public:
 
     /**
      * @brief Read diagnostics from specific encoder device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @param diagnostics Output diagnostic information
     * @return EncoderError::SUCCESS if successful
      */
@@ -360,7 +355,7 @@ public:
 
     /**
      * @brief Set zero position for specific encoder device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @param zero_position Zero position in LSB (0-16383)
     * @return EncoderError::SUCCESS if successful
      */
@@ -402,14 +397,14 @@ public:
 
     /**
      * @brief Get measurement statistics for monitoring specific device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @return Number of measurements taken since initialization
      */
     uint32_t GetMeasurementCount(uint8_t deviceIndex) const noexcept;
 
     /**
      * @brief Get communication error count for specific device.
-     * @param deviceIndex Device index (0=onboard, 1-3=external)
+     * @param deviceIndex Device slot (0–3)
      * @return Number of communication errors since initialization
      */
     uint32_t GetCommunicationErrorCount(uint8_t deviceIndex) const noexcept;
@@ -438,24 +433,17 @@ private:
     ~EncoderManager() noexcept;
 
     /**
-     * @brief Initialize the encoder manager system.
-     * @note This automatically creates the onboard AS5047U encoder device using CommChannelsManager
+     * @brief Initialize the encoder manager system (no devices auto-created).
      * @return true if initialization successful, false otherwise
      */
     bool Initialize() noexcept;
 
     /**
-     * @brief Initialize the onboard AS5047U encoder device with SPI transport.
-     * @return true if initialization successful, false otherwise
+     * @brief Validate that deviceIndex is within [0, MAX_ENCODER_DEVICES).
      */
-    bool InitializeOnboardAs5047uDevice() noexcept;
-
-    /**
-     * @brief Validate if device index is for external device.
-     * @param deviceIndex Device index to validate
-     * @return true if index is for external device (1, 2, or 3), false otherwise
-     */
-    bool IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept;
+    static bool IsValidDeviceIndex(uint8_t deviceIndex) noexcept {
+        return deviceIndex < MAX_ENCODER_DEVICES;
+    }
 
     /**
     * @brief Map AS5047U driver sticky error flags to generic EncoderError.
@@ -507,11 +495,7 @@ private:
      */
     std::array<bool, MAX_ENCODER_DEVICES> device_active_;
 
-    /**
-     * @brief Onboard device creation tracking.
-     * Tracks if onboard device has been created.
-     */
-    bool onboard_device_created_ = false;
+    // (no onboard device — all encoder slots are user-provisioned)
 
     // ===============================
     // DEPENDENCIES

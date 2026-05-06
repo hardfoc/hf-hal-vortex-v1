@@ -15,6 +15,7 @@
 #include "MotorController.h"
 #include "handlers/tmc9660/Tmc9660Handler.h"
 #include "handlers/logger/Logger.h"
+#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/memory_utils.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 #include <algorithm>
@@ -135,7 +136,7 @@ bool TemperatureManager::Initialize() noexcept {
 }
 
 bool TemperatureManager::InitializeEsp32Internal() noexcept {
-    esp32_temp_ = std::make_unique<EspTemperature>();
+    esp32_temp_ = hf::utils::make_unique_nothrow<EspTemperature>();
     if (!esp32_temp_) {
         Logger::GetInstance().Error(TAG, "Failed to allocate EspTemperature");
         return false;
@@ -175,7 +176,7 @@ bool TemperatureManager::InitializeNtcThermistor() noexcept {
     ntc_cfg.low_threshold_celsius = 0.0f;
     ntc_cfg.high_threshold_celsius = 85.0f;
 
-    ntc_handler_ = std::make_unique<NtcTemperatureHandler>(adc_driver, ntc_cfg);
+    ntc_handler_ = hf::utils::make_unique_nothrow<NtcTemperatureHandler>(adc_driver, ntc_cfg);
     if (!ntc_handler_) {
         Logger::GetInstance().Error(TAG, "Failed to allocate NTC handler");
         return false;
@@ -209,8 +210,8 @@ bool TemperatureManager::InitializeTmc9660Chip() noexcept {
         return false;
     }
 
-    tmc9660_temp_ = std::make_unique<Tmc9660TemperatureWrapper>(*handler);
-    if (!tmc9660_temp_->Initialize()) {
+    tmc9660_temp_ = hf::utils::make_unique_nothrow<Tmc9660TemperatureWrapper>(*handler);
+    if (!tmc9660_temp_ || !tmc9660_temp_->Initialize()) {
         Logger::GetInstance().Error(TAG, "TMC9660 temp wrapper init failed");
         tmc9660_temp_.reset();
         return false;

@@ -43,7 +43,7 @@
  *
  * @note Steps 5–9 are best-effort: `EnsureInitialized()` succeeds when NVS, comms, GPIO,
  *       and LEDs are up; motor / sensor failures produce warnings and degraded diagnostics.
- * 
+ *
  * Usage Example:
  * @code
  * // Get the Vortex API instance
@@ -499,7 +499,7 @@ private:
 
     /** 0 = Spi, 1 = Uart — must match `VortexOnboardTmc9660Transport` enumerators. */
     static std::atomic<std::uint8_t> onboard_tmc9660_transport_;
-    
+
     // Component references (these are references to singletons, not owned)
     // NOTE: Removed duplicate _ref_ members - public refs serve both roles
 };

@@ -11,8 +11,8 @@
  *          (all pins known at compile time) instead of a heap-allocated
  *          unordered_map. String lookups iterate the constexpr mapping table.
  *
- *          Vortex TMC9660 / PCAL: motor-facing lines use `PCAL_TMC_*` (e.g. DRV_EN, RST, SPI gate,
- *          flash HOLD, WAKE). TMC9660 GPIO17/18 are duplicated — read via PCAL inputs
+ *          Vortex TMC9660 / PCAL: motor-facing lines use `PCAL_TMC_*` (e.g. DRV_EN, RST, SPI mux,
+ *          WAKE). TMC9660 GPIO17/18 are duplicated — read via PCAL inputs
  *          `PCAL_TMC_GPIO17_EXP_IN` / `PCAL_TMC_GPIO18_EXP_IN` (I²C expander), or configure/read
  *          the same nets through `TMC_GPIO17` / `TMC_GPIO18` once the handler bridge is registered.
  *
@@ -158,6 +158,13 @@ public:
      */
     [[nodiscard]] hf_gpio_err_t DebugReadPcal95555Pin(uint8_t expander_pin_0_to_15,
                                                       bool& out_level) noexcept;
+
+    /**
+     * @brief Read INPUT_PORT_0 and INPUT_PORT_1 in one driver call (bits 0–7 = port0, 8–15 = port1).
+     * @details For bench / bring-up. Lines tied to GND read as 0 (inactive) with typical strapping;
+     *          compare against your schematic for A0–A2 and routed nets.
+     */
+    [[nodiscard]] hf_gpio_err_t DebugReadPcal95555InputSnapshot(uint16_t& out_bits) noexcept;
 
     /**
      * @brief After MotorController::CreateOnboardDevice(), register TMC9660 GPIO17/18 in the table.

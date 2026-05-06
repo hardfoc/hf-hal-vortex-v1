@@ -117,6 +117,7 @@ bool ImuManager::Deinitialize() noexcept {
     interrupt_gpio_ = nullptr;
     interrupt_gpio_shared_.reset();
     onboard_bno_reset_gpio_shared_.reset();
+    onboard_bno_boot_gpio_shared_.reset();
     onboard_bno_int_gpio_shared_.reset();
 
     initialized_.store(false, std::memory_order_release);
@@ -721,14 +722,21 @@ bool ImuManager::Initialize() noexcept {
     }
 
     onboard_bno_reset_gpio_shared_.reset();
+    onboard_bno_boot_gpio_shared_.reset();
     onboard_bno_int_gpio_shared_.reset();
     if (gpio_manager_ && gpio_manager_->IsInitialized()) {
         onboard_bno_reset_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_RST);
+        onboard_bno_boot_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_BOOT);
         onboard_bno_int_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
         if (!onboard_bno_reset_gpio_shared_) {
             Logger::GetInstance().Warn(
                 "ImuManager",
                 "GPIO_PCAL_IMU_RST not registered — onboard BNO08x hardware reset line unavailable");
+        }
+        if (!onboard_bno_boot_gpio_shared_) {
+            Logger::GetInstance().Warn(
+                "ImuManager",
+                "GPIO_PCAL_IMU_BOOT not registered — BOOTN not software-driven (OK if strapped on PCB)");
         }
         if (!onboard_bno_int_gpio_shared_) {
             Logger::GetInstance().Warn(
@@ -770,6 +778,11 @@ bool ImuManager::Initialize() noexcept {
 bool ImuManager::InitializeOnboardBno08xDevice() noexcept {
     Logger::GetInstance().Info("ImuManager", "Initializing onboard BNO08x IMU device with I2C transport");
 
+    // IMU shares the I2C bus with PCAL95555 (0x20): different 7-bit addresses, no electrical
+    // conflict. RST/BOOT/INT are routed through PCAL outputs/inputs but do not participate in
+    // I2C addressing. Long clock-stretch from the BNO is tolerated via CommChannelsManager's
+    // per-device scl_wait_us for BNO08X_IMU (matches hf-bno08x-driver ESP32 examples).
+
     // Get I2C device from communication manager for BNO08x
     BaseI2c* imu_device = comm_manager_->GetI2cDevice(I2cDeviceId::BNO08X_IMU);
     if (!imu_device) {
@@ -782,8 +795,9 @@ bool ImuManager::InitializeOnboardBno08xDevice() noexcept {
 
     BaseGpio* const rst = onboard_bno_reset_gpio_shared_ ? onboard_bno_reset_gpio_shared_.get() : nullptr;
     BaseGpio* const intr = onboard_bno_int_gpio_shared_ ? onboard_bno_int_gpio_shared_.get() : nullptr;
+    BaseGpio* const boot = onboard_bno_boot_gpio_shared_ ? onboard_bno_boot_gpio_shared_.get() : nullptr;
 
-    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config, rst, intr);
+    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config, rst, intr, boot);
     
     if (!bno08x_handlers_[ONBOARD_IMU_INDEX]) {
         Logger::GetInstance().Error("ImuManager", "Failed to create onboard BNO08x handler");

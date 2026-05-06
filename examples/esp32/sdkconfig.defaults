@@ -4,7 +4,11 @@
 # Target
 CONFIG_IDF_TARGET="esp32c6"
 
-# Increase main task stack for test framework
+# `app_main` runs full Vortex::EnsureInitialized() (TMC9660 bootloader, BNO08x/SH-2,
+# encoders, temperature, …) — deep call stacks on the main task.
+#
+# Tuned with on-target bring-up + gpio_stress_test after NTC recursion fix.
+# Keep this aligned with CONFIG_MAIN_TASK_STACK_SIZE in sdkconfig.
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 
 # Enable C++ exceptions-free runtime (noexcept only)

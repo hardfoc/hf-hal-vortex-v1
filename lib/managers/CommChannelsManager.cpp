@@ -5,7 +5,8 @@
  * @details Configures four communication buses for the Vortex board:
  *          - UART : TMC9660 TMCL protocol (115200 8N1)
  *          - SPI  : TMC9660 (Mode 3) + AS5047U (Mode 1) + 2 ext (Mode 0)
- *          - I2C  : BNO08x IMU (0x4A) + PCAL95555 (0x20) @ 400 kHz
+ *          - I2C  : BNO08x IMU (0x4A) + PCAL95555 (0x20) @ 100 kHz; BNO device uses extended
+ *                   scl_wait_us for SH-2 clock stretching (see add_builtin_device)
  *          - CAN  : TWAI 500 kbps
  *
  * @version 2.0
@@ -217,6 +218,14 @@ bool CommChannelsManager::Initialize() noexcept {
                     dev.dev_addr_length   = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
                     dev.scl_speed_hz      = kBuiltinSclHz;
                     dev.disable_ack_check = false;
+                    // BNO08x SH-2 hub stretches SCL while preparing SHTP payloads. Our standalone
+                    // Esp32Bno08xI2cBus example sets scl_wait_us = 50000; leaving the default (0)
+                    // relies on ESP-IDF's per-byte stretch limit and commonly trips I2C hardware
+                    // timeouts on ESP32-class masters (see hf-bno08x-driver esp32_bno08x_bus.hpp).
+                    // PCAL95555 does not need an extended wait; keep 0 for that device.
+                    if (id == I2cDeviceId::BNO08X_IMU) {
+                        dev.scl_wait_us = 50000;
+                    }
 
                     int idx = i2c_bus_->CreateDevice(dev);
                     i2c_builtin_indices_[static_cast<uint8_t>(id)] = idx;
@@ -231,9 +240,10 @@ bool CommChannelsManager::Initialize() noexcept {
                     bool inited = dev_iface && dev_iface->EnsureInitialized();
                     Logger::GetInstance().Info(
                         TAG,
-                        "%s I2C device added (addr=0x%02X, idx=%d, scl=%lu Hz, ready=%s)",
+                        "%s I2C device added (addr=0x%02X, idx=%d, scl=%lu Hz, scl_wait_us=%lu, "
+                        "ready=%s)",
                         name, addr, idx, static_cast<unsigned long>(kBuiltinSclHz),
-                        inited ? "yes" : "no");
+                        static_cast<unsigned long>(dev.scl_wait_us), inited ? "yes" : "no");
                 };
 
                 // Device 0: BNO08x IMU @ 0x4A

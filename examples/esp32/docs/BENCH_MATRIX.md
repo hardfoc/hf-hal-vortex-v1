@@ -18,7 +18,7 @@ Defaults are **off** so CI and USB-debug builds stay permissive. Alternatively s
 | `vortex_led_ws2812_smoke` | WS2812 / `LedManager` | yes | GPIO3 data; demo runs boot pulse, RGB sweep, rainbow, breath, blink, status colours, ends dim green (~20 s). |
 | `vortex_i2c_scan_pcal_bno_pca` | Shared I2C + PCAL + BNO + PCA9685 | yes | SDA 21 / SCL 22; runtime slot @ 0x40 for `Pca9685Handler`. |
 | `vortex_motor_comms_smoke` | TMC9660 telemetry, no spin | yes | Uses `MotorController::visitDriver` after `Vortex` registers onboard SPI + PCAL control pins. |
-| `vortex_bldc_open_loop` | Open-loop voltage segment | no | Short velocity command; **motion** — secure motor. |
+| `vortex_bldc_open_loop` | Open-loop voltage segment | no | Tunables in `main/common/vortex_bench_safety.hpp` (velocity, spin ms, current cap, pole pairs). **Motion** — secure motor. |
 | `vortex_bldc_velocity_foc_hall` | FOC + Hall velocity | no | Requires Hall wiring; **motion**. |
 | `vortex_bldc_velocity_foc_abn` | FOC + ABN velocity | no | Set CPR to encoder; **motion**. |
 | `vortex_bldc_position_foc_as5047` | Position PI + encoder angle log | no | Logs `EncoderManager` AS5047 sample; TMC path uses ABN CPR placeholder — see app header for SPI-enc upgrade. **Motion**. |

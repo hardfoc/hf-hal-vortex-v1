@@ -33,7 +33,10 @@ bool MotorController::Initialize() {
         return false;
     }
     
-    // Initialize all active devices
+    // Initialize all active devices. On Vortex SPI, configureOnboardHostBusBeforeHandlerInitLocked()
+    // asserts PCAL_TMC_SPI_COMM_EN before each handler->Initialize(). Vortex::InitializeMotors() also
+    // calls ApplyOnboardTmc9660HostSpiGateMode(Enabled) right after CreateOnboardDevice so the mux is
+    // not left at the expander default between GPIO registration and this first Initialize() pass.
     bool allSuccess = true;
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         if (deviceActive_[i] && tmcHandlers_[i]) {
@@ -414,18 +417,8 @@ MotorError MotorController::applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660Host
     }
 
     auto comm = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_SPI_COMM_EN);
-    auto hold = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_SHARED_FLASH_HOLD);
 
     if (mode == Tmc9660HostSpiGateMode::EnabledForHostSpiMotor) {
-        // Assert flash HOLD first (active-low), then steer mux to TMC9660 so shared MOSI/MISO
-        // does not corrupt external flash while TMCL/bootloader runs on the host SPI port.
-        if (hold && hold->EnsureInitialized()) {
-            const hf_gpio_err_t hr = hold->SetActive();
-            if (hr != hf_gpio_err_t::GPIO_SUCCESS) {
-                Logger::GetInstance().Warn(TAG, "PCAL_TMC_SHARED_FLASH_HOLD SetActive failed (%d)",
-                                           static_cast<int>(hr));
-            }
-        }
         if (comm && comm->EnsureInitialized()) {
             const hf_gpio_err_t cr = comm->SetActive();
             if (cr != hf_gpio_err_t::GPIO_SUCCESS) {
@@ -441,12 +434,8 @@ MotorError MotorController::applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660Host
         return MotorError::SUCCESS;
     }
 
-    // Disabled: release mux toward motor first, then release flash HOLD (UART / TMC↔flash path).
     if (comm && comm->EnsureInitialized()) {
         (void)comm->SetInactive();
-    }
-    if (hold && hold->EnsureInitialized()) {
-        (void)hold->SetInactive();
     }
 #if defined(HF_RTOS_FREERTOS)
     os_delay_msec(1);

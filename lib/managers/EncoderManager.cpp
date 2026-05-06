@@ -40,8 +40,8 @@ EncoderManager& EncoderManager::GetInstance() noexcept {
     return instance;
 }
 
-EncoderManager::EncoderManager() noexcept 
-    : initialized_(false), manager_mutex_(), onboard_device_created_(false) {
+EncoderManager::EncoderManager() noexcept
+    : initialized_(false), manager_mutex_() {
     // Initialize all device slots as empty and not active
     for (auto& h : as5047u_handlers_) h.reset();
     device_initialized_.fill(false);
@@ -100,7 +100,6 @@ bool EncoderManager::Deinitialize() noexcept {
     initialized_.store(false, std::memory_order_release);
     comm_manager_ = nullptr;
     gpio_manager_ = nullptr;
-    onboard_device_created_ = false;
 
     Logger::GetInstance().Info("EncoderManager", "Encoder Manager deinitialized");
     return true;
@@ -138,13 +137,13 @@ as5047u::AS5047U<As5047uSpiAdapter>* EncoderManager::GetAs5047uDriver(uint8_t de
 //**                  DEVICES MANAGEMENT METHODS                           **//
 //**************************************************************************//
 
-bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex, 
-                                               SpiDeviceId spiDeviceId,
-                                               const As5047uConfig& config) noexcept {
+bool EncoderManager::CreateAs5047uDevice(uint8_t deviceIndex,
+                                         SpiDeviceId spiDeviceId,
+                                         const As5047uConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
-    
-    if (!IsExternalDeviceIndex(deviceIndex)) {
-        Logger::GetInstance().Error("EncoderManager", "Invalid device index %u for external device", deviceIndex);
+
+    if (!IsValidDeviceIndex(deviceIndex)) {
+        Logger::GetInstance().Error("EncoderManager", "Invalid device index %u", deviceIndex);
         return false;
     }
     
@@ -181,27 +180,27 @@ bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex,
     // Initialize if manager is already initialized
     if (initialized_.load(std::memory_order_acquire)) {
         device_initialized_[deviceIndex] = as5047u_handlers_[deviceIndex]->Initialize();
-        
+
         if (device_initialized_[deviceIndex]) {
-            Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u created and initialized successfully", deviceIndex);
+            Logger::GetInstance().Info("EncoderManager", "AS5047U device %u created and initialized", deviceIndex);
         } else {
-            Logger::GetInstance().Error("EncoderManager", "External AS5047U device %u created but initialization failed (driver_flags=0x%04X)", 
+            Logger::GetInstance().Error("EncoderManager", "AS5047U device %u created but init failed (flags=0x%04X)",
                                       deviceIndex, static_cast<uint16_t>(as5047u_handlers_[deviceIndex]->GetLastError()));
         }
     } else {
-        Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u created (will be initialized later)", deviceIndex);
+        Logger::GetInstance().Info("EncoderManager", "AS5047U device %u created (will be initialized later)", deviceIndex);
     }
-    
+
     return true;
 }
 
-bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex, 
-                                               BaseSpi& spi_interface,
-                                               const As5047uConfig& config) noexcept {
+bool EncoderManager::CreateAs5047uDevice(uint8_t deviceIndex,
+                                         BaseSpi& spi_interface,
+                                         const As5047uConfig& config) noexcept {
     MutexLockGuard lock(manager_mutex_);
-    
-    if (!IsExternalDeviceIndex(deviceIndex)) {
-        Logger::GetInstance().Error("EncoderManager", "Invalid device index %u for external device", deviceIndex);
+
+    if (!IsValidDeviceIndex(deviceIndex)) {
+        Logger::GetInstance().Error("EncoderManager", "Invalid device index %u", deviceIndex);
         return false;
     }
     
@@ -225,43 +224,42 @@ bool EncoderManager::CreateExternalAs5047uDevice(uint8_t deviceIndex,
     // Initialize if manager is already initialized
     if (initialized_.load(std::memory_order_acquire)) {
         device_initialized_[deviceIndex] = as5047u_handlers_[deviceIndex]->Initialize();
-        
+
         if (device_initialized_[deviceIndex]) {
-            Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u (direct SPI) created and initialized successfully", deviceIndex);
+            Logger::GetInstance().Info("EncoderManager", "AS5047U device %u (direct SPI) created and initialized", deviceIndex);
         } else {
-            Logger::GetInstance().Error("EncoderManager", "External AS5047U device %u (direct SPI) created but initialization failed (driver_flags=0x%04X)", 
+            Logger::GetInstance().Error("EncoderManager", "AS5047U device %u (direct SPI) init failed (flags=0x%04X)",
                                       deviceIndex, static_cast<uint16_t>(as5047u_handlers_[deviceIndex]->GetLastError()));
         }
     } else {
-        Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u (direct SPI) created (will be initialized later)", deviceIndex);
+        Logger::GetInstance().Info("EncoderManager", "AS5047U device %u (direct SPI) created (will init later)", deviceIndex);
     }
     
     return true;
 }
 
-bool EncoderManager::DeleteExternalDevice(uint8_t deviceIndex) noexcept {
+bool EncoderManager::DeleteDevice(uint8_t deviceIndex) noexcept {
     MutexLockGuard lock(manager_mutex_);
-    
-    if (!IsExternalDeviceIndex(deviceIndex)) {
-        Logger::GetInstance().Error("EncoderManager", "Cannot delete onboard device or invalid index %u", deviceIndex);
+
+    if (!IsValidDeviceIndex(deviceIndex)) {
+        Logger::GetInstance().Error("EncoderManager", "Invalid device index %u", deviceIndex);
         return false;
     }
-    
+
     if (!device_active_[deviceIndex]) {
         Logger::GetInstance().Warn("EncoderManager", "Device slot %u is already empty", deviceIndex);
-        return true; // Consider this success
+        return true;
     }
-    
-    // Deinitialize and clean up handler
+
     if (as5047u_handlers_[deviceIndex]) {
         as5047u_handlers_[deviceIndex]->Deinitialize();
         as5047u_handlers_[deviceIndex].reset();
     }
-    
+
     device_active_[deviceIndex] = false;
     device_initialized_[deviceIndex] = false;
-    
-    Logger::GetInstance().Info("EncoderManager", "External AS5047U device %u deleted successfully", deviceIndex);
+
+    Logger::GetInstance().Info("EncoderManager", "AS5047U device %u deleted", deviceIndex);
     return true;
 }
 
@@ -284,11 +282,11 @@ bool EncoderManager::IsDeviceValid(uint8_t deviceIndex) const noexcept {
 
 bool EncoderManager::IsExternalSlotAvailable(uint8_t deviceIndex) const noexcept {
     MutexLockGuard lock(manager_mutex_);
-    
-    if (!IsExternalDeviceIndex(deviceIndex)) {
+
+    if (!IsValidDeviceIndex(deviceIndex)) {
         return false;
     }
-    
+
     return !device_active_[deviceIndex];
 }
 
@@ -344,10 +342,10 @@ void EncoderManager::GetAvailableDevices(std::array<const char*, MAX_ENCODER_DEV
     
     count = 0;
     static constexpr const char* kDeviceNames[] = {
-        "AS5047U-0 (Onboard)",
-        "AS5047U-1 (External)",
-        "AS5047U-2 (External)",
-        "AS5047U-3 (External)"
+        "AS5047U-0",
+        "AS5047U-1",
+        "AS5047U-2",
+        "AS5047U-3"
     };
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i]) {
@@ -618,12 +616,9 @@ bool EncoderManager::Initialize() noexcept {
         return false;
     }
     
-    // Initialize onboard AS5047U device
-    if (!InitializeOnboardAs5047uDevice()) {
-        Logger::GetInstance().Warn("EncoderManager", "Failed to initialize onboard AS5047U device");
-        // Continue anyway - this is not fatal
-    }
-    
+    // Vortex V1 has no onboard encoder — users add external AS5047U devices
+    // via CreateExternalAs5047uDevice() with their own SPI CS line.
+
     // Initialize monitoring statistics
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         measurement_counts_[i].store(0);
@@ -642,34 +637,8 @@ bool EncoderManager::Initialize() noexcept {
     return true;
 }
 
-bool EncoderManager::InitializeOnboardAs5047uDevice() noexcept {
-    if (onboard_device_created_) {
-        return true; // Already created
-    }
-    
-    // Get onboard AS5047U SPI device
-    BaseSpi* spi_interface = comm_manager_->GetSpiDevice(SpiDeviceId::AS5047U_POSITION_ENCODER);
-    if (!spi_interface) {
-        Logger::GetInstance().Error("EncoderManager", "Failed to get onboard AS5047U SPI interface");
-        return false;
-    }
-    
-    // Create onboard AS5047U handler with default config
-    auto handler = std::make_unique<As5047uHandler>(*spi_interface, As5047uHandler::GetDefaultConfig());
-    if (!handler) {
-        Logger::GetInstance().Error("EncoderManager", "Failed to create onboard AS5047U handler");
-        return false;
-    }
-    
-    // Store handler and mark as active
-    as5047u_handlers_[ONBOARD_ENCODER_INDEX] = std::move(handler);
-    device_active_[ONBOARD_ENCODER_INDEX] = true;
-    device_initialized_[ONBOARD_ENCODER_INDEX] = false;
-    onboard_device_created_ = true;
-    
-    Logger::GetInstance().Info("EncoderManager", "Onboard AS5047U device created successfully");
-    return true;
-}
+// InitializeOnboardAs5047uDevice() removed — Vortex V1 has no onboard encoder.
+// Users call CreateAs5047uDevice() to register their encoder(s).
 
 uint32_t EncoderManager::GetMeasurementCount(uint8_t deviceIndex) const noexcept {
     if (deviceIndex >= MAX_ENCODER_DEVICES) {
@@ -685,11 +654,7 @@ uint32_t EncoderManager::GetCommunicationErrorCount(uint8_t deviceIndex) const n
     return communication_error_counts_[deviceIndex].load(std::memory_order_acquire);
 }
 
-bool EncoderManager::IsExternalDeviceIndex(uint8_t deviceIndex) const noexcept {
-    return (deviceIndex == EXTERNAL_ENCODER_1_INDEX || 
-            deviceIndex == EXTERNAL_ENCODER_2_INDEX || 
-            deviceIndex == EXTERNAL_ENCODER_3_INDEX);
-}
+// IsExternalDeviceIndex() removed — all slots are equivalent (no onboard encoder).
 
 //**************************************************************************//
 //**                  SENSOR MONITORING METHODS                           **//
@@ -731,11 +696,9 @@ void EncoderManager::DumpStatistics() const noexcept {
     Logger::GetInstance().Info("EncoderManager", "Initialized: %s", initialized_.load() ? "YES" : "NO");
     Logger::GetInstance().Info("EncoderManager", "Active Devices: %u/%u", GetDeviceCount(), MAX_ENCODER_DEVICES);
     
-    // Dump individual device statistics
     for (uint8_t i = 0; i < MAX_ENCODER_DEVICES; ++i) {
         if (device_active_[i]) {
-            std::string device_type = (i == ONBOARD_ENCODER_INDEX) ? "Onboard" : "External";
-            Logger::GetInstance().Info("EncoderManager", "--- Device %u (%s) ---", i, device_type.c_str());
+            Logger::GetInstance().Info("EncoderManager", "--- Device %u ---", i);
             Logger::GetInstance().Info("EncoderManager", "  Active: YES");
             Logger::GetInstance().Info("EncoderManager", "  Initialized: %s", device_initialized_[i] ? "YES" : "NO");
             Logger::GetInstance().Info("EncoderManager", "  Measurements: %u", measurement_counts_[i].load());
