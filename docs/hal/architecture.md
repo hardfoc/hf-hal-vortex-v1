@@ -69,4 +69,5 @@ Example apps use **`examples/esp32/main/common/vortex_board_pins.hpp`** and **`v
 | Manager behaviour and registries | `lib/managers/*.h` (Doxygen in headers) |
 | Handler APIs | `lib/core/handlers/<device>/` |
 | On-target apps and CI matrix | [`examples/esp32/docs/README.md`](../../examples/esp32/docs/README.md), [`examples/esp32/docs/BENCH_MATRIX.md`](../../examples/esp32/docs/BENCH_MATRIX.md) |
+| TMC9660 BLDC (bootloader vs parameter mode, bench order) | [`examples/esp32/docs/BLDC_BRINGUP.md`](../../examples/esp32/docs/BLDC_BRINGUP.md) |
 | Quick manager ↔ handler map | [managers-and-handlers.md](managers-and-handlers.md) |

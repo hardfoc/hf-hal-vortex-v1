@@ -83,7 +83,13 @@ bool CommChannelsManager::Initialize() noexcept {
 
         if (tx_map && rx_map) {
             hf_uart_config_t uart_cfg = {};
-            uart_cfg.port_number     = 0;
+            // Port 1, NOT 0. ESP-IDF's `CONFIG_ESP_CONSOLE_UART_NUM=0` keeps UART0
+            // claimed by the console driver (mirrored alongside USB-Serial-JTAG).
+            // Sharing UART0 between the console and the TMC9660 means every
+            // `ESP_LOGI` becomes raw bytes on the same TX line that carries
+            // bootloader frames, the IC can never sync to 0x55, and any reply is
+            // consumed by the console driver before our HAL sees it.
+            uart_cfg.port_number     = 1;
             uart_cfg.baud_rate       = 115200;
             uart_cfg.data_bits       = hf_uart_data_bits_t::HF_UART_DATA_8_BITS;
             uart_cfg.parity          = hf_uart_parity_t::HF_UART_PARITY_DISABLE;

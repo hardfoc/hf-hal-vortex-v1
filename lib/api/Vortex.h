@@ -34,8 +34,8 @@
  * 2. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
  * 3. GpioManager (depends on CommChannelsManager)
  * 4. LedManager (WS2812 / status — early so LED-only benches work without TMC9660)
- * 5. MotorController (depends on CommChannelsManager; onboard SPI vs UART via
- *    `SetOnboardTmc9660Transport()` before `EnsureInitialized()`)
+ * 5. MotorController (depends on CommChannelsManager; onboard **UART** vs SPI via
+ *    `SetOnboardTmc9660Transport()` before `EnsureInitialized()` — default is UART)
  * 6. AdcManager (depends on MotorController)
  * 7. ImuManager (depends on CommChannelsManager, GpioManager)
  * 8. EncoderManager (depends on CommChannelsManager, GpioManager)
@@ -122,8 +122,9 @@ inline constexpr size_t kVortexManagerCount = 9;
  *
  * @details Vortex always exposes a UART to the TMC9660. SPI to the motor IC is muxed
  *          (`PCAL_TMC_SPI_COMM_EN`); `MotorController` asserts it only for SPI handlers.
- *          Call `SetOnboardTmc9660Transport()` before `EnsureInitialized()` to pick UART
- *          (bootloader/TMCL over UART, SPI segment released) vs SPI (default).
+ *          Default is **UART** (bootloader/TMCL over UART, SPI mux released). Call
+ *          `SetOnboardTmc9660Transport(VortexOnboardTmc9660Transport::Spi)` before
+ *          `EnsureInitialized()` if you need TMCL over SPI instead.
  */
 enum class VortexOnboardTmc9660Transport : std::uint8_t {
     Spi = 0,
@@ -248,7 +249,7 @@ public:
      */
     static void SetOnboardTmc9660Transport(VortexOnboardTmc9660Transport transport) noexcept;
 
-    /** @brief Effective transport for `InitializeMotors()` (default: Spi). */
+    /** @brief Effective transport for `InitializeMotors()` (default: Uart). */
     [[nodiscard]] static VortexOnboardTmc9660Transport GetOnboardTmc9660Transport() noexcept;
 
     // Non-copyable, non-movable

@@ -25,8 +25,27 @@
 
 static const char* TAG = "vortex_tmc_tlm";
 
+// Bench diagnostics. Default OFF for the normal telemetry sweep. Flip the diag flags to repeat
+// the FW051V100 NR 245-248 INVALID_VALUE investigation (see BLDC_UART_BRINGUP.md "Gate-current
+// SAP rejection on FW051V100"); flip the `kBenchTry*` flags to pass them through to
+// `configure_complete_bldc`. `kBenchProbeGateCurrentNoMotor` runs the EvKit-ordering probe
+// (SAP NR 245/246 while MOTOR_TYPE is still NO_MOTOR) immediately after `EnsureInitialized`.
+namespace {
+constexpr bool kBenchTryGateCurrentLimits     = false;
+constexpr bool kBenchTryOcVgsProtection       = false;
+constexpr bool kBenchPreTmclGateCurrentDiag   = false;
+constexpr bool kBenchPostTmclGateCurrentDiag  = false;
+constexpr bool kBenchProbeGateCurrentNoMotor  = false;
+}  // namespace
+
 extern "C" void app_main(void) {
     ESP_LOGI(TAG, "TMC9660 telemetry sweep (no commutation, no motion)");
+    if (kBenchTryGateCurrentLimits || kBenchTryOcVgsProtection || kBenchPostTmclGateCurrentDiag) {
+        ESP_LOGW(TAG,
+                 "Bench flags: gate_current_limits=%d oc_vgs_protection=%d post_gate_tmcl_diag=%d",
+                 kBenchTryGateCurrentLimits ? 1 : 0, kBenchTryOcVgsProtection ? 1 : 0,
+                 kBenchPostTmclGateCurrentDiag ? 1 : 0);
+    }
 
     if (!VORTEX_API.EnsureInitialized() || !VORTEX_API.motors.EnsureInitialized()) {
         ESP_LOGE(TAG, "Init failed (Vortex / MotorController)");
@@ -37,13 +56,26 @@ extern "C" void app_main(void) {
     bool ready = false;
     motors.visitDriver(
         [&ready](auto& d) {
-            // Run full bring-up but skip ADC offset calibration (motor unplugged is fine for that
-            // too, but we don't strictly need it for telemetry).
+            if (kBenchProbeGateCurrentNoMotor) {
+                const bool accepted =
+                    vortex_motor_bench::probe_gate_current_with_no_motor_type(d, TAG);
+                ESP_LOGW(TAG, "[gate-diag/no-motor] datasheet-default acceptance with NO_MOTOR: %s",
+                         accepted ? "YES (EvKit ordering matters!)" : "NO (firmware rule unrelated to motor type)");
+            }
+            if (kBenchPreTmclGateCurrentDiag) {
+                vortex_motor_bench::diagnose_uvw_gate_current_tmcl(d, TAG, "pre-config");
+            }
             ready = vortex_motor_bench::configure_complete_bldc(
                 d, TAG, vortex_bench_safety::kDefaultPolePairs,
                 vortex_bench_safety::kPwmFrequencyHz,
                 /*do_calibrate=*/true,
-                /*enable_outputs=*/true);
+                /*enable_outputs=*/true,
+                kBenchTryOcVgsProtection,
+                kBenchTryGateCurrentLimits,
+                /*skip_y2_phase=*/true);
+            if (ready && kBenchPostTmclGateCurrentDiag) {
+                vortex_motor_bench::diagnose_uvw_gate_current_tmcl(d, TAG, "post-config");
+            }
         },
         MotorController::ONBOARD_TMC9660_INDEX);
     if (!ready) {

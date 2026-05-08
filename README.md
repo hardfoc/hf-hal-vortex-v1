@@ -413,9 +413,11 @@ Cross-HAL **coding standards, architecture, CMake contract, testing, and agent p
 
 ### API and on-target tests
 
-- **[`lib/api/README.md`](lib/api/README.md)** — integration notes  
+- **[`lib/api/README.md`](lib/api/README.md)** — integration notes (includes motors / TMC9660 pointer)
 - **[`lib/api/Vortex.h`](lib/api/Vortex.h)** — façade API and diagnostics types  
 - **[`examples/esp32/docs/README.md`](examples/esp32/docs/README.md)** — every `APP_TYPE` and entry `.cpp`  
+- **[`examples/esp32/docs/BENCH_MATRIX.md`](examples/esp32/docs/BENCH_MATRIX.md)** — bench supply, motion, CI matrix  
+- **[`examples/esp32/docs/BLDC_BRINGUP.md`](examples/esp32/docs/BLDC_BRINGUP.md)** — TMC9660 BLDC bootloader vs parameter mode, 13-step bring-up, validation order  
 - **[`examples/esp32/main/vortex_api_test.cpp`](examples/esp32/main/vortex_api_test.cpp)** — primary full-HAL integration app  
 
 ### Legacy per-topic READMEs
@@ -718,6 +720,8 @@ if (adc_result != hf_adc_err_t::ADC_SUCCESS) {
 
 ## 🧪 Examples
 
+On-target firmware lives under **`examples/esp32/`**. For a **full app catalog** (`APP_TYPE` → source), see **[`examples/esp32/docs/README.md`](examples/esp32/docs/README.md)**. For **TMC9660 BLDC** bring-up (bootloader vs parameter mode, suggested validation order), see **[`examples/esp32/docs/BLDC_BRINGUP.md`](examples/esp32/docs/BLDC_BRINGUP.md)**.
+
 ### Complete Vortex API Example
 ```cpp
 #include "api/Vortex.h"
@@ -893,7 +897,7 @@ void DemonstrateMotors(Vortex& vortex) {
 
 ## Testing
 
-On-target firmware apps live under **`examples/esp32/`** (not a legacy top-level `tests/` tree). See **[`examples/esp32/README.md`](examples/esp32/README.md)** and the full app catalog **[`examples/esp32/docs/README.md`](examples/esp32/docs/README.md)**.
+On-target firmware apps live under **`examples/esp32/`** (not a legacy top-level `tests/` tree). See **[`examples/esp32/README.md`](examples/esp32/README.md)** and the full app catalog **[`examples/esp32/docs/README.md`](examples/esp32/docs/README.md)**. For TMC9660 BLDC benches and suggested flash order, see **[`examples/esp32/docs/BLDC_BRINGUP.md`](examples/esp32/docs/BLDC_BRINGUP.md)** and **[`examples/esp32/docs/BENCH_MATRIX.md`](examples/esp32/docs/BENCH_MATRIX.md)**.
 
 ## 🤝 Contributing
 

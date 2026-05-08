@@ -10,13 +10,10 @@
  *   4. `setCommutationMode(FOC_HALL_SENSOR)`, command velocity, telemetry sweep.
  *   5. `motor_stop_safe()`.
  *
- * @note **Bootloader prerequisite:** the TMC9660 must be brought up with
- *       `bootcfg::HallConfig::enable = true` and Hall U/V/W routed to the
- *       expected GPIOs (EvKit defaults: GPIO2/3/4). Vortex's stock
- *       `Tmc9660Handler::kDefaultBootConfig` leaves Hall disabled — pass a
- *       custom `BootloaderConfig*` to `MotorController::CreateOnboardDevice`
- *       enabling Hall before this app will close the loop. Without it the
- *       motor will not commutate (Iq saturates / FOC oscillates).
+ * @note **Bootloader:** stock `Tmc9660Handler::kDefaultBootConfig` enables Hall on
+ *       GPIO2/3/4 (EvKit map). Use a custom `BootloaderConfig*` only if your Hall
+ *       wiring differs; without Hall mux enabled the motor will not commutate in
+ *       this mode (Iq saturates / FOC oscillates).
  */
 #include "api/Vortex.h"
 #include "managers/MotorController.h"
@@ -56,18 +53,48 @@ extern "C" void app_main(void) {
         return;
     }
 
+    // Same VGS-short / fault-clear workaround the open-loop apps use — without it the chip's
+    // GDRV.*CHARGE_SHORT defaults trip on every gate transition, the fault handler retries 5x
+    // and silently reverts COMMUTATION_MODE → SYSTEM_OFF (`FAULT_RETRIES_FAILED`). See
+    // `examples/esp32/docs/BLDC_UART_BRINGUP.md` "VGS-short trip" section.
     motors.visitDriver(
-        [](auto& d) {
+        [](auto& d) { vortex_motor_bench::disable_vortex_uvw_vgs_short_protection(d, TAG); },
+        MotorController::ONBOARD_TMC9660_INDEX);
+
+    bool armed = false;
+    motors.visitDriver(
+        [&armed](auto& d) {
             namespace tmcl = tmc9660::tmcl;
+            vortex_motor_bench::clear_fault_flags(d);
             if (!d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_HALL_SENSOR)) {
                 ESP_LOGE(TAG, "setCommutationMode(FOC_HALL_SENSOR) failed");
                 return;
             }
-            ESP_LOGI(TAG, "Mode: FOC_HALL_SENSOR");
+            vTaskDelay(pdMS_TO_TICKS(vortex_bench_safety::kSettleAfterModeChangeMs));
+
+            uint32_t cm = 0xFFFFFFFFu;
+            (void)d.readParameter(tmcl::Parameters::COMMUTATION_MODE, cm);
+            if (cm != static_cast<uint32_t>(tmcl::CommutationMode::FOC_HALL_SENSOR)) {
+                ESP_LOGW(TAG, "COMMUTATION_MODE=%u (expected FOC_HALL=6), retry after fault clear",
+                         static_cast<unsigned>(cm));
+                vortex_motor_bench::log_fault_flags(d, TAG, "after-revert");
+                vortex_motor_bench::clear_fault_flags(d);
+                (void)d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_HALL_SENSOR);
+                vTaskDelay(pdMS_TO_TICKS(50));
+                (void)d.readParameter(tmcl::Parameters::COMMUTATION_MODE, cm);
+            }
+            armed = (cm == static_cast<uint32_t>(tmcl::CommutationMode::FOC_HALL_SENSOR));
+            ESP_LOGI(TAG, "Mode: FOC_HALL_SENSOR%s (CM_rb=%u)",
+                     armed ? "" : " — REVERTED",
+                     static_cast<unsigned>(cm));
         },
         MotorController::ONBOARD_TMC9660_INDEX);
-
-    vTaskDelay(pdMS_TO_TICKS(vortex_bench_safety::kSettleAfterModeChangeMs));
+    if (!armed) {
+        ESP_LOGE(TAG, "Could not arm FOC_HALL_SENSOR mode — abort before TARGET_VELOCITY");
+        motors.visitDriver([](auto& d) { vortex_motor_bench::motor_stop_safe(d, TAG); },
+                           MotorController::ONBOARD_TMC9660_INDEX);
+        return;
+    }
 
     motors.visitDriver(
         [](auto& d) {

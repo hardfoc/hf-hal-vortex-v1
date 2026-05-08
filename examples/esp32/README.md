@@ -15,8 +15,7 @@ checks** via `idf.py menuconfig` → *Component config* → *Main* → *Vortex A
 [`docs/BENCH_MATRIX.md`](docs/BENCH_MATRIX.md)) so wiring or supply problems fail tests
 instead of logging only.
 
-**Board bring-up:** [`docs/BENCH_MATRIX.md`](docs/BENCH_MATRIX.md) (apps ↔ benches,
-supply limits, timeouts). **Full app index (every `APP_TYPE` + source file):**
+**Board bring-up:** [`docs/BENCH_MATRIX.md`](docs/BENCH_MATRIX.md) and **[`docs/BLDC_BRINGUP.md`](docs/BLDC_BRINGUP.md)** (TMC9660 BLDC depth). **Full app index (every `APP_TYPE` + source file):**
 [`docs/README.md`](docs/README.md). Do not copy TMC9660 EVKIT GPIO numbers; use the Vortex
 functional pin config and `vortex_board_pins.hpp`.
 
@@ -63,7 +62,7 @@ Non-interactive hosts (no TTY) need a pseudo-tty wrapper, e.g. `script -qec '…
 |--------|----------|--------|
 | Full HAL | `vortex_api_test` | Default; broad API + board-oriented checks |
 | Focused | `led_temp_test`, `encoder_imu_test`, `motor_controller_test`, `motor_controller_uart_test`, … | Deeper single-area coverage |
-| Smoke / bench | `vortex_led_ws2812_smoke`, `vortex_motor_comms_smoke`, `vortex_bldc_*`, … | Hardware smoke or motion benches (see bench matrix) |
+| Smoke / bench | `vortex_led_ws2812_smoke`, `vortex_motor_comms_smoke`, `vortex_bldc_*`, … | I²C, motor comms, BLDC benches — see [`docs/BENCH_MATRIX.md`](docs/BENCH_MATRIX.md) and [`docs/BLDC_BRINGUP.md`](docs/BLDC_BRINGUP.md) |
 
 ## Project layout
 
@@ -77,7 +76,7 @@ examples/esp32/
 │   ├── vortex_api_test.cpp
 │   ├── led_temp_test.cpp
 │   └── …                    # other app entry .cpp files
-├── docs/
+├── docs/                    # README (app index), BENCH_MATRIX, BLDC_BRINGUP
 └── scripts/                 # build / flash tooling (submodule)
 ```
 

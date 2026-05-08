@@ -36,7 +36,7 @@
 //==============================================================================
 
 std::atomic<std::uint8_t> Vortex::onboard_tmc9660_transport_{
-    static_cast<std::uint8_t>(VortexOnboardTmc9660Transport::Spi)};
+    static_cast<std::uint8_t>(VortexOnboardTmc9660Transport::Uart)};
 
 Vortex& Vortex::GetInstance() noexcept {
     static Vortex instance;
@@ -528,6 +528,8 @@ bool Vortex::InitializeGpio() noexcept {
 
 bool Vortex::InitializeMotors() noexcept {
     const VortexOnboardTmc9660Transport transport = GetOnboardTmc9660Transport();
+    // Must match `Tmc9660Handler::kDefaultBootConfig` UART device_address (odd 1…255).
+    constexpr uint8_t kOnboardTmc9660TmclAddress = 1;
     Logger::GetInstance().Info(
         "Vortex",
         "Initializing motor controllers (onboard TMC9660 transport: %s)",
@@ -546,7 +548,7 @@ bool Vortex::InitializeMotors() noexcept {
             if (transport == VortexOnboardTmc9660Transport::Uart) {
                 BaseUart* uart = comms.GetUartBus();
                 if (uart != nullptr) {
-                    const MotorError reg = motors.CreateOnboardDevice(*uart, 0, pins, nullptr);
+                    const MotorError reg = motors.CreateOnboardDevice(*uart, kOnboardTmc9660TmclAddress, pins, nullptr);
                     if (reg != MotorError::SUCCESS) {
                         Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(UART) returned %s",
                             MotorErrorToString(reg));
@@ -557,7 +559,7 @@ bool Vortex::InitializeMotors() noexcept {
             } else {
                 BaseSpi* spi = comms.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
                 if (spi != nullptr) {
-                    const MotorError reg = motors.CreateOnboardDevice(*spi, 0, pins, nullptr);
+                    const MotorError reg = motors.CreateOnboardDevice(*spi, kOnboardTmc9660TmclAddress, pins, nullptr);
                     if (reg != MotorError::SUCCESS) {
                         Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(SPI) returned %s",
                             MotorErrorToString(reg));

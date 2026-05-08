@@ -11,7 +11,8 @@ Single-board HAL for **HardFOC Vortex V1** (ESP32-C6). The public entry point is
 | [`docs/hal/architecture.md`](docs/hal/architecture.md) | Init order, degraded bring-up, diagnostics (aligned with `Vortex.cpp`) |
 | [`docs/hal/managers-and-handlers.md`](docs/hal/managers-and-handlers.md) | Each `vortex.*` manager ↔ `hf-core` handlers and headers |
 | [`examples/esp32/docs/README.md`](examples/esp32/docs/README.md) | **Every** on-target `APP_TYPE`, entry `.cpp`, CI flag |
-| [`examples/esp32/docs/BENCH_MATRIX.md`](examples/esp32/docs/BENCH_MATRIX.md) | Bench apps, supply/motion notes |
+| [`examples/esp32/docs/BENCH_MATRIX.md`](examples/esp32/docs/BENCH_MATRIX.md) | Bench apps, supply/motion notes, strict Kconfig |
+| [`examples/esp32/docs/BLDC_BRINGUP.md`](examples/esp32/docs/BLDC_BRINGUP.md) | TMC9660 BLDC: bootloader vs parameter mode, 13-step bring-up, validation order |
 | [`lib/api/README.md`](lib/api/README.md) | API integration notes |
 
 ## Shared handbook (submodule)

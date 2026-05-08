@@ -64,6 +64,34 @@ apps:
     source_file: "vortex_bldc_open_loop.cpp"
     category: "component"
     ci_enabled: false
+  vortex_bldc_open_loop_uart:
+    source_file: "vortex_bldc_open_loop_uart.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_bldc_probe:
+    source_file: "vortex_bldc_probe.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_param_scan:
+    source_file: "vortex_tmcl_param_scan.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_param_scan_spi:
+    source_file: "vortex_tmcl_param_scan.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_manual_compliance:
+    source_file: "vortex_tmcl_manual_compliance.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_param_existence:
+    source_file: "vortex_tmcl_param_existence.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_gap_smoke:
+    source_file: "vortex_tmcl_gap_smoke.cpp"
+    category: "component"
+    ci_enabled: false
   vortex_bldc_velocity_foc_hall:
     source_file: "vortex_bldc_velocity_foc_hall.cpp"
     category: "component"

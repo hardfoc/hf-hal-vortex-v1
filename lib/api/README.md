@@ -22,22 +22,28 @@ The initialization order is carefully managed to handle dependencies:
 ```
 1. NvsManager (flash — `vortex` / `vortex_cal` / `vortex_cfg`)
    ↓
-2. CommChannelsManager (foundation - SPI, I2C, UART, CAN)
+2. CommChannelsManager (SPI, I²C, UART, CAN)
    ↓
-3. GpioManager (depends on CommChannelsManager)
+3. GpioManager
    ↓
-4. MotorController (depends on CommChannelsManager)
+4. LedManager (early — LED-only examples without TMC9660)
    ↓
-5. AdcManager (depends on MotorController)
+5. MotorController (best-effort if hardware absent)
    ↓
-6. ImuManager (depends on CommChannelsManager, GpioManager)
+6. AdcManager (best-effort; TMC9660-dependent on Vortex)
    ↓
-7. EncoderManager (depends on CommChannelsManager, GpioManager)
+7. ImuManager (best-effort)
    ↓
-8. LedManager (independent)
+8. EncoderManager (best-effort)
    ↓
-9. TemperatureManager (depends on AdcManager, MotorController)
+9. TemperatureManager (best-effort)
 ```
+
+Authoritative detail: [`docs/hal/architecture.md`](../docs/hal/architecture.md) and `Vortex::InitializeAllComponents()` in `Vortex.cpp`.
+
+## Motors (TMC9660)
+
+On Vortex V1, **`vortex.motors`** owns the onboard **`Tmc9660Handler`**. Low-level TMCL/parameter access uses **`MotorController::visitDriver()`** (template callback receiving `tmc9660::TMC9660<HalSpiTmc9660Comm>&`). For BLDC bench bring-up order, bootloader vs runtime split, and which example apps to flash in what order, see **[`examples/esp32/docs/BLDC_BRINGUP.md`](../examples/esp32/docs/BLDC_BRINGUP.md)** and **[`examples/esp32/docs/BENCH_MATRIX.md`](../examples/esp32/docs/BENCH_MATRIX.md)**.
 
 ## 🚀 Quick Start
 

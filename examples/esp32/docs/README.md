@@ -6,7 +6,8 @@ Also read:
 
 - **[`BENCH_MATRIX.md`](BENCH_MATRIX.md)** — supply limits, motion warnings, CI vs manual benches.
 - **[`BLDC_BRINGUP.md`](BLDC_BRINGUP.md)** — TMC9660 BLDC: bootloader vs parameter mode, 13-step bring-up, suggested validation order, EVKIT vs Vortex notes.
-- **[`TMCL_PARAM_SCAN_FAILURES.md`](TMCL_PARAM_SCAN_FAILURES.md)** — joined list of non-OK GAP/GGP reads from `vortex_tmcl_param_scan` (see also [`tmcl_param_scan_failures.csv`](tmcl_param_scan_failures.csv)); regenerate with [`tmcl_scan_log_report.py`](tmcl_scan_log_report.py).
+- **[`BLDC_UART_BRINGUP.md`](BLDC_UART_BRINGUP.md)** — UART open-loop spin, VGS-short workaround, fault flags (same prerequisites on SPI for Vortex hardware).
+- **[`TMCL_PARAM_SCAN_FAILURES.md`](TMCL_PARAM_SCAN_FAILURES.md)** — joined list of non-OK GAP/GGP reads from `vortex_tmcl_param_scan` (**UART**) or `vortex_tmcl_param_scan_spi` (**SPI**); see also [`tmcl_param_scan_failures.csv`](tmcl_param_scan_failures.csv)); regenerate with [`tmcl_scan_log_report.py`](tmcl_scan_log_report.py).
 - **[`../README.md`](../README.md)** — build/flash commands (`scripts/build_app.sh`, `APP_TYPE`).
 - **[`../app_config.yml`](../app_config.yml)** — authoritative `APP_TYPE` → source mapping (below mirrors it).
 
@@ -35,7 +36,8 @@ cd examples/esp32
 | `vortex_pcal_gpio_imu_bringup` | [`main/vortex_pcal_gpio_imu_bringup.cpp`](../main/vortex_pcal_gpio_imu_bringup.cpp) | component | yes | PCAL input snapshot + pin sweep; IMU rotation vectors; I²C diagnostics |
 | `vortex_i2c_la_trace` | [`main/vortex_i2c_la_trace.cpp`](../main/vortex_i2c_la_trace.cpp) | component | yes | Slow I²C markers for logic-analyzer / UART correlation |
 | `vortex_motor_comms_smoke` | [`main/vortex_motor_comms_smoke.cpp`](../main/vortex_motor_comms_smoke.cpp) | component | yes | TMC9660 telemetry / comms without motion |
-| `vortex_bldc_open_loop` | [`main/vortex_bldc_open_loop.cpp`](../main/vortex_bldc_open_loop.cpp) | component | no | Open-loop segment — **motion**; see [`BENCH_MATRIX.md`](BENCH_MATRIX.md) and [`BLDC_BRINGUP.md`](BLDC_BRINGUP.md) |
+| `vortex_bldc_open_loop` | [`main/vortex_bldc_open_loop.cpp`](../main/vortex_bldc_open_loop.cpp) | component | no | Open-loop current-mode on **SPI** — **motion**; [`BENCH_MATRIX.md`](BENCH_MATRIX.md), [`BLDC_BRINGUP.md`](BLDC_BRINGUP.md), [`BLDC_UART_BRINGUP.md`](BLDC_UART_BRINGUP.md) |
+| `vortex_bldc_open_loop_uart` | [`main/vortex_bldc_open_loop_uart.cpp`](../main/vortex_bldc_open_loop_uart.cpp) | component | no | Open-loop over **UART** — **motion**; [`BLDC_UART_BRINGUP.md`](BLDC_UART_BRINGUP.md) |
 | `vortex_bldc_velocity_foc_hall` | [`main/vortex_bldc_velocity_foc_hall.cpp`](../main/vortex_bldc_velocity_foc_hall.cpp) | component | no | FOC + Hall — **motion**; bootloader Hall mux — [`BLDC_BRINGUP.md`](BLDC_BRINGUP.md) |
 | `vortex_bldc_velocity_foc_abn` | [`main/vortex_bldc_velocity_foc_abn.cpp`](../main/vortex_bldc_velocity_foc_abn.cpp) | component | no | FOC + incremental encoder — **motion**; bootloader ABN — [`BLDC_BRINGUP.md`](BLDC_BRINGUP.md) |
 | `vortex_bldc_position_foc_as5047` | [`main/vortex_bldc_position_foc_as5047.cpp`](../main/vortex_bldc_position_foc_as5047.cpp) | component | no | Position loop + AS5047 angle — **motion**; see app header |
@@ -49,7 +51,7 @@ cd examples/esp32
 |------|------|
 | [`main/common/vortex_board_pins.hpp`](../main/common/vortex_board_pins.hpp) | Board pin constants for examples |
 | [`main/common/vortex_bench_safety.hpp`](../main/common/vortex_bench_safety.hpp) | Current / supply / thermal / motion guardrails for motor benches |
-| [`main/common/vortex_motor_bench_common.hpp`](../main/common/vortex_motor_bench_common.hpp) | Shared TMC9660 BLDC parameter-mode bring-up (`configure_complete_bldc`, telemetry helpers) |
+| [`main/common/vortex_motor_bench_common.hpp`](../main/common/vortex_motor_bench_common.hpp) | Shared TMC9660 BLDC parameter-mode bring-up (`configure_complete_bldc`, telemetry helpers, `disable_vortex_uvw_vgs_short_protection`, open-loop fault mask) |
 | [`main/common/vortex_driver_reference.md`](../main/common/vortex_driver_reference.md) | Driver study index for this board |
 
 ## Tie-back to HAL docs

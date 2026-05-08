@@ -10,11 +10,9 @@
  *   4. `setCommutationMode(FOC_ABN)`, command velocity, telemetry sweep.
  *   5. `motor_stop_safe()`.
  *
- * @note **Bootloader prerequisite:** `bootcfg::ABN1Config::enable = true`
- *       with A/B/N pins set (EvKit defaults: GPIO8/13/14). Vortex's stock
- *       `Tmc9660Handler::kDefaultBootConfig` leaves ABN1 disabled — supply
- *       a custom `BootloaderConfig*` enabling it before this app will close
- *       the loop on a real encoder.
+ * @note **Bootloader:** stock `Tmc9660Handler::kDefaultBootConfig` enables ABN1
+ *       on GPIO8/13/14 (EvKit map). Use a custom `BootloaderConfig*` only if your
+ *       encoder is not wired like the 3PH-EVKIT.
  *
  * @note Update `kAbnEncoderCountsPerRev` in `vortex_bench_safety.hpp` for
  *       your encoder; the `FORCED_PHI_E_ZERO_WITH_ACTIVE_SWING` init does
@@ -57,19 +55,50 @@ extern "C" void app_main(void) {
         return;
     }
 
+    // Same VGS-short / fault-clear workaround the open-loop apps use — without it the chip's
+    // GDRV.*CHARGE_SHORT defaults trip on every gate transition, the fault handler retries 5x
+    // and silently reverts COMMUTATION_MODE → SYSTEM_OFF (`FAULT_RETRIES_FAILED`). See
+    // `examples/esp32/docs/BLDC_UART_BRINGUP.md` "VGS-short trip" section.
     motors.visitDriver(
-        [](auto& d) {
+        [](auto& d) { vortex_motor_bench::disable_vortex_uvw_vgs_short_protection(d, TAG); },
+        MotorController::ONBOARD_TMC9660_INDEX);
+
+    bool armed = false;
+    motors.visitDriver(
+        [&armed](auto& d) {
             namespace tmcl = tmc9660::tmcl;
+            vortex_motor_bench::clear_fault_flags(d);
             if (!d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_ABN)) {
                 ESP_LOGE(TAG, "setCommutationMode(FOC_ABN) failed");
                 return;
             }
             ESP_LOGI(TAG, "Mode: FOC_ABN — encoder init runs (forced phi_e zero swing, ~1 s)");
+            // Encoder init can take ~1s to settle (init_delay default = 1000ms).
+            vTaskDelay(pdMS_TO_TICKS(1500));
+
+            uint32_t cm = 0xFFFFFFFFu;
+            (void)d.readParameter(tmcl::Parameters::COMMUTATION_MODE, cm);
+            if (cm != static_cast<uint32_t>(tmcl::CommutationMode::FOC_ABN)) {
+                ESP_LOGW(TAG, "COMMUTATION_MODE=%u (expected FOC_ABN=7), retry after fault clear",
+                         static_cast<unsigned>(cm));
+                vortex_motor_bench::log_fault_flags(d, TAG, "after-revert");
+                vortex_motor_bench::clear_fault_flags(d);
+                (void)d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_ABN);
+                vTaskDelay(pdMS_TO_TICKS(1500));
+                (void)d.readParameter(tmcl::Parameters::COMMUTATION_MODE, cm);
+            }
+            armed = (cm == static_cast<uint32_t>(tmcl::CommutationMode::FOC_ABN));
+            ESP_LOGI(TAG, "FOC_ABN%s (CM_rb=%u)",
+                     armed ? " armed" : " — REVERTED",
+                     static_cast<unsigned>(cm));
         },
         MotorController::ONBOARD_TMC9660_INDEX);
-
-    // Encoder init can take ~1s to settle (init_delay default = 1000ms).
-    vTaskDelay(pdMS_TO_TICKS(1500));
+    if (!armed) {
+        ESP_LOGE(TAG, "Could not arm FOC_ABN mode — abort before TARGET_VELOCITY");
+        motors.visitDriver([](auto& d) { vortex_motor_bench::motor_stop_safe(d, TAG); },
+                           MotorController::ONBOARD_TMC9660_INDEX);
+        return;
+    }
 
     motors.visitDriver(
         [](auto& d) {

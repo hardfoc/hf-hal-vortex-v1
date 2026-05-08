@@ -9,6 +9,8 @@ This folder is the **canonical** place for Vortex-specific architecture and navi
 | [architecture.md](architecture.md) | Call stack from app → `Vortex` → managers → `hf-core` handlers, init order, degraded bring-up, health APIs |
 | [managers-and-handlers.md](managers-and-handlers.md) | One table: each manager, its sources in this repo, and the handler/driver types it owns or uses |
 | [../../examples/esp32/docs/README.md](../../examples/esp32/docs/README.md) | **Full** on-target example apps: every `APP_TYPE`, entry source file, CI flag, and links into `main/` |
+| [../../examples/esp32/docs/BENCH_MATRIX.md](../../examples/esp32/docs/BENCH_MATRIX.md) | Bench supply / motion warnings; TMC9660 app matrix |
+| [../../examples/esp32/docs/BLDC_BRINGUP.md](../../examples/esp32/docs/BLDC_BRINGUP.md) | TMC9660 BLDC: bootloader vs runtime config, 13-step bring-up, suggested validation order |
 
 ## Cross-repo references
 
