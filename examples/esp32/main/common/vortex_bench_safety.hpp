@@ -63,23 +63,25 @@ inline constexpr uint16_t kOutputVoltageLimit = 8000;
 // ============================================================================
 // Current limits (parameter-mode `MAX_TORQUE` / `MAX_FLUX`)
 // ============================================================================
-/// Software clamp on torque current (mA). Conservative for a 30 W motor.
-inline constexpr uint16_t kMaxPhaseCurrentMa = 1500;
+/// Software clamp on torque current (mA). Bumped 1500 → 2500 mA on 2026-05
+/// to give `OPENLOOP_CURRENT` (2000 mA) headroom — see `kOpenLoopCurrentMa`.
+inline constexpr uint16_t kMaxPhaseCurrentMa = 2500;
 /// Field weakening / flux current cap (mA). In `FOC_OPENLOOP_CURRENT_MODE` the
 /// commanded `OPENLOOP_CURRENT` is driven entirely along the d-axis (flux),
 /// so this **also clamps the open-loop bench current**: keep it ≥ whatever
 /// `kOpenLoopCurrentMa` / `kSafeOpenLoopCurrentMa` the bench apps command.
-/// 1200 mA gives headroom for a 1 A-class open-loop command while staying
-/// under the 1.5 A `kI2tCurrent1A` window and the 3 A `kExpectedPeakCurrentA` rail.
-inline constexpr uint16_t kMaxFluxCurrentMa = 1200;
+/// 2200 mA gives headroom for the 2 A open-loop command while staying
+/// under the bumped 2.5 A `kI2tCurrent1A` window and the 3 A
+/// `kExpectedPeakCurrentA` rail. Raised 1200 → 2200 mA on 2026-05.
+inline constexpr uint16_t kMaxFluxCurrentMa = 2200;
 /// Continuous I²t window 1 (short thermal envelope). The TMC9660 ROM rejects
 /// `THERMAL_WINDING_TIME_CONSTANT_1 < ~1 s` with REPLY_INVALID_VALUE — keep
 /// well above that floor. Defaults are 3 s / 6 s; we run a touch tighter to
 /// trip earlier on a stalled rotor.
-inline constexpr float kI2tCurrent1A = 1.5f;
+inline constexpr float kI2tCurrent1A = 2.5f;
 inline constexpr uint16_t kI2tWindow1Ms = 2000;
 /// Continuous I²t window 2 (longer-term).
-inline constexpr float kI2tCurrent2A = 1.25f;
+inline constexpr float kI2tCurrent2A = 2.0f;
 inline constexpr uint16_t kI2tWindow2Ms = 5000;
 
 // ============================================================================
@@ -89,37 +91,71 @@ inline constexpr float kChipWarningTempC = 80.0f;
 inline constexpr float kChipShutdownTempC = 100.0f;
 
 // ============================================================================
-// Velocity profile defaults (TMCL internal units)
+// Velocity profile defaults — expressed in real-world units
 // ============================================================================
-/// Open-loop velocity command for first spin (TMCL internal units). Must be
-/// ≥ `kOpenLoopMinCommandVelocity` so the ramper accepts the write in
-/// `FOC_OPENLOOP_CURRENT_MODE` on Vortex-class hardware.
-inline constexpr int32_t kOpenLoopTargetVelocity = 3500;
-/// Floor for `TARGET_VELOCITY` during open-loop current-mode ramp-up; values
-/// below this were observed to be rejected until the pipeline is fully armed.
-inline constexpr int32_t kOpenLoopMinCommandVelocity = 1000;
-/// Ramper `maxVelocity` must cover `kOpenLoopTargetVelocity` (internal units).
-inline constexpr uint32_t kOpenLoopRampMaxVelocity = 2'000'000u;
-/// Open-loop PWM magnitude (voltage mode): `OPENLOOP_VOLTAGE` 0…16383, where
-/// 16383 ≈ 100% modulation on the bus. 800 ≈ 5% modulation = ~1.2 V across
-/// two phases of a 24 V motor → ~0.75 A continuous through 1.6 Ω line-line
-/// winding; sustainable indefinitely (well under the 1.5 A I²t window) and
-/// still strong enough for open-loop pull-in at low velocity. Lets Iq emerge
-/// naturally as rotor lags `phi_e` (d-axis-only current mode cannot do that).
-/// Bench-tuned 2026-05; 1200 trips I²t in 5 s, 3500 trips OC in <500 ms.
-inline constexpr uint16_t kOpenLoopVoltage = 800u;
+//
+// Bench code converts these into the chip's opaque internal units via
+// `tmc9660::units::velocityToInternal(...)` /
+// `tmc9660::units::accelerationToInternal(...)` using the active
+// `tmc9660::units::MotorContext` (pole-pairs + sensor selection).
+// See `tmc9660_units.hpp` (vendor library) for the full datasheet derivation
+// (k_RPM = CPR × 2^24 / (40 MHz × 60), p. 69 of the TMC9660 Parameter Mode
+// Reference Manual).
+//
+// The constants below are **the canonical bench defaults**: tweak these
+// to change the spin profile. The internal-unit values are derived once,
+// at use site, from the active MotorContext.
+
+/// Open-loop spin target velocity at the **load (output)** shaft, RPM.
+/// 50 load-RPM \u2192 500 motor-RPM through the 10:1 reducer. Smooth-rotation
+/// regime for open-loop voltage mode at 1500/16383 modulation on a 24 V bus
+/// (back-EMF at 500 motor-RPM \u2248 0.16 V \u2014 still well below the \u22482.2 V
+/// applied fundamental, so plenty of torque margin against gearbox cogging).
+inline constexpr double kOpenLoopTargetRpm = 50.0;
+/// Floor below which `setTargetVelocity` writes are coalesced/rejected by
+/// the chip while the FOC pipeline is still arming. Roughly 0.3 RPM
+/// mechanical (1000 internal units at pp=7) — keep small but non-zero.
+inline constexpr double kOpenLoopMinCommandRpm = 0.3;
+/// Ramper VMAX in **motor-frame** RPM. Must be ≥ (load_target_rpm × gear_ratio).
+/// With the 10:1 bench gearbox and `kOpenLoopTargetRpm = 80` (load), the motor
+/// shaft cruises at 800 RPM — so 1000 RPM gives 25% headroom.
+inline constexpr double kOpenLoopRampMaxRpm = 1000.0;
+/// Ramper acceleration / deceleration in **motor-frame** RPM per second.
+/// 125 motor-RPM/s ramps the motor 0 \u2192 500 RPM in 4 s (= load 0 \u2192 50 RPM in
+/// 4 s through a 10:1 reducer), leaving ~6 s of cruise inside the 10 s
+/// `kOpenLoopSpinDurationMs` window.
+///
+/// 2026-05 datasheet-math fix: prior driver versions wrote `rpm/s \u00d7 k_RPM`
+/// directly to RAMP_AMAX, missing the chip's `2^17 / fCLK` factor (\u22480.00328).
+/// 15 RPM/s on the old code was therefore actually executing at \u22484577 RPM/s
+/// (instant jolt, slip-and-recover stutter). With the corrected math 125 RPM/s
+/// is a smooth 4-second ramp.
+inline constexpr double kOpenLoopRampMaxRpmPerSec = 125.0;
+
+/// Hall-FOC velocity target (RPM, mechanical).
+inline constexpr double kHallFocTargetRpm = 200.0;
+/// ABN-FOC velocity target (RPM, mechanical).
+inline constexpr double kAbnFocTargetRpm = 150.0;
+/// Open-loop PWM magnitude (voltage mode): `OPENLOOP_VOLTAGE` 0..16383, where
+/// 16383 ≈ 100% modulation on the bus. 1500 ≈ 9.2% modulation ≈ 2.2 V peak
+/// fundamental on a 24 V supply — enough to maintain phase lock on a geared
+/// rotor up to ~200 motor-RPM, where back-EMF is still small relative to
+/// applied voltage. Bumped 800 → 1500 on 2026-05 because at 5% modulation
+/// the geared rotor (10:1 reducer) only produced phase-locked torque at very
+/// low speed and stalled into vibration once the ramp climbed.
+/// Stays well under any current limit (line-line resistance ~1.6 Ω → stall
+/// current at 2.2 V is ~1.4 A, sustainable continuously).
+inline constexpr uint16_t kOpenLoopVoltage = 1500u;
 /// Open-loop current (current mode): `OPENLOOP_CURRENT` in mA — must stay <=
-/// kMaxFluxCurrentMa. Bumped from 150 → 700 mA on 2026-05 because the 30 W
-/// bench motor's static-friction / cogging torque was holding the rotor while
-/// the chip happily rotated `phi_e` in open-loop. 700 mA is ~56 % of the
-/// motor's continuous rating; stays under `kMaxFluxCurrentMa`, I²t window 1
-/// (1.5 A / 2 s), and the 1.5 A `MAX_TORQUE` clamp. Raise only with thermal
-/// awareness (stalled rotor + 1 A dissipates significant copper loss).
-inline constexpr uint16_t kOpenLoopCurrentMa = 1000u;
-/// Hall-FOC velocity command (still well below max RPM).
-inline constexpr int32_t kHallFocTargetVelocity = 600;
-/// ABN-FOC velocity command (assumes encoder + bootloader pin mux).
-inline constexpr int32_t kAbnFocTargetVelocity = 500;
+/// kMaxFluxCurrentMa. Bumped 150 → 700 → 1000 → 2000 mA across 2026-05
+/// bench iterations: at 1000 mA the 30 W bench motor's actual rotor only
+/// followed ~0.5 mech rev while the chip's open-loop `phi_e` rotated 12+
+/// revs (massive slip). 2000 mA is the motor's continuous rating; stays
+/// under `kMaxFluxCurrentMa` (4000 mA), the I²t window (1.5 A / 2 s
+/// ceiling for short bursts is overridden by the higher continuous limit),
+/// and the `MAX_TORQUE` clamp. Raise only with thermal awareness (stalled
+/// rotor at 2 A dissipates significant copper loss).
+inline constexpr uint16_t kOpenLoopCurrentMa = 2000u;
 /// Torque command for FOC torque-mode demo (mA, signed).
 inline constexpr int16_t kTorqueModeTargetMa = 250;
 
@@ -127,7 +163,7 @@ inline constexpr int16_t kTorqueModeTargetMa = 250;
 // Profile timings (ms)
 // ============================================================================
 /// Hard ceiling for any motion segment in a bench app.
-inline constexpr uint32_t kMotorProfileMaxDurationMs = 5000;
+inline constexpr uint32_t kMotorProfileMaxDurationMs = 8000;
 /// Settle delay after mode change before commanding velocity.
 inline constexpr uint32_t kSettleAfterModeChangeMs = 300;
 /// Erratum 4 (Parameter Mode): first target torque/flux/velocity/position
@@ -138,8 +174,11 @@ inline constexpr uint32_t kErratum4TargetCoalesceMs = 5;
 /// Brief pause after `RAMP_ENABLE` / `DIRECT_VELOCITY_MODE` tweaks before a
 /// velocity SAP (same 1 kHz scheduling class as Erratum 4 on some builds).
 inline constexpr uint32_t kAfterRampDvmTweakMs = 5;
-/// Spin time for the open-loop bench (kept short).
-inline constexpr uint32_t kOpenLoopSpinDurationMs = 1500;
+/// Spin time for the open-loop bench. Long enough to (a) finish the
+/// hardware ramp 0 → kOpenLoopTargetVelocity at kOpenLoopRampMaxRpmPerSec
+/// (~5.3 s for 80 RPM @ 15 RPM/s) and (b) leave ~5 s of visible spin
+/// at the cruise velocity for the human observer at the bench.
+inline constexpr uint32_t kOpenLoopSpinDurationMs = 10000;
 /// Spin time for FOC bench profiles.
 inline constexpr uint32_t kFocSpinDurationMs = 2000;
 /// Telemetry poll period inside spin loops (ms).

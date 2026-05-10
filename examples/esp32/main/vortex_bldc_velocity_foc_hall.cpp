@@ -28,8 +28,8 @@ static const char* TAG = "vortex_bldc_hall";
 
 extern "C" void app_main(void) {
     ESP_LOGW(TAG,
-             "MOTION APP — Hall FOC velocity, target=%ld units, current cap %u mA, spin %lu ms",
-             static_cast<long>(vortex_bench_safety::kHallFocTargetVelocity),
+             "MOTION APP — Hall FOC velocity, target=%.1f RPM, current cap %u mA, spin %lu ms",
+             vortex_bench_safety::kHallFocTargetRpm,
              static_cast<unsigned>(vortex_bench_safety::kMaxPhaseCurrentMa),
              static_cast<unsigned long>(vortex_bench_safety::kFocSpinDurationMs));
 
@@ -98,8 +98,16 @@ extern "C" void app_main(void) {
 
     motors.visitDriver(
         [](auto& d) {
-            if (!d.velocityControl.setTargetVelocity(vortex_bench_safety::kHallFocTargetVelocity)) {
-                ESP_LOGE(TAG, "setTargetVelocity failed");
+            using ::tmc9660::units::VelocityUnit;
+            const ::tmc9660::units::MotorContext ctx{
+                tmc9660::tmcl::MotorType::BLDC_MOTOR,
+                vortex_bench_safety::kDefaultPolePairs,
+                tmc9660::tmcl::VelocitySensorSelection::DIGITAL_HALL,
+                0u};
+            if (!d.velocityControl.setTargetVelocity(
+                    vortex_bench_safety::kHallFocTargetRpm, VelocityUnit::Rpm, ctx)) {
+                ESP_LOGE(TAG, "setTargetVelocity(%.1f RPM) failed",
+                         vortex_bench_safety::kHallFocTargetRpm);
             }
         },
         MotorController::ONBOARD_TMC9660_INDEX);

@@ -6,6 +6,7 @@
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 #include <algorithm>
+#include <limits>
 
 MotorController& MotorController::GetInstance() noexcept {
     static MotorController instance;
@@ -573,4 +574,138 @@ void MotorController::DumpStatistics() const noexcept {
         system_healthy ? "HEALTHY" : "DEGRADED");
     
     Logger::GetInstance().Info(TAG, "=== END MOTOR CONTROLLER STATISTICS ===");
+}
+
+//==============================================================================
+// Mechanical frame (gearbox / output-shaft mapping)
+//==============================================================================
+
+namespace {
+inline bool isValidGearRatio(double r) noexcept {
+    // Reject NaN, infinities and non-positive values.
+    return r > 0.0 && r == r && r != std::numeric_limits<double>::infinity();
+}
+} // namespace
+
+bool MotorController::setMotorMechanics(const MotorMechanics& mech,
+                                        uint8_t deviceIndex) noexcept {
+    if (deviceIndex >= MAX_TMC9660_DEVICES) return false;
+    if (!isValidGearRatio(mech.gear_ratio_motor_to_output)) return false;
+    MutexLockGuard guard(deviceMutex_);
+    mechanics_[deviceIndex] = mech;
+    return true;
+}
+
+MotorMechanics MotorController::getMotorMechanics(uint8_t deviceIndex) const noexcept {
+    if (deviceIndex >= MAX_TMC9660_DEVICES) return MotorMechanics{};
+    MutexLockGuard guard(deviceMutex_);
+    return mechanics_[deviceIndex];
+}
+
+//------------------------------------------------------------------------------
+// Motor frame (passthrough)
+//------------------------------------------------------------------------------
+
+bool MotorController::setMotorVelocity(double v, ::tmc9660::units::VelocityUnit unit,
+                                       ::tmc9660::units::MotorContext const& ctx,
+                                       uint8_t deviceIndex) noexcept {
+    bool ok = false;
+    visitDriver([&](auto& d) { ok = d.velocityControl.setTargetVelocity(v, unit, ctx); },
+                deviceIndex);
+    return ok;
+}
+
+bool MotorController::getMotorVelocity(double& out, ::tmc9660::units::VelocityUnit unit,
+                                       ::tmc9660::units::MotorContext const& ctx,
+                                       uint8_t deviceIndex) noexcept {
+    bool ok = false;
+    visitDriver([&](auto& d) { ok = d.velocityControl.getActualVelocity(out, unit, ctx); },
+                deviceIndex);
+    return ok;
+}
+
+bool MotorController::setMotorPosition(double p, ::tmc9660::units::PositionUnit unit,
+                                       ::tmc9660::units::MotorContext const& ctx,
+                                       uint8_t deviceIndex) noexcept {
+    bool ok = false;
+    visitDriver([&](auto& d) { ok = d.positionControl.setTargetPosition(p, unit, ctx); },
+                deviceIndex);
+    return ok;
+}
+
+bool MotorController::getMotorPosition(double& out, ::tmc9660::units::PositionUnit unit,
+                                       ::tmc9660::units::MotorContext const& ctx,
+                                       uint8_t deviceIndex) noexcept {
+    bool ok = false;
+    visitDriver([&](auto& d) { ok = d.positionControl.getActualPosition(out, unit, ctx); },
+                deviceIndex);
+    return ok;
+}
+
+//------------------------------------------------------------------------------
+// Load frame (gearbox-aware)
+//------------------------------------------------------------------------------
+//
+// motor_value = load_value * gear_ratio (sign-flipped if invert_output)
+// The conversion is dimensionally-invariant: applying a scalar gear ratio to
+// any velocity / position unit (RPM, RadPerSec, MechRevs, DegMech, …) before
+// it reaches the silicon yields the correct rotor-frame command, because
+// every unit in tmc9660::units is linear in mechanical revolutions.
+
+bool MotorController::setLoadVelocity(double v, ::tmc9660::units::VelocityUnit unit,
+                                      ::tmc9660::units::MotorContext const& ctx,
+                                      uint8_t deviceIndex) noexcept {
+    if (deviceIndex >= MAX_TMC9660_DEVICES) return false;
+    MotorMechanics mech;
+    {
+        MutexLockGuard guard(deviceMutex_);
+        mech = mechanics_[deviceIndex];
+    }
+    const double motor_v = (mech.invert_output ? -v : v) * mech.gear_ratio_motor_to_output;
+    return setMotorVelocity(motor_v, unit, ctx, deviceIndex);
+}
+
+bool MotorController::getLoadVelocity(double& out, ::tmc9660::units::VelocityUnit unit,
+                                      ::tmc9660::units::MotorContext const& ctx,
+                                      uint8_t deviceIndex) noexcept {
+    if (deviceIndex >= MAX_TMC9660_DEVICES) return false;
+    double motor_v = 0.0;
+    if (!getMotorVelocity(motor_v, unit, ctx, deviceIndex)) return false;
+    MotorMechanics mech;
+    {
+        MutexLockGuard guard(deviceMutex_);
+        mech = mechanics_[deviceIndex];
+    }
+    out = motor_v / mech.gear_ratio_motor_to_output;
+    if (mech.invert_output) out = -out;
+    return true;
+}
+
+bool MotorController::setLoadPosition(double p, ::tmc9660::units::PositionUnit unit,
+                                      ::tmc9660::units::MotorContext const& ctx,
+                                      uint8_t deviceIndex) noexcept {
+    if (deviceIndex >= MAX_TMC9660_DEVICES) return false;
+    MotorMechanics mech;
+    {
+        MutexLockGuard guard(deviceMutex_);
+        mech = mechanics_[deviceIndex];
+    }
+    const double motor_p = (mech.invert_output ? -p : p) * mech.gear_ratio_motor_to_output;
+    return setMotorPosition(motor_p, unit, ctx, deviceIndex);
+}
+
+bool MotorController::getLoadPosition(double& out, ::tmc9660::units::PositionUnit unit,
+                                      ::tmc9660::units::MotorContext const& ctx,
+                                      uint8_t deviceIndex) noexcept {
+    if (deviceIndex >= MAX_TMC9660_DEVICES) return false;
+    double motor_p = 0.0;
+    if (!getMotorPosition(motor_p, unit, ctx, deviceIndex)) return false;
+    MotorMechanics mech;
+    {
+        MutexLockGuard guard(deviceMutex_);
+        mech = mechanics_[deviceIndex];
+    }
+    out = motor_p / mech.gear_ratio_motor_to_output;
+    if (mech.invert_output) out = -out;
+    return true;
 }

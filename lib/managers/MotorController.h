@@ -44,6 +44,44 @@ struct Tmc9660ControlPins {
 };
 
 //==============================================================================
+// MOTOR MECHANICAL FRAME (gearbox / output shaft mapping)
+//==============================================================================
+
+/**
+ * @brief Mechanical mapping between the motor (rotor) frame and the load
+ *        (output-shaft) frame.
+ *
+ * Vortex talks to the silicon in the motor frame: every set/get on
+ * `velocityControl`, `positionControl`, the Diagnostics snapshot, and the
+ * commutation engine uses motor-shaft units. When the motor drives a
+ * gearbox, the user typically wants to think in the output-shaft frame.
+ *
+ * `gear_ratio_motor_to_output` is the number of motor-shaft revolutions per
+ * one output-shaft revolution — e.g. a 10:1 reducer has gear_ratio = 10.
+ *
+ *     motor_value = load_value * gear_ratio_motor_to_output
+ *     load_value  = motor_value / gear_ratio_motor_to_output
+ *
+ * Defaults to `1.0` (direct drive) so motor-frame and load-frame APIs are
+ * interchangeable until the user configures a gearbox.
+ */
+struct MotorMechanics {
+    /**
+     * Motor-shaft revolutions per one output-shaft revolution.
+     * Must be > 0. 1.0 = direct drive. Reducers (typical) are > 1.0;
+     * step-up gearing is < 1.0 (e.g. 0.5 for 1:2 step-up).
+     */
+    double gear_ratio_motor_to_output{1.0};
+
+    /**
+     * If true, sign of any load-frame command/feedback is inverted before
+     * being mapped to/from the motor frame. Useful when the gearbox or
+     * coupling reverses rotation direction.
+     */
+    bool invert_output{false};
+};
+
+//==============================================================================
 // MOTOR CONTROLLER ERROR CODES
 //==============================================================================
 
@@ -262,6 +300,98 @@ public:
     }
 
     //**************************************************************************//
+    //**            MECHANICAL FRAME / GEARBOX (Motor <-> Load)               **//
+    //**************************************************************************//
+
+    /**
+     * @brief Set the mechanical mapping (gearbox + direction) for a device.
+     *
+     * The mapping is per-device, lives in the manager, and applies to every
+     * subsequent setLoadXxx / getLoadXxx call. Default mapping is direct-drive
+     * (gear_ratio=1.0, invert=false), in which load-frame == motor-frame.
+     *
+     * @param mech         Mechanical configuration
+     * @param deviceIndex  Device slot (defaults to onboard)
+     * @return true if accepted, false if @p deviceIndex is invalid or
+     *         @p mech.gear_ratio_motor_to_output is non-positive / non-finite.
+     */
+    bool setMotorMechanics(const MotorMechanics& mech,
+                           uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /**
+     * @brief Read back the currently configured mechanical mapping.
+     * @param deviceIndex  Device slot (defaults to onboard)
+     */
+    [[nodiscard]] MotorMechanics getMotorMechanics(
+        uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) const noexcept;
+
+    //**************************************************************************//
+    //**            MOTOR-FRAME COMMANDS (rotor-side, raw chip frame)         **//
+    //**************************************************************************//
+
+    /**
+     * @brief Command target velocity in the **motor (rotor) frame**.
+     *
+     * This is a thin convenience wrapper around the vendor unit-aware API:
+     * the value is forwarded straight to `velocityControl.setTargetVelocity`
+     * with no gearbox math applied. Use this when you want to think in the
+     * frame the silicon thinks in.
+     */
+    bool setMotorVelocity(double value, ::tmc9660::units::VelocityUnit unit,
+                          ::tmc9660::units::MotorContext const& ctx,
+                          uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Read actual velocity in motor frame. */
+    bool getMotorVelocity(double& out_value, ::tmc9660::units::VelocityUnit unit,
+                          ::tmc9660::units::MotorContext const& ctx,
+                          uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Command target position in motor frame. */
+    bool setMotorPosition(double value, ::tmc9660::units::PositionUnit unit,
+                          ::tmc9660::units::MotorContext const& ctx,
+                          uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Read actual position in motor frame. */
+    bool getMotorPosition(double& out_value, ::tmc9660::units::PositionUnit unit,
+                          ::tmc9660::units::MotorContext const& ctx,
+                          uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    //**************************************************************************//
+    //**            LOAD-FRAME COMMANDS (output-shaft frame, gearbox-aware)   **//
+    //**************************************************************************//
+
+    /**
+     * @brief Command target velocity in the **load (output-shaft) frame**.
+     *
+     * The value is multiplied by `gear_ratio_motor_to_output` (and sign-flipped
+     * if `invert_output` is set) before being forwarded to the silicon.
+     * With the default 1:1 mechanics this is identical to
+     * setMotorVelocity().
+     *
+     * Convention example: a 10:1 reducer with `gear_ratio_motor_to_output =
+     * 10` and `setLoadVelocity(60.0, VelocityUnit::Rpm, ctx)` will spin the
+     * **rotor** at 600 RPM so the **output** turns at 60 RPM.
+     */
+    bool setLoadVelocity(double value, ::tmc9660::units::VelocityUnit unit,
+                         ::tmc9660::units::MotorContext const& ctx,
+                         uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Read actual velocity expressed in the load frame. */
+    bool getLoadVelocity(double& out_value, ::tmc9660::units::VelocityUnit unit,
+                         ::tmc9660::units::MotorContext const& ctx,
+                         uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Command target position in the load frame (gearbox-aware). */
+    bool setLoadPosition(double value, ::tmc9660::units::PositionUnit unit,
+                         ::tmc9660::units::MotorContext const& ctx,
+                         uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Read actual position expressed in the load frame. */
+    bool getLoadPosition(double& out_value, ::tmc9660::units::PositionUnit unit,
+                         ::tmc9660::units::MotorContext const& ctx,
+                         uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//
     //**************************************************************************//
 
@@ -423,6 +553,7 @@ private:
     std::array<bool, MAX_TMC9660_DEVICES> deviceInitialized_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceActive_;    ///< Track which devices are active
     std::array<std::atomic<uint32_t>, MAX_TMC9660_DEVICES> deviceErrorCounts_{}; ///< Per-device error counters
+    std::array<MotorMechanics, MAX_TMC9660_DEVICES> mechanics_{}; ///< Per-device mechanical mapping (default 1:1)
     
     bool onboardDeviceCreated_;         ///< Track if onboard device has been created
     std::atomic<bool> initialized_;      ///< Track if system has been initialized

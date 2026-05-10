@@ -256,7 +256,7 @@ inline void exercise_target_velocity_matrix(tmc9660::TMC9660<Comm>& d, const cha
         bool dvm_ok  = d.ramp.setDirectVelocityMode(s.direct_velocity_mode);
         vTaskDelay(pdMS_TO_TICKS(vortex_bench_safety::kAfterRampDvmTweakMs));
 
-        bool tv_ok = d.velocityControl.setTargetVelocity(s.value);
+        bool tv_ok = d.velocityControl.setTargetVelocityRaw(s.value);
 
         // Read back the four interesting registers (always — even on failure).
         uint32_t tv_rb = 0, rv_rb = 0, av_rb = 0, ang_rb = 0, gen_status = 0;
@@ -283,7 +283,7 @@ inline void exercise_target_velocity_matrix(tmc9660::TMC9660<Comm>& d, const cha
         vTaskDelay(pdMS_TO_TICKS(150));
 
         // Tear motion back to zero before next shot, ignoring failures.
-        (void)d.velocityControl.setTargetVelocity(0);
+        (void)d.velocityControl.setTargetVelocityRaw(0);
         vTaskDelay(pdMS_TO_TICKS(vortex_bench_safety::kErratum4TargetCoalesceMs));
     }
 }

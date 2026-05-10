@@ -31,8 +31,8 @@ static const char* TAG = "vortex_bldc_abn";
 
 extern "C" void app_main(void) {
     ESP_LOGW(TAG,
-             "MOTION APP — ABN FOC velocity, target=%ld units, CPR=%lu, current cap %u mA",
-             static_cast<long>(vortex_bench_safety::kAbnFocTargetVelocity),
+             "MOTION APP — ABN FOC velocity, target=%.1f RPM, CPR=%lu, current cap %u mA",
+             vortex_bench_safety::kAbnFocTargetRpm,
              static_cast<unsigned long>(vortex_bench_safety::kAbnEncoderCountsPerRev),
              static_cast<unsigned>(vortex_bench_safety::kMaxPhaseCurrentMa));
 
@@ -102,8 +102,16 @@ extern "C" void app_main(void) {
 
     motors.visitDriver(
         [](auto& d) {
-            if (!d.velocityControl.setTargetVelocity(vortex_bench_safety::kAbnFocTargetVelocity)) {
-                ESP_LOGE(TAG, "setTargetVelocity failed");
+            using ::tmc9660::units::VelocityUnit;
+            const ::tmc9660::units::MotorContext ctx{
+                tmc9660::tmcl::MotorType::BLDC_MOTOR,
+                vortex_bench_safety::kDefaultPolePairs,
+                tmc9660::tmcl::VelocitySensorSelection::ABN1_ENCODER,
+                vortex_bench_safety::kAbnEncoderCountsPerRev};
+            if (!d.velocityControl.setTargetVelocity(
+                    vortex_bench_safety::kAbnFocTargetRpm, VelocityUnit::Rpm, ctx)) {
+                ESP_LOGE(TAG, "setTargetVelocity(%.1f RPM) failed",
+                         vortex_bench_safety::kAbnFocTargetRpm);
             }
         },
         MotorController::ONBOARD_TMC9660_INDEX);

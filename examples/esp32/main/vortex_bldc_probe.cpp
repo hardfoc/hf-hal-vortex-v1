@@ -105,7 +105,12 @@ extern "C" void app_main(void) {
             vortex_motor_bench::clear_fault_flags(d);
             // Re-enable ramp generator like the spin app does, even though we
             // won't ask for motion: the chip uses the ramper to advance phi_e.
-            (void)vortex_motor_bench::configure_ramp_for_open_loop_voltage(d, TAG);
+            const ::tmc9660::units::MotorContext ctx{
+                tmc9660::tmcl::MotorType::BLDC_MOTOR,
+                vortex_bench_safety::kDefaultPolePairs,
+                tmc9660::tmcl::VelocitySensorSelection::SAME_AS_COMMUTATION,
+                0u};
+            (void)vortex_motor_bench::configure_ramp_for_open_loop_voltage(d, TAG, ctx);
 
             if (!d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_OPENLOOP_VOLTAGE_MODE)) {
                 ESP_LOGE(TAG, "setCommutationMode(FOC_OPENLOOP_VOLTAGE_MODE) failed");
@@ -158,7 +163,7 @@ extern "C" void app_main(void) {
         [](auto& d) {
             namespace tmcl = tmc9660::tmcl;
             ESP_LOGI(TAG, "==== Switching to FOC_OPENLOOP_CURRENT_MODE for current-mode matrix ====");
-            (void)d.velocityControl.setTargetVelocity(0);
+            (void)d.velocityControl.setTargetVelocityRaw(0);
             if (!d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_OPENLOOP_CURRENT_MODE)) {
                 ESP_LOGE(TAG, "setCommutationMode(FOC_OPENLOOP_CURRENT_MODE) failed");
                 return;

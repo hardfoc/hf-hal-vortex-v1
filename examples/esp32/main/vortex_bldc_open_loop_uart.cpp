@@ -22,9 +22,9 @@
  *   1. Force `VortexOnboardTmc9660Transport::Uart` and bring up Vortex.
  *   2. Dump PCAL95555 control-line state so a stale GPIO mux/wake/RST is
  *      caught before the gate driver ever switches.
- *   3. `configure_complete_bldc(..., with_oc_vgs_protection=false,
+ *   3. `configure_complete_bldc(..., with_oc_vgs_protection=true,
  *      with_gate_current_limits=false, skip_y2_phase=true)` — programs the
- *      motor profile, gate driver (without re-touching VGS-short protection),
+ *      motor profile, gate driver with overcurrent + fault-handler protection,
  *      shunt sensing, FOC PI, supply OV/UV, chip temperature thresholds and
  *      I²t protections.
  *   4. **Disable the chip-default VGS-short enables on UVW** (NR 272-275)
@@ -77,8 +77,9 @@ constexpr int32_t  kCruiseVelocity    = 2500;
 /// Floor used during ramp-up; bench observation is the chip rejects very
 /// small values when the OPENLOOP-CURRENT pipeline is fresh, so we never
 /// land between 0 and this value during the ramp itself (the final
-/// ramp-down explicitly writes 0 to stop).
-constexpr int32_t kMinRampVelocity = vortex_bench_safety::kOpenLoopMinCommandVelocity;
+/// ramp-down explicitly writes 0 to stop). 1000 internal units ≈ 0.3 RPM
+/// at the bench's 7-pole-pair motor.
+constexpr int32_t kMinRampVelocity = 1000;
 
 template <typename Driver>
 void emergency_stop(Driver& d) noexcept {
@@ -122,8 +123,8 @@ extern "C" void app_main(void) {
                 vortex_bench_safety::kPwmFrequencyHz,
                 /*do_calibrate=*/true,
                 /*enable_outputs=*/true,
-                /*with_oc_vgs_protection=*/false,
-                /*with_gate_current_limits=*/false,
+                /*with_oc_vgs_protection=*/true,
+                /*with_gate_current_limits=*/true,
                 /*skip_y2_phase=*/true);
         },
         MotorController::ONBOARD_TMC9660_INDEX);
@@ -144,7 +145,12 @@ extern "C" void app_main(void) {
             // 1. Configure ramper FIRST so the hardware ramper exists when we
             //    enable openloop. (RAMP_ENABLE=1, DIRECT_VELOCITY_MODE=0,
             //    RAMP_VMAX = kOpenLoopRampMaxVelocity).
-            if (!vortex_motor_bench::configure_ramp_for_open_loop_voltage(d, TAG)) {
+            const ::tmc9660::units::MotorContext ctx{
+                tmc9660::tmcl::MotorType::BLDC_MOTOR,
+                vortex_bench_safety::kDefaultPolePairs,
+                tmc9660::tmcl::VelocitySensorSelection::SAME_AS_COMMUTATION,
+                0u};
+            if (!vortex_motor_bench::configure_ramp_for_open_loop_voltage(d, TAG, ctx)) {
                 return;
             }
             // 2. Pre-load OPENLOOP_VOLTAGE BEFORE switching commutation mode.
@@ -202,7 +208,7 @@ extern "C" void app_main(void) {
         bool wrote = false;
         motors.visitDriver(
             [v, &wrote](auto& d) {
-                wrote = d.velocityControl.setTargetVelocity(v);
+                wrote = d.velocityControl.setTargetVelocityRaw(v);
             },
             MotorController::ONBOARD_TMC9660_INDEX);
         if (!wrote) {
@@ -235,7 +241,7 @@ extern "C" void app_main(void) {
     // (e.g. for a slow open-loop pull-in) we have to write it explicitly
     // here so the field actually slows down before the telemetry segment.
     motors.visitDriver(
-        [](auto& d) { (void)d.velocityControl.setTargetVelocity(kCruiseVelocity); },
+        [](auto& d) { (void)d.velocityControl.setTargetVelocityRaw(kCruiseVelocity); },
         MotorController::ONBOARD_TMC9660_INDEX);
     ESP_LOGI(TAG, "CRUISE at TARGET_VELOCITY=%ld for %lu ms",
              static_cast<long>(kCruiseVelocity), static_cast<unsigned long>(kCruiseHoldMs));
@@ -269,7 +275,7 @@ extern "C" void app_main(void) {
         // last step writes 0 directly to actually stop.
         const int32_t v = (step > 1 && v_raw < kMinRampVelocity) ? kMinRampVelocity : v_raw;
         motors.visitDriver(
-            [v](auto& d) { (void)d.velocityControl.setTargetVelocity(v); },
+            [v](auto& d) { (void)d.velocityControl.setTargetVelocityRaw(v); },
             MotorController::ONBOARD_TMC9660_INDEX);
         vTaskDelay(pdMS_TO_TICKS(kRampStepDelayMs));
     }

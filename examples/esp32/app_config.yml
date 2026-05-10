@@ -64,6 +64,10 @@ apps:
     source_file: "vortex_bldc_open_loop.cpp"
     category: "component"
     ci_enabled: false
+  vortex_bldc_dynamics:
+    source_file: "vortex_bldc_dynamics.cpp"
+    category: "component"
+    ci_enabled: false
   vortex_bldc_open_loop_uart:
     source_file: "vortex_bldc_open_loop_uart.cpp"
     category: "component"
@@ -78,6 +82,14 @@ apps:
     ci_enabled: false
   vortex_tmcl_param_scan_spi:
     source_file: "vortex_tmcl_param_scan.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_param_scan_post_config:
+    source_file: "vortex_tmcl_param_scan_post_config.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_tmcl_param_scan_post_config_spi:
+    source_file: "vortex_tmcl_param_scan_post_config.cpp"
     category: "component"
     ci_enabled: false
   vortex_tmcl_manual_compliance:
@@ -102,6 +114,10 @@ apps:
     ci_enabled: false
   vortex_bldc_position_foc_as5047:
     source_file: "vortex_bldc_position_foc_as5047.cpp"
+    category: "component"
+    ci_enabled: false
+  vortex_bldc_abn_as5047_dynamics:
+    source_file: "vortex_bldc_abn_as5047_dynamics.cpp"
     category: "component"
     ci_enabled: false
   vortex_bldc_telemetry_sweep:

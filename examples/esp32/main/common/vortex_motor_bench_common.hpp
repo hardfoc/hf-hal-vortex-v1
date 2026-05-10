@@ -90,8 +90,17 @@ inline bool set_system_off(tmc9660::TMC9660<Comm>& d, const char* tag) noexcept 
 template <typename Comm>
 inline bool configure_gate_driver(tmc9660::TMC9660<Comm>& d, const char* tag,
                                   bool with_oc_vgs_protection = false,
-                                  bool with_gate_current_limits = false,
+                                  bool with_gate_current_limits = true,
                                   bool skip_y2 = true) noexcept {
+    // Apply per-device topology fact: Vortex 3-phase BLDC stage does not wire Y2.
+    // Setting it on the driver lets the vendor library short-circuit any subsequent
+    // Y2 SAP attempt — independently of whether a caller flips skip_y2 the wrong way.
+    {
+        auto caps = d.capabilities();
+        caps.y2Phase = !skip_y2;
+        d.setCapabilities(caps);
+    }
+
     typename tmc9660::TMC9660<Comm>::GateDriver::PowerStageProfile p{};
     p.mosfet_RdsOn_mOhm     = vortex_bench_safety::kMosfetRdsOnMilliOhm;
     p.mosfet_gateCharge_nC  = vortex_bench_safety::kMosfetGateChargeNc;
@@ -111,6 +120,15 @@ inline bool configure_gate_driver(tmc9660::TMC9660<Comm>& d, const char* tag,
     p.configure_y2_phase                 = !skip_y2;
     p.program_gate_current_limits        = with_gate_current_limits;
     p.configure_gate_oc_vgs_protection   = with_oc_vgs_protection;
+    // FW051V100 silicon quirk on NR 245/246 (UVW_SINK / SOURCE_CURRENT) is now handled inside
+    // the vendor driver via a 0x111×enum byte-replication transform in configurePowerStageProtection,
+    // so explicit override values like CUR_270_MA / CUR_135_MA program cleanly. Pass through the
+    // bench-validated values below so the chip never falls back to its reset defaults silently.
+    if (with_gate_current_limits) {
+        // 58 nC FETs at 24 V / 25 kHz — chip-default-strength code (sink=270 mA, source=135 mA).
+        p.uvw_gate_current_sink   = tmcl::GateCurrentSink::CUR_270_MA;
+        p.uvw_gate_current_source = tmcl::GateCurrentSource::CUR_135_MA;
+    }
 
     if (!d.gateDriver.configurePowerStageProtection(p)) {
         ESP_LOGE(tag, "gateDriver.configurePowerStageProtection failed");
@@ -185,15 +203,15 @@ inline bool configure_motor(tmc9660::TMC9660<Comm>& d, const char* tag,
 template <typename Comm>
 inline bool configure_torque_flux_loop(tmc9660::TMC9660<Comm>& d, const char* tag) noexcept {
     typename tmc9660::TMC9660<Comm>::TorqueFluxControl::TorqueFluxConfig tf{};
-    tf.torqueP = 50;
-    tf.torqueI = 100;
+    tf.torqueP = 400;
+    tf.torqueI = 400;
     tf.torqueOffset_mA = 0;
     tf.fluxOffset_mA = 0;
     if (!d.torqueFluxControl.configureAuto(tf)) {
         ESP_LOGE(tag, "torqueFluxControl.configureAuto failed");
         return false;
     }
-    ESP_LOGI(tag, "  ✓ Torque/flux PI: P=50, I=100 (combined loops, no field weakening)");
+    ESP_LOGI(tag, "  ✓ Torque/flux PI: P=400, I=400 (combined loops, no field weakening)");
     return true;
 }
 
@@ -205,13 +223,19 @@ inline bool configure_velocity_loop(tmc9660::TMC9660<Comm>& d, const char* tag,
     vc.sensorSelection      = sensor;
     vc.velocityP            = 1000;
     vc.velocityI            = 2;
+    // Default pNormalization is SHIFT_16_BIT (>>16 ≈ ÷65k) which neuters
+    // velocity-loop output: at err=14k counts, P=1000 → only ~218 mA Iq cmd
+    // → motor stalls. SHIFT_8_BIT (>>8 ≈ ÷256) is the standard for chip-time
+    // velocity scaling in Hz units; gives sane Iq saturating at MAX_TORQUE.
+    vc.pNormalization       = tmcl::VelocityPiNorm::SHIFT_8_BIT;
+    vc.iNormalization       = tmcl::VelocityPiNorm::SHIFT_8_BIT;
     vc.velocityScalingFactor = 1;
     vc.velocityOffset       = 0;
     if (!d.velocityControl.configureAuto(vc)) {
         ESP_LOGE(tag, "velocityControl.configureAuto failed");
         return false;
     }
-    ESP_LOGI(tag, "  ✓ Velocity PI: P=1000, I=2, sensorSelection=%d",
+    ESP_LOGI(tag, "  ✓ Velocity PI: P=1000, I=2, normP/I=SHIFT_8_BIT, sensorSelection=%d",
              static_cast<int>(sensor));
     return true;
 }
@@ -277,17 +301,37 @@ inline bool configure_ramp_passthrough(tmc9660::TMC9660<Comm>& d, const char* ta
  *  for any value that the un-ramped pipeline cannot serve.
  */
 template <typename Comm>
-inline bool configure_ramp_for_open_loop_voltage(tmc9660::TMC9660<Comm>& d, const char* tag) noexcept {
-    typename tmc9660::TMC9660<Comm>::Ramp::RampConfig rc{};
-    rc.maxVelocity              = vortex_bench_safety::kOpenLoopRampMaxVelocity;
+inline bool configure_ramp_for_open_loop_voltage(tmc9660::TMC9660<Comm>& d, const char* tag,
+                                                 ::tmc9660::units::MotorContext const& ctx) noexcept {
+    using ::tmc9660::units::VelocityUnit;
+    using ::tmc9660::units::AccelerationUnit;
+    auto rc = tmc9660::TMC9660<Comm>::Ramp::buildRampConfig(
+        vortex_bench_safety::kOpenLoopRampMaxRpm,        VelocityUnit::Rpm,
+        vortex_bench_safety::kOpenLoopRampMaxRpmPerSec,  AccelerationUnit::RpmPerSec,
+        ctx);
     rc.enableRamp               = true;
     rc.enableDirectVelocityMode = false;
     if (!d.ramp.configureAuto(rc)) {
         ESP_LOGE(tag, "ramp.configureAuto (open-loop spin) failed");
         return false;
     }
-    ESP_LOGI(tag, "  ✓ Ramp: generator ON, direct velocity OFF, max_vel=%lu (ramper drives phi_e)",
-             static_cast<unsigned long>(rc.maxVelocity));
+    ESP_LOGI(tag,
+             "  ✓ Ramp: gen ON, direct vel OFF, VMAX=%lu (%.0f RPM)",
+             static_cast<unsigned long>(rc.maxVelocity),
+             vortex_bench_safety::kOpenLoopRampMaxRpm);
+    ESP_LOGI(tag,
+             "    AMAX=A1=A2=%lu  DMAX=D1=D2=%lu  (%.1f RPM/s symmetric)",
+             static_cast<unsigned long>(rc.maxAcceleration.value_or(0)),
+             static_cast<unsigned long>(rc.maxDeceleration.value_or(0)),
+             vortex_bench_safety::kOpenLoopRampMaxRpmPerSec);
+    ESP_LOGI(tag,
+             "    V1=%lu V2=%lu (single-segment) VSTART=%lu VSTOP=%lu TVMAX=%u TZEROWAIT=%u",
+             static_cast<unsigned long>(rc.velocityThreshold1.value_or(0)),
+             static_cast<unsigned long>(rc.velocityThreshold2.value_or(0)),
+             static_cast<unsigned long>(rc.startVelocity.value_or(0)),
+             static_cast<unsigned long>(rc.stopVelocity.value_or(0)),
+             static_cast<unsigned>(rc.timeAtVmax.value_or(0)),
+             static_cast<unsigned>(rc.timeZeroWait.value_or(0)));
     return true;
 }
 
@@ -358,23 +402,32 @@ inline bool configure_hall(tmc9660::TMC9660<Comm>& d, const char* tag) noexcept 
 template <typename Comm>
 inline bool configure_abn(tmc9660::TMC9660<Comm>& d, const char* tag,
                           uint32_t counts_per_rev =
-                              vortex_bench_safety::kAbnEncoderCountsPerRev) noexcept {
+                              vortex_bench_safety::kAbnEncoderCountsPerRev,
+                          uint16_t init_openloop_current_mA = 2000) noexcept {
     typename tmc9660::TMC9660<Comm>::FeedbackSense::AbnConfig ac{};
     ac.countsPerRev = counts_per_rev;
     ac.direction = tmcl::Direction::NOT_INVERTED;
     ac.nChannelInverted = tmcl::EnableDisable::DISABLED;
     ac.initMethod = tmcl::AbnInitMethod::FORCED_PHI_E_ZERO_WITH_ACTIVE_SWING;
-    ac.initDelay = 1000;
+    ac.initDelay = 2000;
     ac.initVelocity = 5;
     ac.nChannelOffset = 0;
     ac.nChannelFiltering = tmcl::AbnNChannelFiltering::FILTERING_OFF;
     ac.clearOnNextNull = tmcl::EnableDisable::DISABLED;
+    // Datasheet (param-mode line 2411-2422): FORCED_PHI_E_* init methods drive
+    // the rotor with OPENLOOP_CURRENT (param 46, mA). Default 1000 mA is too
+    // weak for gearboxed motors → init silently completes with bogus offset
+    // and FOC produces vibration only. Pass 0 to leave OPENLOOP_CURRENT alone.
+    ac.initOpenloopCurrent_mA = init_openloop_current_mA;
     if (!d.feedbackSense.configureAuto(ac)) {
         ESP_LOGE(tag, "feedbackSense.configureAuto(ABN) failed (bootloader ABN pins enabled?)");
         return false;
     }
-    ESP_LOGI(tag, "  ✓ ABN: %lu CPR, FORCED_PHI_E_ZERO_WITH_ACTIVE_SWING init, no N-filter",
-             static_cast<unsigned long>(counts_per_rev));
+    ESP_LOGI(tag,
+             "  ✓ ABN: %lu CPR, FORCED_PHI_E_ZERO_WITH_ACTIVE_SWING init, "
+             "OPENLOOP_CURRENT=%u mA, no N-filter",
+             static_cast<unsigned long>(counts_per_rev),
+             static_cast<unsigned>(init_openloop_current_mA));
     return true;
 }
 
@@ -826,7 +879,7 @@ inline bool configure_complete_bldc(tmc9660::TMC9660<Comm>& d,
                                     bool do_calibrate = true,
                                     bool enable_outputs = true,
                                     bool with_oc_vgs_protection = false,
-                                    bool with_gate_current_limits = false,
+                                    bool with_gate_current_limits = true,
                                     bool skip_y2_phase = true) noexcept {
     ESP_LOGI(tag, "==== Vortex BLDC bring-up start (24V class, %u pole pairs, %lu Hz PWM) ====",
              static_cast<unsigned>(pole_pairs), static_cast<unsigned long>(pwm_hz));

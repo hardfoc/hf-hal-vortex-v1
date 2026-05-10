@@ -62,12 +62,12 @@ extern "C" void app_main(void) {
                 return;
             }
 
-            (void)d.positionControl.setTargetPosition(200);
+            (void)d.positionControl.setTargetPositionRaw(200);
         },
         MotorController::ONBOARD_TMC9660_INDEX);
 
     vTaskDelay(pdMS_TO_TICKS(400));
-    VORTEX_API.motors.visitDriver([](auto& d) { (void)d.positionControl.setTargetPosition(0); },
+    VORTEX_API.motors.visitDriver([](auto& d) { (void)d.positionControl.setTargetPositionRaw(0); },
                                   MotorController::ONBOARD_TMC9660_INDEX);
     vTaskDelay(pdMS_TO_TICKS(400));
     VORTEX_API.motors.visitDriver([](auto& d) { vortex_motor_bench::motor_stop_safe(d); },
