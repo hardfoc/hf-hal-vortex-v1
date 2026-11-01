@@ -1,6 +1,6 @@
 ###############################################################################
 #  HardFOC HAL Vortex V1 – ESP-IDF Component Manager Manifest
-#  
+#
 #  This manifest file describes the HardFOC HAL (Hardware Abstraction Layer)
 #  component for the ESP-IDF Component Manager. The HAL provides a unified
 #  interface for motor control, sensor management, and communication on the
@@ -14,10 +14,10 @@
 name: hf-hal-vortex-v1
 version: "1.1.0"
 description: |
-  HardFOC Hardware Abstraction Layer for Vortex V1 platform - comprehensive 
-  motor control, sensor management, and communication interface. Provides 
-  unified APIs for TMC9660 motor controllers, BNO08x IMU sensors, AS5047U 
-  encoders, PCAL95555 GPIO expanders, and WS2812 LED control with full 
+  HardFOC Hardware Abstraction Layer for Vortex V1 platform - comprehensive
+  motor control, sensor management, and communication interface. Provides
+  unified APIs for TMC9660 motor controllers, BNO08x IMU sensors, AS5047U
+  encoders, PCAL95555 GPIO expanders, and WS2812 LED control with full
   ESP32-C6 integration and RTOS support.
 
 # ─── External Links ───────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ files:
     - "LICENSE"
     - "README.md"
     - "DOCUMENTATION_INDEX.md"
-  
+
   # Exclude development and documentation files to minimize package size
   exclude:
     # Documentation and examples
@@ -86,20 +86,20 @@ files:
     - "**/datasheet/**"
     - "**/examples/**"
     - "**/tests/**"
-    
+
     # Development and CI files
     - "**/.github/**"
     - "**/.gitlab-ci.yml"
     - "**/.git/**"
     - "**/.svn/**"
-    
+
     # IDE and editor files
     - "**/.idea/**"
     - "**/.vscode/**"
     - "**/.settings/**"
     - "**/.DS_Store"
     - "**/Thumbs.db"
-    
+
     # Build artifacts
     - "**/build/**"
     - "**/dist/**"
@@ -108,7 +108,7 @@ files:
     - "**/sdkconfig"
     - "**/sdkconfig.old"
     - "**/.component_hash"
-    
+
     # Python and cache files
     - "**/__pycache__/**"
     - "**/*.pyc"
@@ -122,7 +122,7 @@ files:
 
 ###############################################################################
 #  Component Architecture Overview
-#  
+#
 #  The HardFOC HAL consists of several layers:
 #
 #  1. API Layer (lib/api/)
@@ -163,21 +163,21 @@ files:
 #  Usage Example:
 #  ```cpp
 #  #include "api/Vortex.h"
-#  
+#
 #  // Get the unified API instance
 #  auto& vortex = Vortex::GetInstance();
-#  
+#
 #  // Initialize all systems
 #  if (vortex.EnsureInitialized()) {
 #      // Access motor controllers
 #      auto& motors = vortex.motors;
-#      
+#
 #      // Access IMU sensors
 #      auto& imu = vortex.imu;
-#      
+#
 #      // Access GPIO management
 #      auto& gpio = vortex.gpio;
-#      
+#
 #      // Use any component through unified interface
 #  }
 #  ```
