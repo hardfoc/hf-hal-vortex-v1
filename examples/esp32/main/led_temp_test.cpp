@@ -81,7 +81,7 @@ static bool test_temp_read_ntc() noexcept {
 
 static bool test_temp_read_motor() noexcept {
   float celsius = 0.0f;
-  [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("MOTOR_TEMP", &celsius);
+  [[maybe_unused]] auto err = TEMP().ReadTemperatureCelsius("MOTOR_TEMP", celsius);
   return true;
 }
 
