@@ -330,7 +330,7 @@ hf_gpio_err_t GpioManager::DebugReadPcal95555InputSnapshot(uint16_t& out_bits) n
     if (!pcal95555_handler_->EnsureInitialized()) {
         return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     }
-    return pcal95555_handler_->ReadAllInputsSnapshot(out_bits);
+    return pcal95555_handler_->ReadAllInputLevels(out_bits);
 }
 
 Tmc9660Handler* GpioManager::GetTmc9660Handler(uint8_t device_index) noexcept {

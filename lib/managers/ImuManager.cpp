@@ -795,9 +795,15 @@ bool ImuManager::InitializeOnboardBno08xDevice() noexcept {
 
     BaseGpio* const rst = onboard_bno_reset_gpio_shared_ ? onboard_bno_reset_gpio_shared_.get() : nullptr;
     BaseGpio* const intr = onboard_bno_int_gpio_shared_ ? onboard_bno_int_gpio_shared_.get() : nullptr;
-    BaseGpio* const boot = onboard_bno_boot_gpio_shared_ ? onboard_bno_boot_gpio_shared_.get() : nullptr;
 
-    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config, rst, intr, boot);
+    // BOOTN is sampled at reset (low = bootloader). The I2C transport has no
+    // boot line, so hold it at the run level before the handler resets the IMU.
+    if (onboard_bno_boot_gpio_shared_ &&
+        onboard_bno_boot_gpio_shared_->SetInactive() != hf_gpio_err_t::GPIO_SUCCESS) {
+        Logger::GetInstance().Warn("ImuManager", "Failed to drive GPIO_PCAL_IMU_BOOT to the run level");
+    }
+
+    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config, rst, intr);
     
     if (!bno08x_handlers_[ONBOARD_IMU_INDEX]) {
         Logger::GetInstance().Error("ImuManager", "Failed to create onboard BNO08x handler");
