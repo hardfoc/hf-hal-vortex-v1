@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="948" viewBox="0 0 1200 948" role="img" aria-labelledby="board-overview-title board-overview-desc" font-family="Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+<title id="board-overview-title">Vortex V1: buses and chips</title>
+<desc id="board-overview-desc">Block diagram of the Vortex V1 board: the ESP32-C6 connects over SPI2 to the TMC9660 and AS5047U, over UART to the TMC9660, over I2C to the PCAL95555 expander and BNO08x IMU, over TWAI to the CAN transceiver and to a WS2812 LED; the PCAL95555 drives the TMC9660 and IMU control lines.</desc>
+<defs><marker id="fk-arrow-amber-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#C26A05"/></marker><marker id="fk-arrow-blue-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2563EB"/></marker><marker id="fk-arrow-green-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#15803D"/></marker><marker id="fk-arrow-slate-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#64748B"/></marker><marker id="fk-arrow-teal-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0F8B80"/></marker></defs>
+<rect x="0.5" y="0.5" width="1199" height="947" rx="16" fill="#FFFFFF" stroke="#E2E7EE"/>
+<text x="32" y="44" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#3730A3">HARDWARE</text>
+<text x="32" y="77.3" font-size="26" font-weight="700" fill="#17202C">Vortex V1: buses and chips</text>
+<text x="32" y="103.8" font-size="15" fill="#566070">Every GPIO, expander pin, SPI mode and I2C address below is read from the pin map and the comms manager.</text>
+<rect x="32" y="119.8" width="1136" height="1" fill="#E2E7EE"/>
+<path d="M266 167.8 L628 167.8" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M266 209.8 L628 209.8" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M266 292.8 L628 292.8" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M266 382.8 L628 382.8" fill="none" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#fk-arrow-slate-strong)"/>
+<path d="M266 462.8 L628 462.8" fill="none" stroke="#C26A05" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-amber-strong)"/>
+<path d="M266 489.8 L628 489.8" fill="none" stroke="#C26A05" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-amber-strong)"/>
+<path d="M266 562.8 L628 562.8" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M266 652.8 L628 652.8" fill="none" stroke="#15803D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-green-strong)"/>
+<path d="M266 742.8 L628 742.8" fill="none" stroke="#C26A05" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-amber-strong)"/>
+<path d="M1082 472.8 L1114 472.8 Q1122 472.8 1122 464.8 L1122 193.8 Q1122 185.8 1114 185.8 L1082 185.8" fill="none" stroke="#C26A05" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#fk-arrow-amber-strong)"/>
+<path d="M1082 486.8 L1098 486.8 Q1106 486.8 1106 494.8 L1106 554.8 Q1106 562.8 1098 562.8 L1082 562.8" fill="none" stroke="#C26A05" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#fk-arrow-amber-strong)"/>
+<rect x="32" y="137.8" width="230" height="640" rx="10" fill="#EEF0FF" stroke="#4F46E5" stroke-width="1.4"/>
+<rect x="32" y="145.8" width="4" height="624" rx="2" fill="#4F46E5"/>
+<rect x="632" y="137.8" width="446" height="96" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="632" y="145.8" width="4" height="80" rx="2" fill="#2563EB"/>
+<rect x="632" y="257.8" width="446" height="70" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="632" y="265.8" width="4" height="54" rx="2" fill="#0F8B80"/>
+<rect x="632" y="347.8" width="446" height="70" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1" stroke-dasharray="6 4"/>
+<rect x="632" y="437.8" width="446" height="70" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="632" y="445.8" width="4" height="54" rx="2" fill="#C26A05"/>
+<rect x="632" y="527.8" width="446" height="70" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="632" y="535.8" width="4" height="54" rx="2" fill="#0F8B80"/>
+<rect x="632" y="617.8" width="446" height="70" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="632" y="625.8" width="4" height="54" rx="2" fill="#15803D"/>
+<rect x="632" y="707.8" width="446" height="70" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="632" y="715.8" width="4" height="54" rx="2" fill="#C26A05"/>
+<rect x="32" y="807.8" width="1136" height="79.3" rx="10" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="52" y="164.6" font-size="15" font-weight="700" fill="#3730A3">ESP32-C6</text>
+<text x="52" y="189.4" font-size="13" fill="#2B3442">RISC-V MCU</text>
+<text x="52" y="208.2" font-size="13" fill="#2B3442">runs the HAL and your app</text>
+<text x="52" y="227.1" font-size="13" fill="#2B3442">USB-JTAG on GPIO12/GPIO13</text>
+<text x="652" y="164.6" font-size="15" font-weight="700" fill="#17202C">TMC9660</text>
+<text x="652" y="189.4" font-size="13" fill="#2B3442">motor controller with gate drivers</text>
+<text x="652" y="208.2" font-size="13" fill="#2B3442">TMCL over UART or SPI</text>
+<text x="652" y="284.6" font-size="15" font-weight="700" fill="#17202C">AS5047U</text>
+<text x="652" y="309.4" font-size="13" fill="#2B3442">magnetic angle encoder</text>
+<text x="652" y="374.6" font-size="15" font-weight="700" fill="#17202C">External SPI slots 1 and 2</text>
+<text x="652" y="399.4" font-size="13" fill="#2B3442">chip selects on the header</text>
+<text x="652" y="464.6" font-size="15" font-weight="700" fill="#17202C">PCAL95555</text>
+<text x="652" y="489.4" font-size="13" fill="#2B3442">16-bit I/O expander, I2C 0x20</text>
+<text x="652" y="554.5" font-size="15" font-weight="700" fill="#17202C">BNO08x IMU</text>
+<text x="652" y="579.4" font-size="13" fill="#2B3442">9-axis IMU, I2C 0x4A</text>
+<text x="652" y="644.5" font-size="15" font-weight="700" fill="#17202C">CAN transceiver</text>
+<text x="652" y="669.4" font-size="13" fill="#2B3442">standby via PCAL95555</text>
+<text x="652" y="734.5" font-size="15" font-weight="700" fill="#17202C">WS2812</text>
+<text x="652" y="759.4" font-size="13" fill="#2B3442">RGB status LED</text>
+<rect x="366.4" y="157.8" width="161.1" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="172.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">SPI2 mode 3, CS GPIO18</text>
+<rect x="316.6" y="199.8" width="260.7" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="214.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">UART RX GPIO4 / TX GPIO5 (default link)</text>
+<rect x="366.4" y="282.8" width="161.2" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="297.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">SPI2 mode 1, CS GPIO20</text>
+<rect x="356.8" y="372.8" width="180.5" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="387.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">SPI2, CS GPIO19 and GPIO8</text>
+<rect x="349" y="452.8" width="196" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="467.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">I2C SDA GPIO21 / SCL GPIO22</text>
+<rect x="352.5" y="479.8" width="188.9" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="494.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">interrupt GPIO23 (active low)</text>
+<rect x="349" y="552.8" width="196" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="567.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">I2C SDA GPIO21 / SCL GPIO22</text>
+<rect x="352" y="642.8" width="189.9" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="657.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">TWAI TX GPIO14 / RX GPIO15</text>
+<rect x="390.8" y="732.8" width="112.4" height="20" rx="10" fill="#FFFFFF"/>
+<text x="447" y="747.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">RMT data GPIO3</text>
+<text x="280" y="149.8" font-size="12" fill="#566070">SPI2: SCK GPIO6, MOSI GPIO7, MISO GPIO2</text>
+<text x="46" y="834.5" font-size="15" font-weight="700" fill="#8A3C0B">Expander pins</text>
+<text x="46" y="852.3" font-size="13" fill="#8A3C0B">TMC9660 control lines on the PCAL95555: DRV_EN P0_4, RST_CTRL P0_5, WAKE_CTRL P1_6, SPI_COMM_EN P1_5 (SPI mux, active low), FAULT_STATUS P0_3. IMU:</text>
+<text x="46" y="871.2" font-size="13" fill="#8A3C0B">BOOT P1_3, INT P1_4, RST P1_7. CAN standby: P1_2. Power good: P0_6.</text>
+<rect x="32" y="902.5" width="14" height="14" rx="4" fill="#EEF0FF" stroke="#4F46E5" stroke-width="1.4"/>
+<text x="54" y="914.2" font-size="12.5" fill="#566070">MCU</text>
+<rect x="109.5" y="902.5" width="14" height="14" rx="4" fill="#EAF2FF" stroke="#2563EB" stroke-width="1.4"/>
+<text x="131.5" y="914.2" font-size="12.5" fill="#566070">motor</text>
+<rect x="192.3" y="902.5" width="14" height="14" rx="4" fill="#E6F6F4" stroke="#0F8B80" stroke-width="1.4"/>
+<text x="214.3" y="914.2" font-size="12.5" fill="#566070">sensing</text>
+<rect x="287" y="902.5" width="14" height="14" rx="4" fill="#FFF5E3" stroke="#C26A05" stroke-width="1.4"/>
+<text x="309" y="914.2" font-size="12.5" fill="#566070">I/O and control</text>
+<rect x="426.1" y="902.5" width="14" height="14" rx="4" fill="#EAF7EF" stroke="#15803D" stroke-width="1.4"/>
+<text x="448.1" y="914.2" font-size="12.5" fill="#566070">communication</text>
+</svg>

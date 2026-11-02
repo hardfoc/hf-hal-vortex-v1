@@ -138,3 +138,6 @@ Thumbs.db
 
 # Changelogs (maintained locally, not tracked)
 CHANGELOG.md
+# Documentation site (mkdocs build) and the Doxygen output
+site/
+docs/_doxygen/

@@ -1,0 +1,46 @@
+{
+  "board": "Vortex V1",
+  "mcu": "ESP32-C6",
+  "facade": "Vortex",
+  "managers": [
+    "CommChannelsManager",
+    "NvsManager",
+    "GpioManager",
+    "MotorController",
+    "AdcManager",
+    "ImuManager",
+    "EncoderManager",
+    "LedManager",
+    "TemperatureManager"
+  ],
+  "handlers": [
+    "As5047uHandler",
+    "Bno08xHandler",
+    "NtcTemperatureHandler",
+    "Pcal95555Handler",
+    "Tmc9660Handler"
+  ],
+  "drivers": [
+    "hf-as5047u",
+    "hf-bno08x",
+    "hf-ntc-thermistor",
+    "hf-pcal95555",
+    "hf-tmc9660",
+    "hf-ws2812-rmt"
+  ],
+  "interfaces": [
+    "BaseAdc",
+    "BaseCan",
+    "BaseGpio",
+    "BaseI2c",
+    "BaseNvs",
+    "BaseSpi",
+    "BaseTemperature",
+    "BaseUart"
+  ],
+  "sources": [
+    "lib/api/Vortex.h:Vortex (manager references)",
+    "lib/managers:#includes",
+    "lib/core/handlers:#includes"
+  ]
+}
