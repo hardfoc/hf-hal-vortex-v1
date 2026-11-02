@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/adr/0003-pin-map-ownership/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1296,9 +1337,9 @@ repository's README and docs.</p>
 <li>Changing a pin is one edit in <code>hf-pincfg</code>, a submodule bump here, and a docs rebuild.</li>
 <li>The pin map is shared by every HardFOC HAL through <code>hf-pincfg</code>; the board is chosen at build time with
   <code>HARDFOC_BOARD_VORTEX_V1</code> (set in this repository's <code>CMakeLists.txt</code>).</li>
-<li>One copy remains: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/main/common/vortex_board_pins.hpp"><code>vortex_board_pins.hpp</code></a> repeats the
-  bus and LED GPIO numbers for examples that call ESP-IDF directly. It says it must match the pin map but nothing
-  checks it; a compile-time check against the pin map would close the gap.</li>
+<li>The examples that call ESP-IDF directly get their GPIO numbers from
+  <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/main/common/vortex_board_pins.hpp"><code>vortex_board_pins.hpp</code></a>, which reads them from the pin
+  map at compile time and <code>static_assert</code>s that each net is an ESP32 pin; there is no second copy.</li>
 </ul>
 
 

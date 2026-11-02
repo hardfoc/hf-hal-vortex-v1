@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/hardware/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -895,14 +936,14 @@
 bus. Every pin number on this page comes from the board's functional pin map; the full tables are on the
 <a href="pin-map/">pin map</a> page.</p>
 <figure class="hf-figure">
-<img src="../diagrams/board-overview.svg#only-light" alt="Block diagram of the Vortex V1 board: the ESP32-C6 connects over SPI2 to the TMC9660 and AS5047U, over UART to the TMC9660, over I2C to the PCAL95555 expander and BNO08x IMU, over TWAI to the CAN transceiver and to a WS2812 LED; the PCAL95555 drives the TMC9660 and IMU control lines." width="1200" loading="lazy"><img src="../diagrams/board-overview.dark.svg#only-dark" alt="Block diagram of the Vortex V1 board: the ESP32-C6 connects over SPI2 to the TMC9660 and AS5047U, over UART to the TMC9660, over I2C to the PCAL95555 expander and BNO08x IMU, over TWAI to the CAN transceiver and to a WS2812 LED; the PCAL95555 drives the TMC9660 and IMU control lines." width="1200" loading="lazy">
+<img src="../diagrams/board-overview.svg#only-light" alt="Block diagram of the Vortex V1 board: the ESP32-C6 connects over SPI2 to the TMC9660 and AS5047U, over UART to the TMC9660, over I2C to the PCAL95555 expander and BNO08x IMU, over TWAI to the CAN transceiver and to a WS2812 LED; the PCAL95555 drives the TMC9660 and IMU control lines." width="1200" height="948"><img src="../diagrams/board-overview.dark.svg#only-dark" alt="Block diagram of the Vortex V1 board: the ESP32-C6 connects over SPI2 to the TMC9660 and AS5047U, over UART to the TMC9660, over I2C to the PCAL95555 expander and BNO08x IMU, over TWAI to the CAN transceiver and to a WS2812 LED; the PCAL95555 drives the TMC9660 and IMU control lines." width="1200" height="948">
 <figcaption>Vortex V1: buses and chips</figcaption>
 </figure>
 
 <details class="hf-figure-desc">
 <summary>Figure description and sources</summary>
 <p>The ESP32-C6 on the left runs all the software. Each arrow to the right is one bus or signal, labelled with the GPIOs it uses: SPI2 to the TMC9660 motor controller and the AS5047U encoder (plus two external chip selects), a UART that is the TMC9660's default host link, I2C to the PCAL95555 I/O expander and the BNO08x IMU, TWAI to the CAN transceiver, and one data line to the WS2812 status LED. The PCAL95555 drives the TMC9660 control lines (driver enable, reset, wake, SPI mux) and the IMU's boot and reset lines, and reads their fault and interrupt outputs. The layout is drawn by hand; every GPIO number, expander bit, chip select, SPI mode and I2C address is read from the functional pin map and the comms manager, so a pin change rebuilds this figure.</p>
-<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp</code></a> <code>HF_FUNCTIONAL_GPIO_PIN_LIST</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/managers/CommChannelsManager.h"><code>lib/managers/CommChannelsManager.h</code></a> <code>SpiDeviceId</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/managers/CommChannelsManager.cpp"><code>lib/managers/CommChannelsManager.cpp</code></a> <code>add_builtin_device</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/docs/diagrams/figures/board-overview.py"><code>docs/diagrams/figures/board-overview.py</code></a>.</p>
+<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp</code></a> <code>HF_FUNCTIONAL_GPIO_PIN_LIST</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/managers/CommChannelsManager.h"><code>lib/managers/CommChannelsManager.h</code></a> <code>SpiDeviceId</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/managers/CommChannelsManager.cpp"><code>lib/managers/CommChannelsManager.cpp</code></a> <code>add_builtin_device</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/docs/diagrams/figures/board-overview.py"><code>docs/diagrams/figures/board-overview.py</code></a>.</p>
 </details>
 <h2 id="the-chips">The chips<a class="headerlink" href="#the-chips" title="Permanent link">&para;</a></h2>
 <table>
@@ -979,9 +1020,9 @@ bus. Every pin number on this page comes from the board's functional pin map; th
 </ul>
 <h2 id="bench-documents">Bench documents<a class="headerlink" href="#bench-documents" title="Permanent link">&para;</a></h2>
 <p>The bring-up notes written on the bench live next to the examples, not on this site:
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a>,
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up</a> and the
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/docs/README.md">example docs index</a>.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a>,
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up</a> and the
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/docs/README.md">example docs index</a>.</p>
 
 
 

@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/roadmap/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1065,7 +1106,7 @@ host tests that run the same node against a simulated motor.</p>
 </tr>
 <tr>
 <td>CANopenNode sources</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
 <td>Present</td>
 </tr>
 </tbody>
@@ -1087,34 +1128,9 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 </thead>
 <tbody>
 <tr>
-<td><code>GetSystemWarnings()</code> always returns no entries</td>
-<td><code>Vortex.cpp</code></td>
-<td><a href="../architecture/errors/">Errors</a></td>
-</tr>
-<tr>
-<td><code>Vortex::EnsureInitialized()</code> and <code>Shutdown()</code> take no lock</td>
-<td><code>Vortex.cpp</code></td>
-<td><a href="../architecture/threading/">Threading</a></td>
-</tr>
-<tr>
-<td>Per-pin GPIO calls and single-encoder reads take no lock</td>
-<td><code>GpioManager.cpp</code>, <code>EncoderManager.cpp</code></td>
-<td><a href="../architecture/threading/">Threading</a></td>
-</tr>
-<tr>
-<td><code>GpioManager::Read()</code> documents "true = high" but returns the logical (active) state</td>
-<td><code>GpioManager.h</code></td>
-<td><a href="../managers/gpio/">GpioManager</a></td>
-</tr>
-<tr>
 <td>Most managers allocate with throwing <code>make_unique</code>, so a failed allocation aborts</td>
 <td><code>lib/managers</code></td>
 <td><a href="../adr/0002-static-allocation/">ADR 0002</a></td>
-</tr>
-<tr>
-<td><code>vortex_board_pins.hpp</code> repeats GPIO numbers without a check against the pin map</td>
-<td><code>examples/esp32/main/common</code></td>
-<td><a href="../adr/0003-pin-map-ownership/">ADR 0003</a></td>
 </tr>
 <tr>
 <td>ESP32 port numbers and <code>gpio_num_t</code> in managers</td>
@@ -1122,9 +1138,14 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 <td><a href="../adr/0001-mcu-agnostic-boundary/">ADR 0001</a></td>
 </tr>
 <tr>
-<td>No host unit tests in this repository; the examples prove behaviour on a board</td>
-<td>-</td>
+<td>Only some managers build on the host (the rest still construct ESP32 peripherals themselves)</td>
+<td><code>tests/host/seams</code></td>
 <td><a href="../testing/">Testing and CI</a></td>
+</tr>
+<tr>
+<td>hf-core <code>NtcTemperatureHandler</code> recurses until the stack overflows when <code>enable_threshold_monitoring</code> is set in its config; the HAL applies the window after init instead</td>
+<td>hf-core <code>handlers/ntc</code></td>
+<td><a href="../managers/temperature/">TemperatureManager</a></td>
 </tr>
 </tbody>
 </table>

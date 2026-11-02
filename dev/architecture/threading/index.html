@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/architecture/threading/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1230,6 +1271,9 @@
 <p>What you can safely call from more than one FreeRTOS task. The HAL creates <strong>no tasks of its own</strong>: every call runs
 in the task that makes it. Periodic work, such as LED animation steps, is driven by your code.</p>
 <h2 id="locks">Locks<a class="headerlink" href="#locks" title="Permanent link">&para;</a></h2>
+<p>Lock order, when one manager calls another while holding its own lock: <code>MotorController</code> → <code>GpioManager</code> (the
+TMC9660 SPI mux line is a PCAL95555 pin), and a manager's lock → its handler's lock. Nothing takes them in the other
+order.</p>
 <p>Each manager (except <code>NvsManager</code>) has one <code>RtosMutex</code> from <code>hf-utils-rtos-wrap</code>. <code>EnsureInitialized()</code> uses a
 double-checked pattern: an atomic "initialised" flag is read first, then the lock is taken and the flag checked again.</p>
 <table>
@@ -1253,8 +1297,8 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
 </tr>
 <tr>
 <td><code>GpioManager</code></td>
-<td><code>EnsureInitialized()</code>, <code>Deinitialize()</code>, <code>GetSystemDiagnostics()</code>, TMC9660 bridge registration</td>
-<td>every per-pin call (<code>Set()</code>, <code>Read()</code>, <code>Toggle()</code>, <code>SetDirection()</code>, ...)</td>
+<td><code>EnsureInitialized()</code>, <code>Deinitialize()</code>, <code>GetSystemDiagnostics()</code>, TMC9660 bridge registration, every per-pin call (<code>Set()</code>, <code>Read()</code>, <code>Toggle()</code>, <code>SetDirection()</code>, interrupts, ...) and <code>Get()</code></td>
+<td><code>DebugReadPcal95555Pin()</code>, <code>DebugReadPcal95555InputSnapshot()</code> (bring-up only)</td>
 </tr>
 <tr>
 <td><code>MotorController</code></td>
@@ -1273,8 +1317,8 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
 </tr>
 <tr>
 <td><code>EncoderManager</code></td>
-<td>device creation and lookup, <code>ReadAllAngles()</code>, <code>ReadAllVelocities()</code>, <code>CheckAllDevicesHealth()</code></td>
-<td>single-device reads (<code>ReadAngle()</code>, <code>ReadAngleDegrees()</code>, <code>ReadVelocityRPM()</code>, <code>ReadDiagnostics()</code>) and <code>SetZeroPosition()</code></td>
+<td>device creation and lookup, every read (<code>ReadAngle()</code>, <code>ReadAngleDegrees()</code>, <code>ReadVelocityRPM()</code>, <code>ReadDiagnostics()</code>, <code>ReadFieldStrength()</code>, <code>ReadAll*()</code>), <code>SetZeroPosition()</code>, <code>CheckAllDevicesHealth()</code>; the SPI exchange also holds the handler lock</td>
+<td><code>GetAs5047uDriver()</code> (raw driver pointer)</td>
 </tr>
 <tr>
 <td><code>TemperatureManager</code></td>
@@ -1288,30 +1332,31 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
 </tr>
 <tr>
 <td><code>Vortex</code> facade</td>
-<td>none</td>
-<td><code>EnsureInitialized()</code>, <code>Shutdown()</code>; diagnostics read atomics</td>
+<td><code>EnsureInitialized()</code>, <code>Shutdown()</code>, <code>GetSystemDiagnostics()</code>, <code>CollectManagerHealth()</code>, <code>GetFailedComponents()</code>, <code>GetSystemWarnings()</code></td>
+<td><code>IsInitialized()</code>, <code>GetComponentInitializationStatus()</code> (atomics)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="what-that-means-for-your-code">What that means for your code<a class="headerlink" href="#what-that-means-for-your-code" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Initialise from one task.</strong> <code>Vortex::EnsureInitialized()</code> has no lock of its own: call it once from
-   <code>app_main()</code> before you start other tasks. The same holds for <code>Shutdown()</code>.</li>
+<li><strong>Initialise once, early.</strong> <code>Vortex::EnsureInitialized()</code> and <code>Shutdown()</code> take the facade's lifecycle lock, so a
+   second task that calls <code>EnsureInitialized()</code> waits for the first and then returns its result. Still call it from
+   <code>app_main()</code> before you start other tasks: it blocks for the whole bring-up.</li>
 <li><strong>ADC, temperature, LED and motor configuration calls</strong> may be made from several tasks; the manager serialises
    them. A call can block while another task holds the lock (for example during an SPI or UART transfer).</li>
-<li><strong>GPIO</strong>: give each pin one owner task, or add your own lock. Two tasks driving the same pin through
-   <code>GpioManager</code> are not serialised, and the operation counters are plain integers.</li>
+<li><strong>GPIO</strong> calls are serialised by the manager lock, so two tasks cannot interleave a configuration change on the
+   same pin. A read-modify-write of your own (read, decide, write) still needs one owner task.</li>
 <li><strong>SPI2 is shared</strong> by the TMC9660 (when on SPI), the AS5047U and the external slots. Keep each device to one task,
    and remember the TMC9660 SPI mux: while it is selected, the TMC9660 sees the SPI2 traffic.</li>
-<li><strong>Encoder reads</strong> of one device from several tasks: add your own lock, or read all devices with
-   <code>ReadAllAngles()</code>, which takes the manager lock.</li>
+<li><strong>Encoder reads</strong> may come from several tasks; each read holds the manager lock, so a slot cannot be deleted
+   under it. Do not use the raw pointer from <code>GetAs5047uDriver()</code> from more than one task.</li>
 <li><strong>LED animations</strong> advance only when you call <code>vortex.leds.UpdateAnimation()</code>; call it from a periodic task
    about every 50 ms.</li>
 </ol>
 <h2 id="stack-size">Stack size<a class="headerlink" href="#stack-size" title="Permanent link">&para;</a></h2>
 <p><code>Vortex::EnsureInitialized()</code> brings up the TMC9660 bootloader, the BNO08x SH-2 stack and the sensors with deep call
 chains. The examples set <code>CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192</code> in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/sdkconfig.defaults"><code>sdkconfig.defaults</code></a>; keep at least that much if you initialise from
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/sdkconfig.defaults"><code>sdkconfig.defaults</code></a>; keep at least that much if you initialise from
 <code>app_main()</code>.</p>
 
 

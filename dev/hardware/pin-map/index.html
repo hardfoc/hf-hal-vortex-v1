@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/hardware/pin-map/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1038,7 +1079,7 @@
 
 <h1 id="pin-map">Pin map<a class="headerlink" href="#pin-map" title="Permanent link">&para;</a></h1>
 <p>Every functional pin and ADC channel of Vortex V1. The tables below are generated from the board's pin header,
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>,
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>,
 whose X-macro tables are the single source of pin truth (<a href="../../adr/0003-pin-map-ownership/">ADR 0003</a>). CI fails
 when the header changes and these tables are not regenerated, so they cannot drift.</p>
 <p>How to read them:</p>
@@ -1053,7 +1094,7 @@ when the header changes and these tables are not regenerated, so they cannot dri
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <!-- generated: pins-summary -->
 <p>From
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
 do not edit.</p>
 <table>
 <thead>
@@ -1101,7 +1142,7 @@ do not edit.</p>
 <h2 id="esp32-c6-gpio">ESP32-C6 GPIO<a class="headerlink" href="#esp32-c6-gpio" title="Permanent link">&para;</a></h2>
 <!-- generated: pins-esp32 -->
 <p>From
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
 do not edit.</p>
 <table>
 <thead>
@@ -1305,7 +1346,7 @@ do not edit.</p>
 number (0 to 15) the driver uses.</p>
 <!-- generated: pins-pcal95555 -->
 <p>From
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
 do not edit.</p>
 <table>
 <thead>
@@ -1436,7 +1477,7 @@ do not edit.</p>
 <p>Reached through the TMC9660 handler once <code>MotorController</code> has created the onboard device.</p>
 <!-- generated: pins-tmc9660 -->
 <p>From
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
 do not edit.</p>
 <table>
 <thead>
@@ -1478,7 +1519,7 @@ do not edit.</p>
 the TMC9660's internal measurements (currents, supply voltages, temperatures, motor data).</p>
 <!-- generated: pins-adc -->
 <p>From
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>hf_functional_pin_config_vortex_v1.hpp</code></a>;
 do not edit.</p>
 <table>
 <thead>

@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/bring-up/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1378,15 +1419,15 @@ app is built and flashed as in the <a href="../quickstart/">quickstart</a>
    TMC9660 control lines on the PCAL95555, brings the TMC9660 out of its bootloader and reads telemetry without
    moving anything. Then <code>vortex_bldc_telemetry_sweep</code> checks the power-stage configuration.</li>
 <li><strong>First spin.</strong> Follow the bench guides before you run any <code>vortex_bldc_*</code> motion app: the
-   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up guide</a> (bootloader and parameter-mode order) and the
-   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a> (per-app goals, supply and safety notes).
+   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up guide</a> (bootloader and parameter-mode order) and the
+   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a> (per-app goals, supply and safety notes).
    <code>vortex_bldc_open_loop_uart</code> is the confirmed-working open-loop spin.</li>
 </ol>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Bench limits live in one file</p>
 <p>Supply, shunt, current caps, I²t and thermal limits for every bench app are in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/examples/esp32/main/common/vortex_bench_safety.hpp"><code>vortex_bench_safety.hpp</code></a>. Check them against your
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/examples/esp32/main/common/vortex_bench_safety.hpp"><code>vortex_bench_safety.hpp</code></a>. Check them against your
 motor and supply before step 5.</p>
 </div>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>

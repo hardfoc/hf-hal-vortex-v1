@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/gpio/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1365,7 +1406,7 @@
 <h1 id="gpiomanager">GpioManager<a class="headerlink" href="#gpiomanager" title="Permanent link">&para;</a></h1>
 <p>Registers every GPIO-category pin of the pin map, whichever chip it is on, and lets you drive or read it by name or
 by enum. On Vortex V1 those pins live on three chips: the ESP32-C6, the PCAL95555 I/O expander and the TMC9660.
-Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/managers/GpioManager.h"><code>GpioManager.h</code></a>.</p>
+Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/managers/GpioManager.h"><code>GpioManager.h</code></a>.</p>
 <h2 id="which-pins-it-owns">Which pins it owns<a class="headerlink" href="#which-pins-it-owns" title="Permanent link">&para;</a></h2>
 <p>At start-up it walks the pin map and registers the pins whose category is GPIO (and the user, ADC and SPI
 categories). Core pins (crystal, boot, USB) and comm pins (bus lines, the LED data line) are skipped; their owners
@@ -1455,12 +1496,13 @@ string calls search the table on every call.</p>
 counts. <code>DumpStatistics()</code> logs the same, with per-pin access and error counts.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong><code>Read()</code> returns the logical state</strong>, not the electrical level: the header comment says "true = high", but the
-  code returns <code>IsActive()</code>. For an active-low pin, <code>true</code> means the line is low.</li>
+<li><strong><code>Read()</code> returns the logical state</strong>, not the electrical level, the same as <code>IsActive()</code>. For an active-low pin,
+  <code>true</code> means the line is low. <code>Set(name, true)</code> likewise drives the pin to its active level.</li>
 <li><strong>Expander pins are slow.</strong> Every PCAL95555 access is an I2C transfer; do not toggle them in a fast loop.</li>
 <li><strong><code>MotorController</code> owns the TMC9660 control lines.</strong> Driving <code>PCAL_TMC_DRV_EN</code>, <code>PCAL_TMC_RST_CTRL</code> or
   <code>PCAL_TMC_SPI_COMM_EN</code> yourself disables or confuses the motor controller.</li>
-<li><strong>No lock on pin operations.</strong> Give each pin one owner task. See <a href="../../architecture/threading/">Threading</a>.</li>
+<li><strong>Pin operations are serialised</strong>, but a read-then-write sequence of your own is not atomic; give such a pin one
+  owner task. See <a href="../../architecture/threading/">Threading</a>.</li>
 <li><strong>A wrong name</strong> returns <code>GPIO_ERR_PIN_NOT_FOUND</code>. Copy names from the pin map.</li>
 </ul>
 

@@ -1,5 +1,0 @@
-<map id="EncoderManager::CheckAllDevicesHealth" name="EncoderManager::CheckAllDevicesHealth">
-<area shape="rect" id="Node000001" title="Check health status of all active encoder devices." alt="" coords="5,5,201,45"/>
-<area shape="rect" id="Node000002" href="$class_encoder_manager.html#a55891b42a16447c3db7a2a9d13b04328" title="Read diagnostics from specific encoder device." alt="" coords="249,13,497,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,23,236,23,236,28,202,28"/>
-</map>

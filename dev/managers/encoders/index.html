@@ -105,6 +105,47 @@
   <meta property="og:description" content="Hardware abstraction layer for the HardFOC Vortex V1 motor controller board (ESP32-C6, TMC9660): one Vortex object, one manager per board function, every chip on the board.">
   <meta property="og:url" content="https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/encoders/">
   <meta name="twitter:card" content="summary">
+  <script>
+(function () {
+  if (typeof mermaid != "undefined" && !(mermaid instanceof Element)) return;
+  var SRC = "https://unpkg.com/mermaid@11/dist/mermaid.min.js", config = {}, real, loading, waiting = [];
+  var stub = {
+    initialize: function (c) { config = c || {}; if (real) real.initialize(config); },
+    render: function (id, text) {
+      var el = null, pres = document.querySelectorAll("pre.mermaid:not([data-hf-mermaid])");
+      for (var i = 0; i < pres.length && !el; i++) if (pres[i].textContent === text) el = pres[i];
+      if (el) el.setAttribute("data-hf-mermaid", "");
+      return near(el).then(load).then(function (m) { return m.render(id, text); });
+    }
+  };
+  function load() {
+    return loading || (loading = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = SRC;
+      s.onload = function () {
+        real = window.mermaid;
+        window.mermaid = stub;
+        real.initialize(config);
+        resolve(real);
+      };
+      s.onerror = function () { loading = null; reject(new Error("Mermaid did not load")); };
+      document.head.appendChild(s);
+    }));
+  }
+  function near(el) {
+    if (real || !el || !("IntersectionObserver" in window)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries.some(function (e) { return e.isIntersecting; })) { io.disconnect(); resolve(); }
+      }, { rootMargin: "100% 0px" });
+      io.observe(el);
+      waiting.push(function () { io.disconnect(); resolve(); });
+    });
+  }
+  window.addEventListener("beforeprint", function () { waiting.splice(0).forEach(function (go) { go(); }); });
+  window.mermaid = stub;
+})();
+</script>
 
   </head>
   
@@ -1321,7 +1362,7 @@
 <h1 id="encodermanager">EncoderManager<a class="headerlink" href="#encodermanager" title="Permanent link">&para;</a></h1>
 <p>Owns up to four AS5047U magnetic angle encoders. Vortex V1 has a chip select wired for one encoder
 (<code>AS5047U_POSITION_ENCODER</code>, GPIO20) and two external chip selects that can each take another, but <strong>no encoder is
-created automatically</strong>: you create each device. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/faead8a5624200ed080a80c73aca2be6bea6d0bb/lib/managers/EncoderManager.h"><code>EncoderManager.h</code></a>.</p>
+created automatically</strong>: you create each device. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/managers/EncoderManager.h"><code>EncoderManager.h</code></a>.</p>
 <h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1348,8 +1389,16 @@ created automatically</strong>: you create each device. Source: <a href="https:/
 <td>Velocity from the sensor</td>
 </tr>
 <tr>
-<td><code>ReadDiagnostics(index, As5047uDiagnostics&amp;)</code>, <code>SetZeroPosition(index, counts)</code></td>
-<td>Sensor diagnostics, zero offset</td>
+<td><code>ReadDiagnostics(index, As5047uDiagnostics&amp;)</code></td>
+<td>Error flags (one ERRFL read) and the manager's counters</td>
+</tr>
+<tr>
+<td><code>ReadFieldStrength(index, EncoderFieldStrength&amp;)</code></td>
+<td>AGC value and CORDIC magnitude: how strong the magnet looks</td>
+</tr>
+<tr>
+<td><code>SetZeroPosition(index, counts)</code></td>
+<td>Zero offset</td>
 </tr>
 <tr>
 <td><code>ReadAllAngles(...)</code>, <code>ReadAllVelocities(...)</code>, <code>CheckAllDevicesHealth()</code></td>
@@ -1385,8 +1434,8 @@ created automatically</strong>: you create each device. Source: <a href="https:/
 <ul>
 <li><strong>Nothing to read until you create a device.</strong> <code>EnsureInitialized()</code> succeeds with zero devices.</li>
 <li><strong>SPI2 is shared</strong> with the TMC9660 (when on SPI) and the external slots.</li>
-<li><strong>Single-device reads take no manager lock.</strong> Read one encoder from one task, or use <code>ReadAllAngles()</code>. See
-  <a href="../../architecture/threading/">Threading</a>.</li>
+<li><strong>Every read takes the manager lock</strong> and the handler lock for the SPI exchange. <code>GetAs5047uDriver()</code> returns the
+  raw driver without either; keep it to one task. See <a href="../../architecture/threading/">Threading</a>.</li>
 <li><strong>The TMC9660 can use the same encoder.</strong> The position benches feed the AS5047U angle to the host while the
   TMC9660 uses its own ABN input; decide which side owns the feedback before you close a loop on it.</li>
 </ul>
