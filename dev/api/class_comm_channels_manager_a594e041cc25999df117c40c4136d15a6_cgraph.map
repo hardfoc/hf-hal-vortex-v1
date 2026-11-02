@@ -1,5 +1,0 @@
-<map id="CommChannelsManager::I2cProbeAddress" name="CommChannelsManager::I2cProbeAddress">
-<area shape="rect" id="Node000001" title="Probe a single 7&#45;bit address on the primary I²C bus." alt="" coords="5,5,188,45"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#a2976cae013767005f87bf16019432e60" title="Address&#45;only probe." alt="" coords="236,13,395,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
-</map>

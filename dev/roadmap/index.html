@@ -1106,14 +1106,17 @@ host tests that run the same node against a simulated motor.</p>
 </tr>
 <tr>
 <td>CANopenNode sources</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
 <td>Present</td>
 </tr>
 </tbody>
 </table>
 <p>The HAL's part is small by design: the CAN port stays a <code>BaseCan*</code> from
 <a href="../managers/comms/"><code>CommChannelsManager</code></a>, and the drive talks to the TMC9660 through
-<a href="../managers/motors/"><code>MotorController</code></a>.</p>
+<a href="../managers/motors/"><code>MotorController</code></a>, whose
+<a href="../managers/motors/#drive-observability">drive-observability hooks</a> (batched TMCL access, telemetry snapshots with
+ages, decoded fault words, parameter-image apply with verification) are what the object dictionary's telemetry,
+health and configuration objects are built on.</p>
 <h2 id="another-mcu-and-can-fd">Another MCU and CAN FD<a class="headerlink" href="#another-mcu-and-can-fd" title="Permanent link">&para;</a></h2>
 <p>A future Vortex is expected on an STM32 with CAN FD. <a href="../adr/0001-mcu-agnostic-boundary/">ADR 0001</a> records the
 boundary that makes this a port of four managers rather than a rewrite, and lists what crosses it today.</p>

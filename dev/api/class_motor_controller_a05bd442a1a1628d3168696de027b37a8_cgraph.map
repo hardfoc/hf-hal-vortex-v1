@@ -1,5 +1,0 @@
-<map id="MotorController::withSpiDriverLocked" name="MotorController::withSpiDriverLocked">
-<area shape="rect" id="Node000001" title="Run fn on the SPI driver of a ready device, through the handler (handler lock held)." alt="" coords="5,5,185,45"/>
-<area shape="rect" id="Node000002" href="$class_motor_controller.html#a8e0f1266ddb48bc8b91c015f51c3cbf9" title="Visit the underlying typed TMC9660 driver by device index." alt="" coords="233,13,433,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,23,220,23,220,28,186,28"/>
-</map>

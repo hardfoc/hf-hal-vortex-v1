@@ -1,5 +1,0 @@
-<map id="EncoderManager::DeleteDevice" name="EncoderManager::DeleteDevice">
-<area shape="rect" id="Node000001" title="Delete an encoder device and free its slot." alt="" coords="289,13,516,38"/>
-<area shape="rect" id="Node000002" href="$class_encoder_manager.html#adc3bc356c34a0026798e1a479037bf71" title=" " alt="" coords="5,5,241,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="276,28,241,28,241,23,276,23"/>
-</map>

@@ -998,6 +998,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#drive-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drive observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pitfalls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1368,6 +1379,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#drive-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drive observability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pitfalls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1407,7 +1429,7 @@
 <p>Owns the TMC9660 motor controllers: the onboard one, and up to two more on the external SPI chip selects. The
 TMC9660 runs the motor loops itself (FOC current, velocity and position, ramps); this manager creates its handler,
 manages the host link and gives you unit-aware velocity and position calls in the motor frame or, through a gear
-ratio, the load frame. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/MotorController.h"><code>MotorController.h</code></a>.</p>
+ratio, the load frame. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/lib/managers/MotorController.h"><code>MotorController.h</code></a>.</p>
 <h2 id="devices">Devices<a class="headerlink" href="#devices" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1498,15 +1520,66 @@ counts per revolution.</p>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>Commanding motion assumes the TMC9660 has been configured for your motor (type, pole pairs, current limits,
-feedback, commutation mode). The <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up notes</a> and the motor
+feedback, commutation mode). The <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up notes</a> and the motor
 bench examples (<code>vortex_bldc_*</code> in <a href="../../examples/">Examples</a>) show the full sequence.</p>
 <h2 id="diagnostics">Diagnostics<a class="headerlink" href="#diagnostics" title="Permanent link">&para;</a></h2>
 <p><code>GetSystemDiagnostics()</code> fills <code>MotorSystemDiagnostics</code>: whether the manager is up, how many device slots are active
 and initialised, the last error, and per device whether it is active, initialised and its error count.</p>
-<p>The TMC9660's own telemetry (currents, voltages, temperatures, fault flags, every axis and global parameter) is
-reached through <code>visitDriver()</code>. How the product firmware exposes all of it through the CANopen object dictionary,
-a CLI and a dashboard, and what the SPI access time costs, is in the
-<a href="https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md">drive observability design</a>.</p>
+<h2 id="drive-observability">Drive observability<a class="headerlink" href="#drive-observability" title="Permanent link">&para;</a></h2>
+<p>The hooks the <a href="https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md">drive observability design</a>
+needs from the HAL. Each call is one pipelined TMCL batch (on SPI, N accesses cost N + 1 frames instead of 2N), sent
+through the handler's <code>visitDriver()</code> with the device lock held. A call never starts a bootloader bring-up: a device
+that is not up returns <code>NOT_INITIALIZED</code> and sends nothing. The helpers live in
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/lib/managers/api_helpers/Tmc9660DriveObservability.h"><code>api_helpers/Tmc9660DriveObservability.h</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReadParameters(span&lt;MotorParameterAccess&gt;)</code>, <code>WriteParameters(...)</code></td>
+<td>Batch GAP / SAP of any axis parameters; per-element value and TMCL status</td>
+</tr>
+<tr>
+<td><code>ReadTelemetry(set, MotorTelemetrySnapshot&amp;)</code></td>
+<td>Refreshes a caller-owned snapshot. <code>Cyclic</code> = the design's fixed slots (position 144, velocity 125, packed Iq/Id 331, status 289, and the error words 299 / 300 on alternate calls: 5 accesses); <code>Status</code> = status, error, ADC, supply, temperatures, total current, I²t sums; <code>Full</code> = all 16 fields. Each field keeps the sequence of its last good read (<code>Age()</code>), a failed access keeps the old value, and the batch time is recorded</td>
+</tr>
+<tr>
+<td><code>ReadDriveDiagnostics(MotorDriveDiagnostics&amp;)</code></td>
+<td>Reads 289/299/300/301 in one batch and decodes them: regulation stopped, chip reset seen (watchdog bit, so re-apply the image), heartbeat stopped, retries failed, thermal and I²t conditions, gate-driver faults per phase and side, ADC clipping, and a severity (<code>Ok</code>, <code>Warning</code>, <code>Fault</code>); on SPI also the TMCL link counters</td>
+</tr>
+<tr>
+<td><code>ClearLatchedFaults(general, gate_driver, adc)</code></td>
+<td>Write-1-to-clear of the latched bits</td>
+</tr>
+<tr>
+<td><code>ApplyParameterImage(image, options, result)</code></td>
+<td>Writes a parameter image with <code>MOTOR_TYPE</code> first (FW051V100 answers most parameters with <code>WRONG_TYPE</code> until it is set); <code>differential</code> writes only what differs on the chip, <code>verify</code> reads everything back. The result counts written, skipped, rejected and mismatched entries and names the first bad one. The TMC9660's own NVM is not used</td>
+</tr>
+<tr>
+<td><code>GetAccessStats()</code>, <code>ResetAccessStats()</code></td>
+<td>Per device: batches, accesses, failed accesses, last and longest batch time</td>
+</tr>
+</tbody>
+</table>
+<p>Values are raw chip units. The snapshot's helpers convert what the design marks as solid (supply 0.1 V, chip
+temperature, total current in mA); the packed 331/332 values stay unscaled until calibrated. The CANopen object
+dictionary, the CLI and the dashboard that use these hooks belong to the product firmware, not to this HAL.</p>
+<div class="language-cpp highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">motors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Vortex</span><span class="o">::</span><span class="n">GetInstance</span><span class="p">().</span><span class="n">motors</span><span class="p">;</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">MotorTelemetrySnapshot</span><span class="w"> </span><span class="n">snap</span><span class="p">{};</span><span class="w">          </span><span class="c1">// keep it: ages are counted across calls</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">motors</span><span class="p">.</span><span class="n">ReadTelemetry</span><span class="p">(</span><span class="n">MotorTelemetrySet</span><span class="o">::</span><span class="n">Cyclic</span><span class="p">,</span><span class="w"> </span><span class="n">snap</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MotorError</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">pos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">snap</span><span class="p">.</span><span class="n">ActualPosition</span><span class="p">();</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int16_t</span><span class="w"> </span><span class="n">iq_raw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">snap</span><span class="p">.</span><span class="n">TorqueCurrentRaw</span><span class="p">();</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">MotorDriveDiagnostics</span><span class="w"> </span><span class="n">diag</span><span class="p">{};</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">motors</span><span class="p">.</span><span class="n">ReadDriveDiagnostics</span><span class="p">(</span><span class="n">diag</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">MotorError</span><span class="o">::</span><span class="n">SUCCESS</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">diag</span><span class="p">.</span><span class="n">chip_reset_detected</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="c1">// the TMC9660 restarted: apply the parameter image again</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Anything else on the chip (every axis and global parameter, RAMDebug) is reached through <code>visitDriver()</code>.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>No motor manager, no TMC9660 features.</strong> If the onboard TMC9660 does not come up (for example with its supply
