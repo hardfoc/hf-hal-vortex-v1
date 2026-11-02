@@ -12,8 +12,9 @@ host tests that run the same node against a simulated motor.
 
 | What | Where | State |
 | --- | --- | --- |
-| CANopen node design | to be linked here once published | Draft, under review |
-| Header-only contracts (CAN frame, CiA 402 rule table, fault policy, router policy, OD store) with host tests | [hardfoc-vortex-v1 PR #7](https://github.com/hardfoc/hardfoc-vortex-v1/pull/7) | In review |
+| CANopen node design: CiA 301 / 402 drive, object dictionary as the single source, threads, wireless access, CAN FD route | [canopen-node.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/canopen-node.md) | Draft, under review |
+| Drive observability: every TMC9660 parameter, telemetry and fault in the object dictionary, the CLI and a dashboard | [drive-observability.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md) | Draft, under review |
+| Header-only contracts (CAN frame, CiA 402 rule table, fault policy, router policy, OD store) with host tests | [`contracts/`](https://github.com/hardfoc/hardfoc-vortex-v1/tree/main/contracts) in hardfoc-vortex-v1 | Merged |
 | Notes on the current CAN path, `hf-utils-canopen` and the TMC9660 | [canopen-and-motor-path.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/canopen-and-motor-path.md) | Published |
 | CANopenNode sources | [`third_party/CANopenNode`](../third_party/README.md) (submodule), built with the HAL's *Build CANopenNode slave stack* option | Present |
 
@@ -37,4 +38,4 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 | Most managers allocate with throwing `make_unique`, so a failed allocation aborts | `lib/managers` | [ADR 0002](adr/0002-static-allocation.md) |
 | `vortex_board_pins.hpp` repeats GPIO numbers without a check against the pin map | `examples/esp32/main/common` | [ADR 0003](adr/0003-pin-map-ownership.md) |
 | ESP32 port numbers and `gpio_num_t` in managers | `CommChannelsManager.cpp`, `LedManager.h` | [ADR 0001](adr/0001-mcu-agnostic-boundary.md) |
-| No host unit tests in this repository; the examples prove behaviour on a board | - | [Testing and CI](guides/testing-and-ci.md) |
+| No host unit tests in this repository; the examples prove behaviour on a board | - | [Testing and CI](testing.md) |

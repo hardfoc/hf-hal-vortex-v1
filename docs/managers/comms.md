@@ -41,6 +41,13 @@ for (size_t i = 0; i < n; ++i) {
 }
 ```
 
+## CANopen
+
+The HAL gives CANopen code the TWAI port as a `BaseCan*` (`GetCanOpenBus()`) and nothing more; the node itself
+lives in the product firmware. Its design, including the transport router that puts the same object dictionary on
+CAN, a future CAN FD port and wireless links, is in the product repository:
+[CANopen node design](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/canopen-node.md).
+
 ## Diagnostics
 
 `GetSystemDiagnostics()` fills `CommSystemDiagnostics`: whether SPI, I2C, UART and CAN are valid, the number of SPI

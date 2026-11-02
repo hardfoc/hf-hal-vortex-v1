@@ -63,6 +63,11 @@ bench examples (`vortex_bldc_*` in [Examples](../examples/index.md)) show the fu
 `GetSystemDiagnostics()` fills `MotorSystemDiagnostics`: whether the manager is up, how many device slots are active
 and initialised, the last error, and per device whether it is active, initialised and its error count.
 
+The TMC9660's own telemetry (currents, voltages, temperatures, fault flags, every axis and global parameter) is
+reached through `visitDriver()`. How the product firmware exposes all of it through the CANopen object dictionary,
+a CLI and a dashboard, and what the SPI access time costs, is in the
+[drive observability design](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md).
+
 ## Pitfalls
 
 - **No motor manager, no TMC9660 features.** If the onboard TMC9660 does not come up (for example with its supply
