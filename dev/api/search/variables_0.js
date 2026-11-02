@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['access_5fcount_0',['access_count',['../struct_gpio_entry.html#a620457ba9b1b0589ba914cd4013dd5f2',1,'GpioEntry::access_count'],['../struct_adc_entry.html#acd74549f37bea096076c1b3e914b3e81',1,'AdcEntry::access_count']]],
+  ['active_1',['active',['../struct_comm_channels_manager_1_1_runtime_i2c_slot.html#a3e65dbd4a319b9b8376128a3dabf9627',1,'CommChannelsManager::RuntimeI2cSlot::active'],['../struct_encoder_system_diagnostics_1_1_device_snapshot.html#ad72cfc16f9c0e0133d4f63bbdc8b4f31',1,'EncoderSystemDiagnostics::DeviceSnapshot::active'],['../struct_imu_system_diagnostics_1_1_device_snapshot.html#ad29c90eee7d8959badedbccc0cc9701d',1,'ImuSystemDiagnostics::DeviceSnapshot::active'],['../struct_motor_system_diagnostics_1_1_device_snapshot.html#ae214bffb4f643c6884380dc215948757',1,'MotorSystemDiagnostics::DeviceSnapshot::active']]],
+  ['active_5fdevice_5fcount_2',['active_device_count',['../struct_encoder_system_diagnostics.html#a321c8a432c33600538d12418bc6d25a1',1,'EncoderSystemDiagnostics::active_device_count'],['../struct_imu_system_diagnostics.html#af71ab7b07be0f176a7e0edc2405809bc',1,'ImuSystemDiagnostics::active_device_count'],['../struct_motor_system_diagnostics.html#ae642d2d540c97a7f226b42c8ccf0c187',1,'MotorSystemDiagnostics::active_device_count']]],
+  ['adc_3',['adc',['../class_vortex.html#a3d7b516b58a9dc00a7f95c44e1bd7769',1,'Vortex']]],
+  ['adc_5fchannels_4',['adc_channels',['../struct_vortex_board_diagnostics.html#a95a98be9eed8bdafeb85567bb3b46b6b',1,'VortexBoardDiagnostics']]],
+  ['adc_5finitialized_5',['adc_initialized',['../struct_vortex_system_diagnostics.html#a59a81a566652d5638d5dd5954a9bf71e',1,'VortexSystemDiagnostics']]],
+  ['adc_5finitialized_5f_6',['adc_initialized_',['../class_vortex.html#ad3613fe5f60f79ce1b261a0a4a8c9dd7',1,'Vortex']]],
+  ['adc_5funit_7',['adc_unit',['../struct_adc_entry.html#a20a4229cb67d990678c8c681873ec72f',1,'AdcEntry']]],
+  ['address_8',['address',['../structvortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_host_8cpp_03_1_1_i2c_slot.html#a115c14be7d9bd954f28367c97bf3062c',1,'vortex::bsp::anonymous_namespace{VortexBoardBindHost.cpp}::I2cSlot::address'],['../structvortex_1_1bsp_1_1_i2c_device_spec.html#a951176356aee4de857c4572b88735b78',1,'vortex::bsp::I2cDeviceSpec::address'],['../struct_comm_channels_manager_1_1_runtime_i2c_slot.html#a39526e2f79d7876321bd6b08a8e9ce82',1,'CommChannelsManager::RuntimeI2cSlot::address']]],
+  ['agc_9',['agc',['../struct_encoder_field_strength.html#a6324f0a692336385b30ae1fb38237476',1,'EncoderFieldStrength']]],
+  ['all_5fhealthy_10',['all_healthy',['../struct_manager_health_snapshot.html#aab15ba44d783e5daf3d250493160eb1f',1,'ManagerHealthSnapshot']]],
+  ['animation_5factive_11',['animation_active',['../struct_led_system_diagnostics.html#a037482476a3ec83b4cff0aca2229ed17',1,'LedSystemDiagnostics']]],
+  ['animation_5fcycles_12',['animation_cycles',['../struct_led_system_diagnostics.html#ae391afd26b2f1b057183b70f2bc1cb56',1,'LedSystemDiagnostics']]],
+  ['animation_5fcycles_5f_13',['animation_cycles_',['../class_led_manager.html#a9c05c671506dc630806a9ed9f26d67c3',1,'LedManager']]],
+  ['animation_5fdirection_5f_14',['animation_direction_',['../class_led_manager.html#aa2665256eb6a5c976171951cdeb367ec',1,'LedManager']]],
+  ['animation_5fstep_5f_15',['animation_step_',['../class_led_manager.html#a225c3a92fafcafbf3c8d3ff837dc11d4',1,'LedManager']]],
+  ['animation_5fupdate_5finterval_16',['ANIMATION_UPDATE_INTERVAL',['../class_led_manager.html#ad6fbb313275ab50c5eb644de31995701',1,'LedManager']]],
+  ['app_5f_17',['app_',['../class_nvs_manager.html#ac279fdbde3e077eb3150332e1487535c',1,'NvsManager']]],
+  ['as5047u_5fhandlers_5f_18',['as5047u_handlers_',['../class_encoder_manager.html#a276cf8c9fd3bab5df065ffd29fd4c1a5',1,'EncoderManager']]]
+];

@@ -1,0 +1,5 @@
+<map id="vortex::bsp::host::Spi" name="vortex::bsp::host::Spi">
+<area shape="rect" id="Node000001" title="SPI device by the index SpiAddDevice() returned." alt="" coords="5,5,164,31"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#aa0d1e1268a920cfae52609640dd5d234" title="The device at index, or nullptr." alt="" coords="212,5,380,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,15,198,15,198,21,164,21"/>
+</map>
