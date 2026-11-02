@@ -1,0 +1,7 @@
+<map id="NvsManager.h" name="NvsManager.h">
+<area shape="rect" id="Node000001" title="Non&#45;volatile storage for Vortex V1 — ESP&#45;IDF NVS behind BaseNvs." alt="" coords="80,5,195,31"/>
+<area shape="rect" id="Node000002" href="$_nvs_manager_8cpp.html" title="Vortex NVS manager — three NVS namespaces, created by the board binding." alt="" coords="5,79,136,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,43,83,80,80,77,115,39"/>
+<area shape="rect" id="Node000003" href="$_vortex_8cpp.html" title="Implementation of the unified Vortex API singleton." alt="" coords="160,79,251,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="160,39,196,77,192,80,156,42"/>
+</map>

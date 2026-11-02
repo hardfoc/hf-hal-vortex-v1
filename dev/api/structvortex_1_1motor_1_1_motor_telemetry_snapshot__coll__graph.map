@@ -1,0 +1,5 @@
+<map id="vortex::motor::MotorTelemetrySnapshot" name="vortex::motor::MotorTelemetrySnapshot">
+<area shape="rect" id="Node000001" title="Caller&#45;owned snapshot, refreshed in place by MotorController::ReadTelemetry()." alt="" coords="5,123,228,163"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="17,5,216,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,59,119,122,114,122,114,59"/>
+</map>

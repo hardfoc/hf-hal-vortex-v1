@@ -1,0 +1,33 @@
+<map id="CommChannelsManager::EnsureInitialized" name="CommChannelsManager::EnsureInitialized">
+<area shape="rect" id="Node000001" title="Initialise all communication buses if not already initialised." alt="" coords="5,203,188,243"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="236,203,419,243"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,221,222,221,222,226,188,226"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1bsp.html#a6dac7d8251cea221c9352c9386bf099d" title="Open the CAN controller." alt="" coords="482,5,645,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="336,202,355,166,384,122,421,78,465,40,475,34,478,39,468,44,424,81,388,125,360,169,341,204"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#aebf1db0755a48037f22ccf89c6079cdc" title="Add a device." alt="" coords="467,55,659,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="342,201,393,145,427,115,465,89,479,82,482,87,468,94,430,119,396,149,346,205"/>
+<area shape="rect" id="Node000005" href="$namespacevortex_1_1bsp.html#acb5b4be1b8dd317f4448fd0729ccb8d5" title="The device at index, or nullptr." alt="" coords="480,104,647,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="356,201,406,169,466,138,486,131,488,136,468,143,408,173,358,205"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1bsp.html#afba371282227cd3238b34ddbc9016b26" title="Initialise the I2C bus." alt="" coords="485,153,641,179"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="410,201,496,179,498,185,411,206"/>
+<area shape="rect" id="Node000007" href="$class_comm_channels_manager.html#ac26134b220ce180e441ad956e8b2c77a" title="Close every bus through the binding and forget the indices. Caller holds mutex_." alt="" coords="472,203,655,243"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="419,221,458,221,458,226,419,226"/>
+<area shape="rect" id="Node000013" href="$namespacevortex_1_1bsp.html#aa0dc60e2e1e2cb4088784d2d7e8e7609" title="Add a chip select." alt="" coords="467,268,660,293"/>
+<area shape="poly" id="edge12_Node000002_Node000013" title=" " alt="" coords="411,241,498,262,496,267,410,246"/>
+<area shape="rect" id="Node000014" href="$namespacevortex_1_1bsp.html#ae46df572cb29f6583d722a17d1501ba7" title="Initialise the SPI bus." alt="" coords="485,317,642,343"/>
+<area shape="poly" id="edge13_Node000002_Node000014" title=" " alt="" coords="358,241,408,273,468,304,488,311,486,316,466,308,406,278,356,246"/>
+<area shape="rect" id="Node000015" href="$namespacevortex_1_1bsp.html#ae15f68dea0949890a311b38fd98ab006" title="Open the board UART." alt="" coords="481,367,646,392"/>
+<area shape="poly" id="edge14_Node000002_Node000015" title=" " alt="" coords="346,242,396,298,430,328,468,353,482,359,479,364,465,358,427,332,393,302,342,245"/>
+<area shape="rect" id="Node000016" href="$class_comm_channels_manager.html#a959f694cd6fbcd173aa0c16fc9b0cf67" title=" " alt="" coords="472,417,655,457"/>
+<area shape="poly" id="edge15_Node000002_Node000016" title=" " alt="" coords="341,242,360,277,389,320,425,364,468,403,477,408,474,413,465,407,421,368,385,323,356,279,336,245"/>
+<area shape="rect" id="Node000008" href="$namespacevortex_1_1bsp.html#ad26bd18d793f8e0fbbc21a6155a41853" title="Close the CAN controller (idempotent)." alt="" coords="737,112,901,137"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="631,201,659,188,672,177,682,167,692,156,707,146,723,139,725,144,709,151,695,160,686,171,676,181,661,192,633,206"/>
+<area shape="rect" id="Node000009" href="$namespacevortex_1_1bsp.html#a0cc7add19c6638325d27459be2904c60" title="Remove every device and release the bus (idempotent)." alt="" coords="739,161,898,187"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="654,203,739,187,740,192,655,208"/>
+<area shape="rect" id="Node000010" href="$namespacevortex_1_1bsp.html#a1ed38d2d17078ea2092389581c9935ea" title="Remove one device." alt="" coords="708,211,929,236"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="655,221,694,221,694,226,655,226"/>
+<area shape="rect" id="Node000011" href="$namespacevortex_1_1bsp.html#a1c98342fa8df72349ad475ee1996878a" title="Remove every device and release the bus (idempotent)." alt="" coords="739,260,898,285"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="655,238,740,255,739,260,654,244"/>
+<area shape="rect" id="Node000012" href="$namespacevortex_1_1bsp.html#af992a8685e3d7827637b047758fb3f43" title="Close the UART opened by UartOpen() (idempotent)." alt="" coords="735,309,902,335"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="636,241,661,253,676,264,686,275,695,286,709,296,725,303,723,307,707,300,691,290,682,279,673,268,659,258,634,246"/>
+</map>

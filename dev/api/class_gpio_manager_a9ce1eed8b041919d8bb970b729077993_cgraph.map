@@ -1,0 +1,7 @@
+<map id="GpioManager::EnsurePcal95555Handler" name="GpioManager::EnsurePcal95555Handler">
+<area shape="rect" id="Node000001" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="5,35,233,75"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="287,5,470,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="233,39,273,35,274,40,234,44"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1bsp.html#a05fe25c2307a70437b9a95809c8bbfcd" title="Create the MCU GPIO for a functional pin (one slot per pin; a second call returns the same object)." alt="" coords="281,70,476,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="234,64,268,68,267,73,233,70"/>
+</map>

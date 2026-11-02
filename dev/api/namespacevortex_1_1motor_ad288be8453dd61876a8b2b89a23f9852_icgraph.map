@@ -1,0 +1,5 @@
+<map id="vortex::motor::ReadDriveDiagnostics" name="vortex::motor::ReadDriveDiagnostics">
+<area shape="rect" id="Node000001" title="Read the four status words in one batch and decode them." alt="" coords="253,5,440,45"/>
+<area shape="rect" id="Node000002" href="$class_motor_controller.html#ab526eb6443c6d24ff6aa3faa05882c61" title="Read the four status words (289/299/300/301) in one batch and decode them." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,28,205,28,205,23,239,23"/>
+</map>
