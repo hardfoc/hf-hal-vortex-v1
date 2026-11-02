@@ -71,26 +71,31 @@ bool GpioManager::Deinitialize() noexcept {
     if (!initialized_.load(std::memory_order_acquire)) return true;
     MutexLockGuard lock(mutex_);
     Logger::GetInstance().Info(TAG, "Deinitializing Vortex GPIO manager");
+    ReleaseLocked();
+    initialized_.store(false, std::memory_order_release);
+    return true;
+}
 
-    for (size_t i = 0; i < HF_GPIO_MAPPING_SIZE; ++i) {
-        entries_[i].driver.reset();
-        entries_[i].registered = false;
-        entries_[i].access_count = 0;
-        entries_[i].error_count = 0;
+void GpioManager::ReleaseLocked() noexcept {
+    // Forget every pointer first, then destroy what they pointed at: the PCAL pin objects
+    // (they reference the handler), the handler, and the MCU pins the binding owns.
+    for (auto& entry : entries_) {
+        entry = GpioEntry{};
     }
     registered_count_ = 0;
     total_ops_ = 0;
     successful_ops_ = 0;
     failed_ops_ = 0;
     last_error_ = hf_gpio_err_t::GPIO_SUCCESS;
+    for (auto& pin : pcal_pins_) {
+        pin.reset();
+    }
     if (pcal95555_handler_) {
         (void)pcal95555_handler_->EnsureDeinitialized();
     }
     pcal95555_handler_.reset();
     pcal_host_int_gpio_ = nullptr;
     vortex::bsp::McuGpioCloseAll();
-    initialized_.store(false, std::memory_order_release);
-    return true;
 }
 
 bool GpioManager::Initialize() noexcept {
@@ -131,7 +136,7 @@ bool GpioManager::Initialize() noexcept {
         }
 
         auto chip = static_cast<HfGpioChipType>(m.chip_type);
-        std::shared_ptr<BaseGpio> gpio;
+        BaseGpio* gpio = nullptr;
 
         switch (chip) {
             case HfGpioChipType::ESP32_INTERNAL: {
@@ -153,9 +158,7 @@ bool GpioManager::Initialize() noexcept {
                 BaseGpio* const mcu = vortex::bsp::McuGpioOpen(
                     static_cast<HfFunctionalGpioPin>(i),
                     hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT, active, out, pull);
-                if (mcu != nullptr) {
-                    gpio = std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, mcu);
-                }
+                gpio = mcu;
                 break;
             }
 
@@ -178,10 +181,19 @@ bool GpioManager::Initialize() noexcept {
                     ? hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW
                     : hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH;
 
-                gpio = pcal95555_handler_->CreateGpioPin(
-                    static_cast<hf_pin_num_t>(m.physical_pin),
-                    pcal_pin_direction(i),
-                    active, out, pull);
+                // The pin object lives in this manager's fixed storage and is attached to
+                // the handler (no heap); AttachStaticPin() configures direction and pull.
+                const auto expander_pin = static_cast<hf_pin_num_t>(m.physical_pin);
+                if (expander_pin < 0 || static_cast<size_t>(expander_pin) >= pcal_pins_.size()) {
+                    break;
+                }
+                auto& slot = pcal_pins_[expander_pin];
+                slot.emplace(expander_pin, &*pcal95555_handler_, pcal_pin_direction(i), active, out, pull);
+                if (pcal95555_handler_->AttachStaticPin(*slot)) {
+                    gpio = &*slot;
+                } else {
+                    slot.reset();
+                }
                 break;
             }
 
@@ -195,9 +207,9 @@ bool GpioManager::Initialize() noexcept {
                 continue;
         }
 
-        if (gpio) {
+        if (gpio != nullptr) {
             auto& entry = entries_[i];
-            entry.driver = std::move(gpio);
+            entry.driver = gpio;
             entry.functional_pin = static_cast<HfFunctionalGpioPin>(i);
             entry.registered = true;
             ++registered_count_;
@@ -211,7 +223,12 @@ bool GpioManager::Initialize() noexcept {
     }
 
     Logger::GetInstance().Info(TAG, "GPIO manager initialized: %zu pins registered", registered_count_);
-    return registered_count_ > 0;
+    if (registered_count_ == 0) {
+        // Fail closed: leave nothing half-built behind a manager that reports "not initialised".
+        ReleaseLocked();
+        return false;
+    }
+    return true;
 }
 
 //==============================================================================
@@ -269,7 +286,7 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
     os_delay_msec(1);
 
     BaseGpio* const int_pin = pcal_host_int_gpio_;
-    pcal95555_handler_ = std::make_unique<Pcal95555Handler>(*i2c_device, int_pin);
+    pcal95555_handler_.emplace(*i2c_device, int_pin);
     if (!pcal95555_handler_->EnsureInitialized()) {
         Logger::GetInstance().Error(
             TAG,
@@ -309,7 +326,9 @@ void GpioManager::RegisterTmc9660BridgePinsIfNeeded() noexcept {
     // Lock order is MotorController -> GpioManager (MotorController drives PCAL_TMC_SPI_COMM_EN
     // through this manager while it holds its own lock), so look the handler up before taking ours.
     Tmc9660Handler* const h = MotorController::GetInstance().handler(0);
-    if (!h) {
+    // Tmc9660Handler::gpio() dereferences wrappers that exist only after a successful bring-up;
+    // with a handler whose bootloader init failed it would hand back a null reference.
+    if (!h || !h->IsDriverReady()) {
         return;
     }
     MutexLockGuard lock(mutex_);
@@ -337,19 +356,29 @@ void GpioManager::RegisterTmc9660BridgePinsIfNeeded() noexcept {
         }
 
         BaseGpio& ref = h->gpio(static_cast<uint8_t>(m.physical_pin));
-        std::shared_ptr<BaseGpio> gpio = std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, &ref);
         if (m.is_inverted) {
-            gpio->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+            ref.SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
         }
 
         auto& entry = entries_[i];
-        entry.driver = std::move(gpio);
+        entry.driver = &ref;  // owned by the MotorController handler; see UnregisterTmc9660BridgePins()
         entry.functional_pin = static_cast<HfFunctionalGpioPin>(i);
         entry.registered = true;
         ++registered_count_;
         Logger::GetInstance().Info(TAG, "Registered GPIO: %.*s (chip=%u, pin=%u) (TMC bridge, deferred)",
                                   static_cast<int>(m.name.size()), m.name.data(), m.chip_type,
                                   m.physical_pin);
+    }
+}
+
+void GpioManager::UnregisterTmc9660BridgePins() noexcept {
+    MutexLockGuard lock(mutex_);
+    for (size_t i = 0; i < HF_GPIO_MAPPING_SIZE; ++i) {
+        if (entries_[i].registered &&
+            static_cast<HfGpioChipType>(HF_GPIO_MAPPING[i].chip_type) == HfGpioChipType::TMC9660_CONTROLLER) {
+            entries_[i] = GpioEntry{};
+            --registered_count_;
+        }
     }
 }
 
@@ -366,7 +395,7 @@ size_t GpioManager::FindByName(std::string_view name) const noexcept {
     return kInvalidIndex;
 }
 
-std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
+BaseGpio* GpioManager::Get(std::string_view name) noexcept {
     MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire)) return nullptr;
     size_t idx = FindByName(name);
@@ -374,7 +403,7 @@ std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
     return entries_[idx].driver;
 }
 
-std::shared_ptr<BaseGpio> GpioManager::Get(HfFunctionalGpioPin pin) noexcept {
+BaseGpio* GpioManager::Get(HfFunctionalGpioPin pin) noexcept {
     const size_t idx = static_cast<size_t>(pin);
     if (idx >= kMaxEntries || !initialized_.load(std::memory_order_acquire)) return nullptr;
     if (pin == HfFunctionalGpioPin::TMC_GPIO17 || pin == HfFunctionalGpioPin::TMC_GPIO18) {

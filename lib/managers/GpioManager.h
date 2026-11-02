@@ -16,11 +16,17 @@
  *          `PCAL_TMC_GPIO17_EXP_IN` / `PCAL_TMC_GPIO18_EXP_IN` (I²C expander), or configure/read
  *          the same nets through `TMC_GPIO17` / `TMC_GPIO18` once the handler bridge is registered.
  *
- *          Each entry stores a shared_ptr<BaseGpio> to accommodate the three
- *          different ownership models:
- *          - ESP32 pins: created by the board binding (static storage there)
- *          - PCAL95555 pins: shared_ptr from Pcal95555Handler::CreateGpioPin()
- *          - TMC9660 pins: non-owning aliasing shared_ptr (handler owns)
+ *          Each entry stores a non-owning BaseGpio* (no heap, no reference counting).
+ *          The pin objects live in static storage for the life of the manager:
+ *          - ESP32 pins: in the board binding (vortex::bsp::McuGpioOpen)
+ *          - PCAL95555 pins: in this manager's fixed pcal_pins_ array, attached to
+ *            the expander handler with Pcal95555Handler::AttachStaticPin()
+ *          - TMC9660 pins: in the MotorController onboard handler; registered by
+ *            RegisterTmc9660BridgePinsIfNeeded(), removed by UnregisterTmc9660BridgePins()
+ *            before MotorController destroys the handler
+ *
+ *          Pointers returned by Get() stay valid until Deinitialize() (or, for the two
+ *          TMC9660 pins, until MotorController::Deinitialize()).
  *
  * @version 2.0
  */
@@ -31,10 +37,11 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
-#include <memory>
+#include <optional>
 #include <string_view>
 
 #include "base/BaseGpio.h"
+#include "handlers/pcal95555/Pcal95555Handler.h"
 #include "RtosMutex.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 
@@ -53,11 +60,11 @@ class MotorController;
 /**
  * @brief A single GPIO entry in the fixed-size registry.
  *
- * Stores a shared_ptr<BaseGpio> for polymorphic ownership across chip types.
+ * Stores a non-owning BaseGpio* (see the ownership rules in the file header).
  * The GpioEntry structs live in a fixed-size std::array inside the singleton.
  */
 struct GpioEntry {
-    std::shared_ptr<BaseGpio> driver;          ///< Polymorphic GPIO driver
+    BaseGpio* driver;                          ///< Pin object (not owned; static storage elsewhere)
     HfFunctionalGpioPin functional_pin;        ///< Functional pin enum
     bool registered{false};                    ///< Whether this slot is active
     uint32_t access_count{0};                  ///< Operation counter
@@ -137,11 +144,19 @@ public:
     // GPIO ACCESS — by string name or functional enum
     //==========================================================================
 
-    /** @brief Get the BaseGpio driver for a named pin. Returns nullptr if not found. */
-    [[nodiscard]] std::shared_ptr<BaseGpio> Get(std::string_view name) noexcept;
+    /**
+     * @brief Get the pin object of a named pin.
+     * @return Non-owning pointer, valid until Deinitialize(); nullptr if not found.
+     * @note A name lookup walks the pin table; bind once at init, not per cycle.
+     */
+    [[nodiscard]] BaseGpio* Get(std::string_view name) noexcept;
 
-    /** @brief Get the BaseGpio driver for a functional pin enum. Returns nullptr if not found. */
-    [[nodiscard]] std::shared_ptr<BaseGpio> Get(HfFunctionalGpioPin pin) noexcept;
+    /**
+     * @brief Get the pin object of a functional pin.
+     * @return Non-owning pointer, valid until Deinitialize() (TMC9660 pins: until
+     *         MotorController::Deinitialize()); nullptr if not registered.
+     */
+    [[nodiscard]] BaseGpio* Get(HfFunctionalGpioPin pin) noexcept;
 
     /** @brief Check if a named pin exists in the registry. */
     [[nodiscard]] bool Contains(std::string_view name) const noexcept;
@@ -177,6 +192,13 @@ public:
      *          `TMC_GPIO17` / `TMC_GPIO18` for driver-backed direction and output updates over SPI/UART.
      */
     void RegisterTmc9660BridgePinsIfNeeded() noexcept;
+
+    /**
+     * @brief Remove the TMC9660 GPIO17/18 entries (their objects belong to the TMC9660 handler).
+     * @details Called by MotorController::Deinitialize() before it destroys the onboard handler,
+     *          so Get(TMC_GPIO17/18) returns nullptr instead of a dangling pointer.
+     */
+    void UnregisterTmc9660BridgePins() noexcept;
 
     //==========================================================================
     // BASIC GPIO OPERATIONS — string-based routing
@@ -323,6 +345,9 @@ private:
 
     [[nodiscard]] bool Initialize() noexcept;
 
+    /** @brief Drop every entry and destroy the pin objects and the expander handler. Caller holds mutex_. */
+    void ReleaseLocked() noexcept;
+
     /** @brief Find entry index by string name. Returns kInvalidIndex if not found. */
     [[nodiscard]] size_t FindByName(std::string_view name) const noexcept;
 
@@ -354,7 +379,8 @@ private:
     // Hardware handlers
     //--------------------------------------------------------------------------
 
-    std::unique_ptr<Pcal95555Handler> pcal95555_handler_;
+    std::optional<Pcal95555Handler> pcal95555_handler_;                  ///< In place; emplaced at init
+    std::array<std::optional<Pcal95555GpioPin>, 16> pcal_pins_{};       ///< Expander pin objects (static)
     /// ESP32 GPIO for PCAL95555 /INT (COMM_I2C_PCAL95555_INT); not in the GPIO registry table.
     BaseGpio* pcal_host_int_gpio_{nullptr};   ///< Owned by the board binding
 };
