@@ -1,9 +1,11 @@
 /**
  * @file NvsManager.cpp
- * @brief Vortex NVS manager — three `EspNvs` namespaces on ESP32.
+ * @brief Vortex NVS manager — three NVS namespaces, created by the board binding.
  */
 
 #include "NvsManager.h"
+
+#include "bsp_bind/VortexBoardBind.h"
 
 #include "handlers/logger/Logger.h"
 
@@ -23,9 +25,9 @@ NvsManager& NvsManager::GetInstance() noexcept {
 //==============================================================================
 
 NvsManager::NvsManager() noexcept
-    : app_("vortex"),
-      calibration_("vortex_cal"),
-      config_("vortex_cfg") {}
+    : app_(vortex::bsp::Nvs(vortex::bsp::NvsRegion::App)),
+      calibration_(vortex::bsp::Nvs(vortex::bsp::NvsRegion::Calibration)),
+      config_(vortex::bsp::Nvs(vortex::bsp::NvsRegion::Config)) {}
 
 bool NvsManager::EnsureInitialized() noexcept {
     if (initialized_.load(std::memory_order_acquire)) {
@@ -34,7 +36,7 @@ bool NvsManager::EnsureInitialized() noexcept {
 
     Logger::GetInstance().Info(TAG, "Initializing Vortex NVS (vortex / vortex_cal / vortex_cfg)");
 
-    auto openRegion = [this](EspNvs& region, const char* label) -> bool {
+    auto openRegion = [this](BaseNvs& region, const char* label) -> bool {
         if (!region.EnsureInitialized()) {
             SetLastError(hf_nvs_err_t::NVS_ERR_FAILURE);
             Logger::GetInstance().Error(TAG, "NVS init failed for %s (namespace=%s)", label, region.GetNamespace());

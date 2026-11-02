@@ -18,7 +18,7 @@
  *
  *          Each entry stores a shared_ptr<BaseGpio> to accommodate the three
  *          different ownership models:
- *          - ESP32 pins: make_shared<EspGpio> (GpioManager owns)
+ *          - ESP32 pins: created by the board binding (static storage there)
  *          - PCAL95555 pins: shared_ptr from Pcal95555Handler::CreateGpioPin()
  *          - TMC9660 pins: non-owning aliasing shared_ptr (handler owns)
  *
@@ -42,7 +42,6 @@
 // FORWARD DECLARATIONS
 //==============================================================================
 
-class EspGpio;
 class Pcal95555Handler;
 class Tmc9660Handler;
 class MotorController;
@@ -357,7 +356,7 @@ private:
 
     std::unique_ptr<Pcal95555Handler> pcal95555_handler_;
     /// ESP32 GPIO for PCAL95555 /INT (COMM_I2C_PCAL95555_INT); not in the GPIO registry table.
-    std::shared_ptr<BaseGpio> pcal_host_int_gpio_;
+    BaseGpio* pcal_host_int_gpio_{nullptr};   ///< Owned by the board binding
 };
 
 //==============================================================================

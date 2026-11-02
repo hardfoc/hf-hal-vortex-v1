@@ -2,7 +2,7 @@
  * @file NvsManager.h
  * @brief Non-volatile storage for Vortex V1 — ESP-IDF NVS behind `BaseNvs`.
  *
- * @details Exposes three fixed ESP32 `EspNvs` namespaces for application data,
+ * @details Exposes three fixed NVS namespaces (created by the board binding) for application data,
  *          calibration blobs, and device configuration. Upper layers should use
  *          `BaseNvs&` from this manager (not IDF NVS directly) so a future
  *          EEPROM-backed `BaseNvs` can be swapped in without changing callers.
@@ -18,11 +18,10 @@
 #include <cstdint>
 
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/base/BaseNvs.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/mcu/esp32/EspNvs.h"
 
 /**
  * @class NvsManager
- * @brief Singleton owning `EspNvs` instances for Vortex board persistent storage.
+ * @brief Singleton giving access to the Vortex board persistent-storage namespaces.
  *
  * Initialization runs **before** communication managers so calibration or
  * board identity can be read early. Namespaces (≤15 chars per ESP-IDF):
@@ -69,9 +68,10 @@ private:
 
     void SetLastError(hf_nvs_err_t e) noexcept { last_error_ = e; }
 
-    EspNvs app_;
-    EspNvs calibration_;
-    EspNvs config_;
+    // Owned by the board binding (bsp_bind/VortexBoardBind.h); constructing them touches no hardware.
+    BaseNvs& app_;
+    BaseNvs& calibration_;
+    BaseNvs& config_;
 
     std::atomic<bool> initialized_{false};
     hf_nvs_err_t last_error_{hf_nvs_err_t::NVS_SUCCESS};

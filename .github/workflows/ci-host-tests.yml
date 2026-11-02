@@ -1,5 +1,6 @@
 ---
-# Host build and unit tests of the MCU-free part of the HAL (tests/host).
+# Host build and unit tests of the MCU-free part of the HAL (tests/host), and the
+# HAL boundary lint (tools/lint/lint_hal_boundary.sh).
 #
 # tests/host adds lib/core (hf-core) as a subdirectory with HF_CORE_MCU=NONE and
 # HF_CORE_RTOS=NONE, builds the HAL managers that do not depend on ESP-IDF, and
@@ -65,3 +66,25 @@ jobs:
       - name: Test
         working-directory: tests/host
         run: ctest --preset host-debug
+
+  boundary:
+    name: HAL boundary lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # On a pull request the allowlist may not grow relative to the base branch.
+      - name: Lint
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "${BASE_REF}" ]; then
+            git fetch --no-tags origin "${BASE_REF}"
+            tools/lint/lint_hal_boundary.sh --base "origin/${BASE_REF}"
+          else
+            tools/lint/lint_hal_boundary.sh
+          fi

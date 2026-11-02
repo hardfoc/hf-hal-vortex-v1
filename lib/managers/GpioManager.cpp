@@ -3,7 +3,7 @@
  * @brief Implementation of the Vortex V1 GPIO manager.
  *
  * @details Multi-chip GPIO initialization:
- *          - ESP32 internal: make_shared<EspGpio>(...)
+ *          - ESP32 internal: created by the board binding (vortex::bsp::McuGpioOpen)
  *          - PCAL95555 expander: Pcal95555Handler::CreateGpioPin(...) — includes host→TMC control
  *            outputs (`PCAL_TMC_DRV_EN`, `PCAL_TMC_RST_CTRL`, `PCAL_TMC_SPI_COMM_EN`,
  *            `PCAL_TMC_WAKE_CTRL`) and inputs (`PCAL_TMC_FAULT_STATUS`,
@@ -20,7 +20,7 @@
 #include "MotorController.h"
 #include "handlers/pcal95555/Pcal95555Handler.h"
 #include "handlers/tmc9660/Tmc9660Handler.h"
-#include "mcu/esp32/EspGpio.h"
+#include "bsp_bind/VortexBoardBind.h"
 #include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
@@ -87,7 +87,8 @@ bool GpioManager::Deinitialize() noexcept {
         (void)pcal95555_handler_->EnsureDeinitialized();
     }
     pcal95555_handler_.reset();
-    pcal_host_int_gpio_.reset();
+    pcal_host_int_gpio_ = nullptr;
+    vortex::bsp::McuGpioCloseAll();
     initialized_.store(false, std::memory_order_release);
     return true;
 }
@@ -147,13 +148,13 @@ bool GpioManager::Initialize() noexcept {
                     ? hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW
                     : hf_gpio_active_state_t::HF_GPIO_ACTIVE_HIGH;
 
-                auto esp = std::make_shared<EspGpio>(
-                    static_cast<hf_pin_num_t>(m.physical_pin),
-                    hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT,
-                    active, out, pull);
-
-                if (esp->EnsureInitialized()) {
-                    gpio = std::move(esp);
+                // The binding owns the pin object (static storage); the entry holds a
+                // non-owning alias of it.
+                BaseGpio* const mcu = vortex::bsp::McuGpioOpen(
+                    static_cast<HfFunctionalGpioPin>(i),
+                    hf_gpio_direction_t::HF_GPIO_DIRECTION_OUTPUT, active, out, pull);
+                if (mcu != nullptr) {
+                    gpio = std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, mcu);
                 }
                 break;
             }
@@ -247,11 +248,11 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
             const hf_gpio_output_mode_t out_mode =
                 m->is_push_pull ? hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_PUSH_PULL
                                 : hf_gpio_output_mode_t::HF_GPIO_OUTPUT_MODE_OPEN_DRAIN;
-            auto esp = std::make_shared<EspGpio>(static_cast<hf_pin_num_t>(m->physical_pin),
-                                                 hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT, active,
-                                                 out_mode, pull);
-            if (esp->EnsureInitialized()) {
-                pcal_host_int_gpio_ = std::move(esp);
+            BaseGpio* const mcu = vortex::bsp::McuGpioOpen(HfFunctionalGpioPin::I2C_PCAL95555_INT,
+                                                          hf_gpio_direction_t::HF_GPIO_DIRECTION_INPUT,
+                                                          active, out_mode, pull);
+            if (mcu != nullptr) {
+                pcal_host_int_gpio_ = mcu;
                 Logger::GetInstance().Info(
                     TAG,
                     "PCAL95555 host INT: GPIO%u (COMM_I2C_PCAL95555_INT); A0–A2 tied GND → 7-bit 0x20",
@@ -267,7 +268,7 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
 
     os_delay_msec(1);
 
-    BaseGpio* const int_pin = pcal_host_int_gpio_ ? pcal_host_int_gpio_.get() : nullptr;
+    BaseGpio* const int_pin = pcal_host_int_gpio_;
     pcal95555_handler_ = std::make_unique<Pcal95555Handler>(*i2c_device, int_pin);
     if (!pcal95555_handler_->EnsureInitialized()) {
         Logger::GetInstance().Error(

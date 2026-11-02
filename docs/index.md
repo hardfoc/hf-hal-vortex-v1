@@ -59,8 +59,9 @@ Status
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="diagrams/hal-layers.dark.svg">
   <img src="diagrams/hal-layers.svg"
-    alt="Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 managers, 5 hf-core handlers, 6
-    chip drivers, and the interface wrap on ESP-IDF and the ESP32-C6.">
+    alt="Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 MCU-free managers, the board
+    binding that constructs the ESP32-C6 peripherals, 5 hf-core handlers, 5 chip drivers, and the
+    interface wrap on ESP-IDF.">
 </picture>
 <!-- /figure -->
 

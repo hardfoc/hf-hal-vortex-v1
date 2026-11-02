@@ -25,10 +25,6 @@
 #include <atomic>
 
 // ESP-IDF for semaphores
-extern "C" {
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
-}
 
 //==============================================================================
 // IMUMANAGER IMPLEMENTATION
@@ -87,10 +83,7 @@ bool ImuManager::Deinitialize() noexcept {
     }
 
     // Clean up interrupt semaphore
-    if (interrupt_semaphore_) {
-        vSemaphoreDelete(static_cast<SemaphoreHandle_t>(interrupt_semaphore_));
-        interrupt_semaphore_ = nullptr;
-    }
+    interrupt_semaphore_ready_ = false;
 
     interrupt_configured_ = false;
     interrupt_enabled_ = false;
@@ -670,7 +663,7 @@ bool ImuManager::WaitForInterrupt(uint8_t deviceIndex, uint32_t timeout_ms) noex
         return false;
     }
     
-    if (!interrupt_semaphore_) {
+    if (!interrupt_semaphore_ready_) {
         Logger::GetInstance().Error("ImuManager", "Interrupt semaphore not available");
         return false;
     }
@@ -680,11 +673,7 @@ bool ImuManager::WaitForInterrupt(uint8_t deviceIndex, uint32_t timeout_ms) noex
         return false;
     }
 
-    TickType_t timeout_ticks = (timeout_ms == 0) ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms);
-    
-    BaseType_t result = xSemaphoreTake(static_cast<SemaphoreHandle_t>(interrupt_semaphore_), timeout_ticks);
-    
-    return (result == pdTRUE);
+    return interrupt_semaphore_.WaitUntilSignalled(timeout_ms == 0 ? OS_WAIT_FOREVER : timeout_ms);
 }
 
 uint32_t ImuManager::GetInterruptCount(uint8_t deviceIndex) const noexcept {
@@ -891,8 +880,8 @@ bool ImuManager::InitializeInterruptGpio() noexcept {
     interrupt_gpio_ = interrupt_gpio_shared_.get();
 
     // Create semaphore for WaitForInterrupt()
-    interrupt_semaphore_ = xSemaphoreCreateBinary();
-    if (!interrupt_semaphore_) {
+    interrupt_semaphore_ready_ = interrupt_semaphore_.EnsureInitialized();
+    if (!interrupt_semaphore_ready_) {
         Logger::GetInstance().Error("ImuManager", "Failed to create interrupt semaphore");
         interrupt_gpio_ = nullptr;
         interrupt_gpio_shared_.reset();
@@ -904,8 +893,11 @@ bool ImuManager::InitializeInterruptGpio() noexcept {
     return true;
 }
 
-void ImuManager::GpioInterruptHandler(BaseGpio* gpio, hf_gpio_interrupt_trigger_t trigger, void* user_data) noexcept {
-    // This function executes in interrupt context - keep it minimal!
+void ImuManager::GpioInterruptHandler(BaseGpio* /*gpio*/, hf_gpio_interrupt_trigger_t /*trigger*/,
+                                      void* user_data) noexcept {
+    // PCAL_IMU_INT is an expander pin: Pcal95555Handler dispatches its callbacks from task
+    // context (DrainPendingInterrupts / ProcessInterrupts), never from an ISR, so the task-level
+    // RTOS-wrapper signal below is the right primitive.
     auto* imu_manager = static_cast<ImuManager*>(user_data);
     if (!imu_manager) {
         return;
@@ -915,13 +907,8 @@ void ImuManager::GpioInterruptHandler(BaseGpio* gpio, hf_gpio_interrupt_trigger_
     imu_manager->interrupt_count_.fetch_add(1);
 
     // Signal semaphore for WaitForInterrupt()
-    if (imu_manager->interrupt_semaphore_) {
-        BaseType_t higher_priority_task_woken = pdFALSE;
-        xSemaphoreGiveFromISR(
-            static_cast<SemaphoreHandle_t>(imu_manager->interrupt_semaphore_), 
-            &higher_priority_task_woken
-        );
-        portYIELD_FROM_ISR(higher_priority_task_woken);
+    if (imu_manager->interrupt_semaphore_ready_) {
+        (void)imu_manager->interrupt_semaphore_.Signal();
     }
 
     // Call user callback if provided
@@ -982,7 +969,7 @@ void ImuManager::DumpStatistics() const noexcept {
     
     // Interrupt Configuration
     Logger::GetInstance().Info(TAG, "Interrupt Configuration:");
-    Logger::GetInstance().Info(TAG, "  Interrupt Semaphore: %s", interrupt_semaphore_ ? "CONFIGURED" : "NOT_CONFIGURED");
+    Logger::GetInstance().Info(TAG, "  Interrupt Semaphore: %s", interrupt_semaphore_ready_ ? "CONFIGURED" : "NOT_CONFIGURED");
     Logger::GetInstance().Info(TAG, "  Interrupt Callback: %s", interrupt_callback_ ? "SET" : "NOT_SET");
     
     // Memory Usage

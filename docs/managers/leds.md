@@ -1,6 +1,7 @@
 # LedManager
 
-Drives the single WS2812 RGB status LED (data on GPIO3, through the ESP32-C6's RMT peripheral): solid colours,
+Drives the single WS2812 RGB status LED (data on GPIO3; the board binding sends each frame through hf-core's
+`Ws2812Handler` on the ESP32-C6's RMT peripheral): solid colours,
 brightness, simple animations and a set of system status patterns. It starts early (step 4) so an LED-only bench
 works without the motor controller. Source: [`LedManager.h`](../../lib/managers/LedManager.h).
 

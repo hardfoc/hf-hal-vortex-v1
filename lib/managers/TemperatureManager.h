@@ -23,7 +23,6 @@
 #include <string_view>
 
 #include "base/BaseTemperature.h"
-#include "mcu/esp32/EspTemperature.h"
 #include "handlers/ntc/NtcTemperatureHandler.h"
 #include "RtosMutex.h"
 
@@ -310,7 +309,7 @@ private:
     uint64_t init_time_ms_{0};
 
     // Named sensor driver instances
-    std::unique_ptr<EspTemperature>          esp32_temp_;
+    BaseTemperature*                         esp32_temp_{nullptr};   ///< MCU die sensor, owned by the board binding
     std::unique_ptr<NtcTemperatureHandler>   ntc_handler_;
     std::unique_ptr<Tmc9660TemperatureWrapper> tmc9660_temp_;
 

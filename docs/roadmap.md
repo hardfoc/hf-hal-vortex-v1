@@ -32,6 +32,5 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 | Gap | Where | Page |
 | --- | --- | --- |
 | Most managers allocate with throwing `make_unique`, so a failed allocation aborts | `lib/managers` | [ADR 0002](adr/0002-static-allocation.md) |
-| ESP32 port numbers and `gpio_num_t` in managers | `CommChannelsManager.cpp`, `LedManager.h` | [ADR 0001](adr/0001-mcu-agnostic-boundary.md) |
-| Only some managers build on the host (the rest still construct ESP32 peripherals themselves) | `tests/host/seams` | [Testing and CI](testing.md) |
+| 13 example apps still include HAL internals (handlers, TMC9660 driver headers, the pin map) | `tools/lint/hal_boundary_allowlist.txt` | [ADR 0001](adr/0001-mcu-agnostic-boundary.md) |
 | hf-core `NtcTemperatureHandler` recurses until the stack overflows when `enable_threshold_monitoring` is set in its config; the HAL applies the window after init instead | hf-core `handlers/ntc` | [TemperatureManager](managers/temperature.md) |

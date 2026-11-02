@@ -25,8 +25,7 @@
     "hf-bno08x",
     "hf-ntc-thermistor",
     "hf-pcal95555",
-    "hf-tmc9660",
-    "hf-ws2812-rmt"
+    "hf-tmc9660"
   ],
   "interfaces": [
     "BaseAdc",
@@ -38,9 +37,21 @@
     "BaseTemperature",
     "BaseUart"
   ],
+  "binding": [
+    "EspCan",
+    "EspGpio",
+    "EspI2c",
+    "EspNvs",
+    "EspSpi",
+    "EspTemperature",
+    "EspUart",
+    "Ws2812Handler"
+  ],
+  "binding_dir": "lib/managers/bsp_bind/esp32c6",
   "sources": [
     "lib/api/Vortex.h:Vortex (manager references)",
     "lib/managers:#includes",
-    "lib/core/handlers:#includes"
+    "lib/core/handlers:#includes",
+    "lib/managers/bsp_bind/esp32c6:#includes"
   ]
 }

@@ -13,7 +13,7 @@ configure them. The names are the **Name** column of the [pin map](../hardware/p
 
 | Chip | Pins | How they are reached |
 | --- | --- | --- |
-| ESP32-C6 | The two external chip selects | An `EspGpio` the manager creates |
+| ESP32-C6 | The two external chip selects | A pin object from the board binding (`McuGpioOpen()`) |
 | PCAL95555 | TMC9660 control and fault lines, IMU boot / interrupt / reset, CAN standby, power good, TMC9660 GPIO17/18 read-back | Pin objects from the `Pcal95555Handler`, over I2C |
 | TMC9660 | `TMC_GPIO17`, `TMC_GPIO18` | The TMC9660 handler, registered once `MotorController` has created the onboard device |
 

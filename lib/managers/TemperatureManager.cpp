@@ -3,7 +3,7 @@
  * @brief Implementation of the Vortex V1 temperature manager.
  *
  * @details Three temperature sources:
- *          1. ESP32 internal (EspTemperature)
+ *          1. ESP32 internal (MCU die sensor from the board binding)
  *          2. NTC thermistor via TMC9660 AIN3 (NtcTemperatureHandler)
  *          3. TMC9660 chip internal (Tmc9660TemperatureWrapper)
  *
@@ -14,6 +14,7 @@
 #include "AdcManager.h"
 #include "MotorController.h"
 #include "handlers/tmc9660/Tmc9660Handler.h"
+#include "bsp_bind/VortexBoardBind.h"
 #include "config/VortexNtcConfig.h"
 #include "handlers/logger/Logger.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/memory_utils.h"
@@ -137,15 +138,15 @@ bool TemperatureManager::Initialize() noexcept {
 }
 
 bool TemperatureManager::InitializeEsp32Internal() noexcept {
-    esp32_temp_ = hf::utils::make_unique_nothrow<EspTemperature>();
+    esp32_temp_ = vortex::bsp::McuTemperature();
     if (!esp32_temp_) {
-        Logger::GetInstance().Error(TAG, "Failed to allocate EspTemperature");
+        Logger::GetInstance().Error(TAG, "No MCU temperature sensor in the board binding");
         return false;
     }
 
     if (!esp32_temp_->EnsureInitialized()) {
-        Logger::GetInstance().Error(TAG, "EspTemperature init failed");
-        esp32_temp_.reset();
+        Logger::GetInstance().Error(TAG, "MCU temperature sensor init failed");
+        esp32_temp_ = nullptr;
         return false;
     }
 
@@ -267,7 +268,7 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsius(std::string_view name,
     BaseTemperature* sensor = nullptr;
 
     switch (entry.sensor_type) {
-        case VortexTempSensorType::ESP32_INTERNAL: sensor = esp32_temp_.get();   break;
+        case VortexTempSensorType::ESP32_INTERNAL: sensor = esp32_temp_;         break;
         case VortexTempSensorType::NTC_THERMISTOR: sensor = ntc_handler_.get();  break;
         case VortexTempSensorType::TMC9660_CHIP:   sensor = tmc9660_temp_.get(); break;
         default:

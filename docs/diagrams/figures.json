@@ -14,15 +14,16 @@
   },
   "hal-layers": {
     "title": "Vortex V1 HAL, layer by layer",
-    "alt": "Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 managers, 5 hf-core handlers, 6 chip drivers, and the interface wrap on ESP-IDF and the ESP32-C6.",
-    "description": "From top to bottom, each layer only calls the one under it. Your application asks the facade singleton for the managers. The managers (one per board function) own the hf-core handlers, which wrap one chip driver each; a manager may also use a driver directly. Drivers talk to hardware only through the interface classes of the internal interface wrap, whose ESP32 implementations sit on ESP-IDF. Every name in a band is read from the code: the managers from the facade's member references, the handlers, drivers and interface classes from the managers' and handlers' #include lines.",
+    "alt": "Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 MCU-free managers, the board binding that constructs the ESP32-C6 peripherals, 5 hf-core handlers, 5 chip drivers, and the interface wrap on ESP-IDF.",
+    "description": "From top to bottom, each layer only calls the one under it. Your application asks the facade singleton for the managers. The managers (one per board function) are MCU-free: they own the hf-core handlers, which wrap one chip driver each, and they get every bus, MCU pin, NVS namespace and the status LED from the board binding. The binding is the only HAL code that names an ESP32 type; it constructs the ESP32 implementations of the interface classes, which sit on ESP-IDF. Drivers talk to hardware only through those interface classes. Every name in a band is read from the code: the managers from the facade's member references, the binding's classes from its #include lines, the handlers, drivers and interface classes from the managers' and handlers' #include lines.",
     "profile": "overview",
     "width": 1200,
     "source": "docs/diagrams/figures/hal-layers.py",
     "sources": [
       "lib/api/Vortex.h:Vortex (manager references)",
       "lib/managers:#includes",
-      "lib/core/handlers:#includes"
+      "lib/core/handlers:#includes",
+      "lib/managers/bsp_bind/esp32c6:#includes"
     ]
   },
   "init-order": {
