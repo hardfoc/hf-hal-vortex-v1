@@ -21,10 +21,9 @@ INPUT                  = lib/api \
                          lib/managers \
                          examples/esp32/main \
                          examples \
-                         README.md \
-                         DOCUMENTATION_INDEX.md
+                         README.md
 
-FILE_PATTERNS          = *.c *.cpp *.h *.hpp *.md
+FILE_PATTERNS          = *.c *.cpp *.h *.hpp
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = README.md
 FILTER_PATTERNS        = *.md="sed -e '/^---$/,/^---$/d'"
