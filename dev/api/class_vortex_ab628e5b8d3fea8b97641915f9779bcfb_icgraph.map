@@ -1,0 +1,9 @@
+<map id="Vortex::GetSystemUptimeMs" name="Vortex::GetSystemUptimeMs">
+<area shape="rect" id="Node000001" title="Get system uptime in milliseconds." alt="" coords="525,31,736,56"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#a9fb28193f53346c0dc37694426a0759a" title="Dump comprehensive system statistics." alt="" coords="245,5,465,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="511,35,465,31,466,25,512,30"/>
+<area shape="rect" id="Node000003" href="$class_vortex.html#a442d960da18c5b06704fde1bd8dea6e7" title="Update system diagnostics." alt="" coords="233,55,477,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="512,56,478,59,477,54,511,51"/>
+<area shape="rect" id="Node000004" href="$class_vortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Ensure all Vortex systems are properly initialized." alt="" coords="5,55,185,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="220,70,186,70,186,65,220,65"/>
+</map>

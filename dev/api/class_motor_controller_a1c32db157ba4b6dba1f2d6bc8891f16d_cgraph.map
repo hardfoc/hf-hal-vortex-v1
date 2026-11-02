@@ -1,0 +1,5 @@
+<map id="MotorController::MotorController" name="MotorController::MotorController">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,240,31"/>
+<area shape="rect" id="Node000002" href="$class_motor_controller.html#a88881cf3614bf87b7bc72100ca57ba3a" title="Get access to Tmc9660Handler by device index." alt="" coords="288,5,469,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,15,274,15,274,21,240,21"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="Vortex::InitializeLeds" name="Vortex::InitializeLeds">
+<area shape="rect" id="Node000001" title="Initialize LED management (step 4 — early for LED&#45;only benches)" alt="" coords="5,31,164,56"/>
+<area shape="rect" id="Node000002" href="$class_led_manager.html#afa325e20cb2d4356fb870fdd86d4c729" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="212,31,431,56"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,41,198,41,198,46,165,46"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="479,31,645,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="431,41,465,41,465,46,431,46"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#ac6bff1fceb7eab43ee606dd3807d3d47" title=" " alt="" coords="715,5,921,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="645,32,701,27,701,32,646,38"/>
+<area shape="rect" id="Node000005" href="$class_led_manager.html#aec49368647c9b09857ea1b775d655e5e" title=" " alt="" coords="693,55,943,80"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="646,48,680,52,679,57,645,54"/>
+</map>
