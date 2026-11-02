@@ -22,9 +22,9 @@ description: |
 
 # ─── External Links ───────────────────────────────────────────────────────────
 url: "https://github.com/hardfoc/hf-hal-vortex-v1"
-repository: "https://github.com/hardfoc/hf-all-hals.git"
-documentation: "https://github.com/hardfoc/hf-all-hals/blob/main/hf-hal-vortex-v1/README.md"
-issues: "https://github.com/hardfoc/hf-all-hals/issues"
+repository: "https://github.com/hardfoc/hf-hal-vortex-v1.git"
+documentation: "https://hardfoc.github.io/hf-hal-vortex-v1/"
+issues: "https://github.com/hardfoc/hf-hal-vortex-v1/issues"
 discussion: "https://github.com/hardfoc/hf-hal-vortex-v1/discussions"
 
 # ─── Licensing and Maintenance ───────────────────────────────────────────────
@@ -77,7 +77,6 @@ files:
     - "idf_component.yml"
     - "LICENSE"
     - "README.md"
-    - "DOCUMENTATION_INDEX.md"
 
   # Exclude development and documentation files to minimize package size
   exclude:
@@ -141,8 +140,8 @@ files:
 #     - LedManager: WS2812 LED control
 #     - TemperatureManager: Multi-source temperature monitoring
 #
-#  3. Handlers (lib/handlers/)
-#     - HAL-specific driver+util glue for each device type
+#  3. Handlers (lib/core/handlers/, from hf-core)
+#     - Driver+util glue for each device type
 #     - Unified interfaces for device communication
 #     - Error handling and diagnostics
 #
