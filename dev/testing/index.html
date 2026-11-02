@@ -1091,7 +1091,7 @@
 
 <h1 id="testing-and-ci">Testing and CI<a class="headerlink" href="#testing-and-ci" title="Permanent link">&para;</a></h1>
 <p>What runs on a pull request, what each check means, and how to run it on your machine first. All workflows are in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/e22cf5665408a3389866bc05a31a38d3c5a80839/.github/workflows"><code>.github/workflows</code></a>; most call reusable workflows in
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/.github/workflows"><code>.github/workflows</code></a>; most call reusable workflows in
 <a href="https://github.com/hardfoc/hf-general-ci-tools">hf-general-ci-tools</a> or
 <a href="https://github.com/hardfoc/hf-espidf-ci-tools">hf-espidf-ci-tools</a>.</p>
 <h2 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">&para;</a></h2>
@@ -1115,7 +1115,7 @@
 <td>Host Tests CI</td>
 <td><code>ci-host-tests.yml</code></td>
 <td>push, every pull request</td>
-<td>Builds the MCU-free HAL sources on Linux with GCC and Clang against hf-core's host mocks and runs <code>tests/host</code></td>
+<td>Builds every HAL source above <code>bsp_bind/</code> on Linux with GCC and Clang against the host binding and runs <code>tests/host</code>; runs the HAL boundary lint (<code>tools/lint/lint_hal_boundary.sh</code>, allowlist may not grow)</td>
 </tr>
 <tr>
 <td>C++ Lint CI</td>
@@ -1163,10 +1163,11 @@
 </table>
 <p>The examples are integration tests: they run on a board, not in CI. CI proves they compile; a person flashes them.</p>
 <h2 id="host-unit-tests">Host unit tests<a class="headerlink" href="#host-unit-tests" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/e22cf5665408a3389866bc05a31a38d3c5a80839/tests/host"><code>tests/host</code></a> builds the HAL sources that do not need ESP-IDF, with hf-core added as a
-subdirectory (<code>HF_CORE_MCU=NONE</code>, <code>HF_CORE_RTOS=NONE</code>), and runs them against hf-core's scriptable <code>Base*</code> fakes
-(<code>hf_core_host_mocks</code>): a test hands a manager a <code>MockSpi</code> with a chip model behind it and checks the frames it
-sends. One file is one executable and one ctest entry.</p>
+<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/tests/host"><code>tests/host</code></a> builds every source in <code>lib/api</code> and <code>lib/managers</code>, with hf-core added as a
+subdirectory (<code>HF_CORE_MCU=NONE</code>, <code>HF_CORE_RTOS=NONE</code>) and the host board binding (<code>bsp_bind/host/</code>) in place of the
+ESP32-C6 one. The binding hands the managers hf-core's scriptable <code>Base*</code> fakes (<code>hf_core_host_mocks</code>) and logs
+what they asked for; a test reaches the fakes through <code>vortex::bsp::host</code> to put a chip model behind them or inject
+a failure. One file is one executable and one ctest entry.</p>
 <table>
 <thead>
 <tr>
@@ -1186,6 +1187,10 @@ sends. One file is one executable and one ctest entry.</p>
 <tr>
 <td><code>test_encoder_manager</code></td>
 <td><code>EncoderManager</code> reads on an AS5047U register model: <code>ReadDiagnostics()</code> makes one ERRFL read, <code>ReadFieldStrength()</code> returns AGC and magnitude, empty slots touch no SPI</td>
+</tr>
+<tr>
+<td><code>test_board_bind</code></td>
+<td><code>Vortex::EnsureInitialized()</code> on the host binding: bus pins, SPI modes, I2C devices, UART, CAN, LED pin and NVS namespaces as the pin map says; LED frames; <code>Shutdown()</code> closes what init opened</td>
 </tr>
 </tbody>
 </table>
@@ -1209,9 +1214,12 @@ tested here.</p>
 </span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>hardfoc-docs<span class="w"> </span>figures<span class="w"> </span>--check
 </span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Markdown and YAML lint</span>
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>npx<span class="w"> </span>markdownlint-cli2<span class="w"> </span>--config<span class="w"> </span>_config/.markdownlint.json<span class="w"> </span><span class="s2">"docs/**/*.md"</span><span class="w"> </span>README.md
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>yamllint<span class="w"> </span>-c<span class="w"> </span>_config/.yamllint<span class="w"> </span>.github/workflows<span class="w"> </span>mkdocs.yml
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># HAL boundary (no MCU header above bsp_bind/)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>tools/lint/lint_hal_boundary.sh<span class="w"> </span>--base<span class="w"> </span>origin/main
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Markdown and YAML lint</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>npx<span class="w"> </span>markdownlint-cli2<span class="w"> </span>--config<span class="w"> </span>_config/.markdownlint.json<span class="w"> </span><span class="s2">"docs/**/*.md"</span><span class="w"> </span>README.md
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>yamllint<span class="w"> </span>-c<span class="w"> </span>_config/.yamllint<span class="w"> </span>.github/workflows<span class="w"> </span>mkdocs.yml
 </span></code></pre></div>
 <h2 id="when-the-docs-checks-fail">When the docs checks fail<a class="headerlink" href="#when-the-docs-checks-fail" title="Permanent link">&para;</a></h2>
 <table>

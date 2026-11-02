@@ -1302,7 +1302,7 @@
 <tbody>
 <tr>
 <td>Status</td>
-<td>Accepted (records the current design)</td>
+<td>Accepted; enforced by the board binding and the boundary lint since the bsp_bind change</td>
 </tr>
 <tr>
 <td>Date</td>
@@ -1328,26 +1328,33 @@ protocol code must not be tied to ESP-IDF.</p>
 <ul>
 <li><strong>Drivers and handlers</strong> (in <code>hf-core</code>) depend only on the <code>Base*</code> interface classes.</li>
 <li><strong>The ESP32 implementations</strong> (<code>EspSpiBus</code>, <code>EspI2cBus</code>, <code>EspUart</code>, <code>EspCan</code>, <code>EspGpio</code>, <code>EspNvs</code>,
-  <code>EspTemperature</code>) are named only in the managers that create buses and peripherals: <code>CommChannelsManager</code>,
-  <code>GpioManager</code>, <code>NvsManager</code> and <code>TemperatureManager</code>. The generated
+  <code>EspTemperature</code>, and the WS2812 status LED through hf-core's <code>Ws2812Handler</code>) are named only in the board
+  binding, <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/esp32c6/VortexBoardBindEsp32c6.cpp"><code>lib/managers/bsp_bind/esp32c6/</code></a>.
+  The managers call the MCU-free functions of
+  <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a> and see only <code>Base*</code> objects. The generated
   <a href="../../architecture/ownership/#managers-handlers-and-drivers">manager map</a> lists every manager's interface classes,
-  read from the <code>#include</code> lines.</li>
+  read from the <code>#include</code> lines, and the <a href="../../architecture/#the-board-binding">binding table</a> which binding
+  functions each manager calls.</li>
+<li><strong>The rule is checked</strong>: <code>tools/lint/lint_hal_boundary.sh</code> (CI job "HAL boundary lint") fails on an ESP-IDF,
+  FreeRTOS, <code>mcu/</code> or RMT include in <code>lib/api</code> or <code>lib/managers</code> outside <code>bsp_bind/&lt;platform&gt;/</code>. Example apps that
+  still include HAL internals are listed in <code>tools/lint/hal_boundary_allowlist.txt</code>, which may only shrink.</li>
 <li><strong>Board wiring</strong> lives in the per-board pin map in <code>hf-pincfg</code> (<a href="../0003-pin-map-ownership/">ADR 0003</a>).</li>
 <li><strong>Application code</strong> sees managers, handlers and <code>Base*</code> pointers (for example <code>BaseCan*</code> from
   <code>GetCanOpenBus()</code>), never <code>Esp*</code> types.</li>
 </ul>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A port to another MCU replaces the <code>Esp*</code> construction in those four managers with another implementation of the
-  same interfaces (the <code>Stm*</code> classes in the interface wrap are the start of one) and adds a pin map; handlers,
-  drivers and code above the managers stay.</li>
+<li>A port to another MCU adds one directory, <code>bsp_bind/&lt;family&gt;/</code>, implementing <code>VortexBoardBind.h</code> with that MCU's
+  interface classes (the <code>Stm*</code> classes in the interface wrap are the start of one), plus a pin map; managers,
+  handlers, drivers and code above them stay. The host build (<code>tests/host</code>) is a second implementation of the same
+  header, so the seam is exercised on every pull request.</li>
 <li><strong>CAN FD</strong> fits the same seam: an FD-capable <code>BaseCan</code> implementation (frames up to 64 bytes, data-phase bit
-  timing) is created by <code>CommChannelsManager</code> instead of <code>EspCan</code>. Code that only sees <code>BaseCan*</code> keeps working;
+  timing) is created by the platform's <code>CanOpen()</code> instead of <code>EspCan</code>. Code that only sees <code>BaseCan*</code> keeps working;
   code that wants FD frames checks the port's capabilities. <code>BaseCan</code>'s message type still carries 8 data bytes, so
   enlarging it is the first step of an FD port.</li>
-<li>Known leaks across the boundary today, to fix before a port: <code>LedManager</code> uses the ESP-IDF RMT WS2812 driver and
-  returns a <code>gpio_num_t</code>; <code>CommChannelsManager.cpp</code> writes ESP32 port numbers (SPI host 1, <code>I2C_NUM_0</code>, UART port
-  1); <code>examples/esp32</code> call ESP-IDF directly, which is fine for examples.</li>
+<li>The leaks this ADR used to list are closed: <code>LedManager</code> no longer uses the RMT driver or <code>gpio_num_t</code>, and
+  <code>CommChannelsManager</code> passes MCU-neutral specs (pins, mode, bit rate) to the binding instead of ESP32 config
+  structs. <code>examples/esp32</code> still call ESP-IDF directly, which is fine for examples.</li>
 </ul>
 
 

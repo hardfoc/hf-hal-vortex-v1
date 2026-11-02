@@ -1406,7 +1406,7 @@
 <h1 id="gpiomanager">GpioManager<a class="headerlink" href="#gpiomanager" title="Permanent link">&para;</a></h1>
 <p>Registers every GPIO-category pin of the pin map, whichever chip it is on, and lets you drive or read it by name or
 by enum. On Vortex V1 those pins live on three chips: the ESP32-C6, the PCAL95555 I/O expander and the TMC9660.
-Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/managers/GpioManager.h"><code>GpioManager.h</code></a>.</p>
+Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/GpioManager.h"><code>GpioManager.h</code></a>.</p>
 <h2 id="which-pins-it-owns">Which pins it owns<a class="headerlink" href="#which-pins-it-owns" title="Permanent link">&para;</a></h2>
 <p>At start-up it walks the pin map and registers the pins whose category is GPIO (and the user, ADC and SPI
 categories). Core pins (crystal, boot, USB) and comm pins (bus lines, the LED data line) are skipped; their owners
@@ -1424,7 +1424,7 @@ configure them. The names are the <strong>Name</strong> column of the <a href=".
 <tr>
 <td>ESP32-C6</td>
 <td>The two external chip selects</td>
-<td>An <code>EspGpio</code> the manager creates</td>
+<td>A pin object from the board binding (<code>McuGpioOpen()</code>)</td>
 </tr>
 <tr>
 <td>PCAL95555</td>

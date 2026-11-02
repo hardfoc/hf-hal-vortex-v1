@@ -1360,9 +1360,10 @@
 
 
 <h1 id="ledmanager">LedManager<a class="headerlink" href="#ledmanager" title="Permanent link">&para;</a></h1>
-<p>Drives the single WS2812 RGB status LED (data on GPIO3, through the ESP32-C6's RMT peripheral): solid colours,
+<p>Drives the single WS2812 RGB status LED (data on GPIO3; the board binding sends each frame through hf-core's
+<code>Ws2812Handler</code> on the ESP32-C6's RMT peripheral): solid colours,
 brightness, simple animations and a set of system status patterns. It starts early (step 4) so an LED-only bench
-works without the motor controller. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/lib/managers/LedManager.h"><code>LedManager.h</code></a>.</p>
+works without the motor controller. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/LedManager.h"><code>LedManager.h</code></a>.</p>
 <h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

@@ -1106,7 +1106,7 @@ host tests that run the same node against a simulated motor.</p>
 </tr>
 <tr>
 <td>CANopenNode sources</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e22cf5665408a3389866bc05a31a38d3c5a80839/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
 <td>Present</td>
 </tr>
 </tbody>
@@ -1133,14 +1133,9 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 <td><a href="../adr/0002-static-allocation/">ADR 0002</a></td>
 </tr>
 <tr>
-<td>ESP32 port numbers and <code>gpio_num_t</code> in managers</td>
-<td><code>CommChannelsManager.cpp</code>, <code>LedManager.h</code></td>
+<td>13 example apps still include HAL internals (handlers, TMC9660 driver headers, the pin map)</td>
+<td><code>tools/lint/hal_boundary_allowlist.txt</code></td>
 <td><a href="../adr/0001-mcu-agnostic-boundary/">ADR 0001</a></td>
-</tr>
-<tr>
-<td>Only some managers build on the host (the rest still construct ESP32 peripherals themselves)</td>
-<td><code>tests/host/seams</code></td>
-<td><a href="../testing/">Testing and CI</a></td>
 </tr>
 <tr>
 <td>hf-core <code>NtcTemperatureHandler</code> recurses until the stack overflows when <code>enable_threshold_monitoring</code> is set in its config; the HAL applies the window after init instead</td>
