@@ -22,6 +22,8 @@
 #include <algorithm>
 
 static constexpr const char* TAG = "VortexComm";
+/// TWAI nominal bit rate. Step 7 of the CANopen plan reads it from the LSS record instead.
+static constexpr uint32_t kCanBitRate = 500000U;
 
 /// CS pin configuration — order matches SpiDeviceId enum.
 static constexpr HfFunctionalGpioPin kSpiCsPins[] = {
@@ -199,7 +201,7 @@ bool CommChannelsManager::Initialize() noexcept {
             vortex::bsp::CanSpec spec{};
             spec.tx_pin = tx_map->physical_pin;
             spec.rx_pin = rx_map->physical_pin;
-            spec.bitrate = 500000;
+            spec.bitrate = kCanBitRate;
             can_bus_ = vortex::bsp::CanOpen(spec);
             can_bus_valid_ = (can_bus_ != nullptr);
             if (can_bus_valid_) {
@@ -410,6 +412,8 @@ BaseCan* CommChannelsManager::GetCanBus() noexcept {
     if (!initialized_.load(std::memory_order_acquire) || !can_bus_valid_) return nullptr;
     return can_bus_;
 }
+
+uint32_t CommChannelsManager::GetCanBitRate() const noexcept { return kCanBitRate; }
 
 //==============================================================================
 // DIAGNOSTICS

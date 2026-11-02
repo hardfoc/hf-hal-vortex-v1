@@ -306,6 +306,13 @@ public:
      */
     BaseCan* GetCanOpenBus() noexcept { return GetCanBus(); }
 
+    // The concrete TWAI controller (EspCan, for hf-core's EspTwaiPort) is not handed out here: this
+    // header is MCU-free. Platform code gets it from its board binding, e.g. on the ESP32-C6
+    // vortex::bsp::esp32c6::CanController() in bsp_bind/esp32c6/VortexBoardBindEsp32c6.h.
+
+    /** @brief Nominal bit rate the TWAI bus was configured with (bit/s). */
+    uint32_t GetCanBitRate() const noexcept;
+
     //==========================================================================
     // DIAGNOSTICS
     //==========================================================================

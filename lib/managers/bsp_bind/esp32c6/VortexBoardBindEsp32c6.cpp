@@ -12,6 +12,7 @@
  */
 
 #include "bsp_bind/VortexBoardBind.h"
+#include "bsp_bind/esp32c6/VortexBoardBindEsp32c6.h"
 
 #include <algorithm>
 #include <array>
@@ -245,6 +246,15 @@ BaseCan* CanOpen(const CanSpec& spec) noexcept {
 }
 
 void CanClose() noexcept { CanSlot().reset(); }
+
+namespace esp32c6 {
+
+EspCan* CanController() noexcept {
+    auto& slot = CanSlot();
+    return slot ? &*slot : nullptr;
+}
+
+}  // namespace esp32c6
 
 //==============================================================================
 // MCU GPIO

@@ -1,17 +1,21 @@
 menu "HardFOC Vortex HAL"
 
     config HARDFOC_HAL_CANOPENNODE_SLAVE
-        bool "Build CANopenNode slave stack (upstream + blank CO driver)"
+        bool "Build the CANopenNode stack (generic hf-core driver)"
         default n
         help
-            Compiles CANopenNode into the hf-hal-vortex-v1 component via hf-core CMake.
+            Compiles CANopenNode v4 into the hf-hal-vortex-v1 component through
+            hf-core's CMake, with the generic driver CO_driver_hardfoc.c and the
+            EspTwaiPort binding (hf-core handlers/common/canopen/).
             Vendor tree: third_party/CANopenNode (git submodule).
+
+            The object dictionary comes from the application: its project
+            CMakeLists.txt sets HF_CORE_CANOPENNODE_OD_DIR (OD.c / OD.h) and
+            optionally HF_CORE_CANOPENNODE_CONFIG_DIR (hf_co_app_config.h)
+            before project(). The upstream example OD is not compiled.
 
             After enabling, initialize the submodule from the HAL repo root:
 
                 git submodule update --init --recursive third_party/CANopenNode
-
-            With the blank driver, CiA logic runs but no frames are sent on TWAI.
-            Replace CO_driver with a BaseCan/TWAI-backed port for a live bus (single RX owner).
 
 endmenu
