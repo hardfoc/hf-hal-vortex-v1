@@ -15,7 +15,7 @@ host tests that run the same node against a simulated motor.
 | CANopen node design: CiA 301 / 402 drive, object dictionary as the single source, threads, wireless access, CAN FD route | [canopen-node.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/canopen-node.md) | Draft, under review |
 | Drive observability: every TMC9660 parameter, telemetry and fault in the object dictionary, the CLI and a dashboard | [drive-observability.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md) | Draft, under review |
 | Header-only contracts (CAN frame, CiA 402 rule table, fault policy, router policy, OD store) with host tests | [`contracts/`](https://github.com/hardfoc/hardfoc-vortex-v1/tree/main/contracts) in hardfoc-vortex-v1 | Merged |
-| Notes on the current CAN path, `hf-utils-canopen` and the TMC9660 | [canopen-and-motor-path.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/canopen-and-motor-path.md) | Published |
+| Notes on the current CAN path, `hf-utils-canopen` and the TMC9660 | [canopen.md](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/canopen.md) | Published |
 | CANopenNode sources | [`third_party/CANopenNode`](../third_party/README.md) (submodule), built with the HAL's *Build CANopenNode slave stack* option | Present |
 
 The HAL's part is small by design: the CAN port stays a `BaseCan*` from

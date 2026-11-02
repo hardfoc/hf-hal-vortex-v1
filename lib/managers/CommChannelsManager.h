@@ -312,6 +312,16 @@ public:
      */
     BaseCan* GetCanOpenBus() noexcept { return GetCanBus(); }
 
+    /**
+     * @brief The TWAI bus as its concrete EspCan, for the CANopen port binding
+     *        (`hf::can::EspTwaiPort` in hf-core `handlers/common/canopen/`).
+     * @return Same instance as `GetCanBus()`, or nullptr if not initialised.
+     */
+    EspCan* GetEspCan() noexcept;
+
+    /** @brief Nominal bit rate the TWAI bus was configured with (bit/s). */
+    uint32_t GetCanBitRate() const noexcept;
+
     //==========================================================================
     // DIAGNOSTICS
     //==========================================================================
