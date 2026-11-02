@@ -79,7 +79,8 @@ hf_temp_err_t Tmc9660TemperatureWrapper::GetSensorInfo(hf_temp_sensor_info_t* in
 hf_u32_t Tmc9660TemperatureWrapper::GetCapabilities() const noexcept {
     if (!IsInitialized()) return HF_TEMP_CAP_NONE;
     Tmc9660Handler::Temperature* const tw = handler_.temperature();
-    return (tw != nullptr) ? tw->GetCapabilities() : HF_TEMP_CAP_NONE;
+    if (tw == nullptr) return HF_TEMP_CAP_NONE;
+    return tw->GetCapabilities();
 }
 
 //==============================================================================
