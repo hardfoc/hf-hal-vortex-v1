@@ -16,7 +16,7 @@ optionally wires its data-ready interrupt. Source: [`ImuManager.h`](../../lib/ma
 | Call | Notes |
 | --- | --- |
 | `GetBno08xHandler(index = 0)` | `Bno08xHandler*`, or `nullptr` |
-| `GetSensor(index = 0)` | `IBno08xDriverOps*`: the driver itself (enable reports, read the latest data) |
+| `VisitSensor(index, fn)` | Runs `fn(IBno08xDriverOps&)` on the driver (enable reports, `Update()`, read the latest data) under the manager and handler locks; `false` if the device is absent or not up |
 | `CreateExternalBno08xDevice(...)`, `DeleteExternalDevice(index)` | External IMUs |
 | `ConfigureInterrupt(index, callback, user_data)`, `EnableInterrupt`, `DisableInterrupt`, `IsInterruptEnabled`, `WaitForInterrupt(index, timeout_ms)` | Data-ready interrupt; the onboard IMU uses `PCAL_IMU_INT` through `GpioManager`. `callback` is a plain `void (*)(void*)`, called in task context |
 | `IsDeviceValid`, `GetActiveDeviceIndices`, `GetAvailableDevices`, `GetDeviceType` | Device bookkeeping |

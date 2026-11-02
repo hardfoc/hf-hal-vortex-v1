@@ -21,7 +21,7 @@ initialisation; see [Initialisation](../architecture/initialization.md#the-onboa
 | Call | Notes |
 | --- | --- |
 | `handler(index = 0)` | `Tmc9660Handler*`, or `nullptr` if there is no device at that index |
-| `visitDriver(func, index = 0)` | Calls `func(auto& driver)` with the typed TMC9660 driver (SPI or UART variant); the way to reach every TMCL parameter |
+| `visitDriver(func, index = 0)` | Calls `func(auto& driver)` with the typed TMC9660 driver (SPI or UART variant) while holding the device lock and the handler lock; the way to reach every TMCL parameter |
 | `setMotorVelocity` / `getMotorVelocity`, `setMotorPosition` / `getMotorPosition` | Motor (rotor) frame; take a value, a `tmc9660::units` unit and a `MotorContext` |
 | `setMotorMechanics(MotorMechanics)`, `getMotorMechanics()` | Gear ratio (motor turns per output turn) and output inversion |
 | `setLoadVelocity` / `getLoadVelocity`, `setLoadPosition` / `getLoadPosition` | Load (output shaft) frame, through the mechanics |

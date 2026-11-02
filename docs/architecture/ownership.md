@@ -44,11 +44,11 @@ same object; prefer the facade in application code so the start-up order is resp
 | Object | Owner | How other code reaches it |
 | --- | --- | --- |
 | SPI2 bus and its device handles, I2C bus and devices, UART, TWAI | The board binding (static storage in `bsp_bind/esp32c6/`); `CommChannelsManager` holds device indices and bounded runtime I2C slots | `GetSpiDevice()`, `GetI2cDevice()`, `GetUartBus()`, `GetCanBus()` return borrowed pointers |
-| `Tmc9660Handler` (onboard at index 0, external TMC9660s at indices 2 and 3) | `MotorController` (`std::array<std::unique_ptr<Tmc9660Handler>, 4>`) | `handler(index)`, `visitDriver()`; `GpioManager`, `AdcManager` and `TemperatureManager` borrow the onboard handler |
+| `Tmc9660Handler` (onboard at index 0, external TMC9660s at indices 2 and 3) | `MotorController` (`std::array<std::optional<Tmc9660Handler>, 4>`) | `handler(index)`, `visitDriver()`; `GpioManager`, `AdcManager` and `TemperatureManager` borrow the onboard handler |
 | `Pcal95555Handler` | `GpioManager` | Through the expander pins it registers |
 | GPIO pin objects | Static storage (see below); `GpioManager` holds one `BaseGpio*` per registered pin | `Get(name)` / `Get(enum)` return a `BaseGpio*`, valid until `GpioManager` is de-initialised |
 | `Bno08xHandler` (onboard at index 0, up to three external) | `ImuManager` | `GetBno08xHandler(index)` |
-| `As5047uHandler` (none by default, up to four) | `EncoderManager` | `GetAs5047uHandler(index)`, `GetAs5047uDriver(index)` |
+| `As5047uHandler` (none by default, up to four) | `EncoderManager` | `GetAs5047uHandler(index)`, `VisitDriver(index, fn)` |
 | `Tmc9660AdcWrapper` | `AdcManager` | `Get(name)` / `Get(enum)` return `BaseAdc*` |
 | ESP32 die temperature sensor | The board binding | `TemperatureManager` reads it by name |
 | `NtcTemperatureHandler`, TMC9660 temperature wrapper | `TemperatureManager` | Read calls by sensor name |

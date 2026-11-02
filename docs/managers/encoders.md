@@ -16,7 +16,7 @@ created automatically**: you create each device. Source: [`EncoderManager.h`](..
 | `ReadFieldStrength(index, EncoderFieldStrength&)` | AGC value and CORDIC magnitude: how strong the magnet looks |
 | `SetZeroPosition(index, counts)` | Zero offset |
 | `ReadAllAngles(...)`, `ReadAllVelocities(...)`, `CheckAllDevicesHealth()` | Every active device, under the manager lock |
-| `GetAs5047uHandler(index)`, `GetAs5047uDriver(index)` | The handler or the typed driver for chip features |
+| `GetAs5047uHandler(index)`, `VisitDriver(index, fn)` | The handler, or `fn(driver)` on the typed driver under the manager and handler locks, for chip features the manager does not wrap |
 | `IsDeviceValid`, `GetActiveDeviceIndices`, `GetAvailableDevices`, `GetDeviceType` | Device bookkeeping |
 | `GetLastError()`, `GetSystemDiagnostics(EncoderSystemDiagnostics&)`, `DumpStatistics()` | Counters and the last error |
 
@@ -39,7 +39,8 @@ if (enc.CreateAs5047uDevice(0, SpiDeviceId::AS5047U_POSITION_ENCODER)) {
 
 - **Nothing to read until you create a device.** `EnsureInitialized()` succeeds with zero devices.
 - **SPI2 is shared** with the TMC9660 (when on SPI) and the external slots.
-- **Every read takes the manager lock** and the handler lock for the SPI exchange. `GetAs5047uDriver()` returns the
-  raw driver without either; keep it to one task. See [Threading](../architecture/threading.md).
+- **Every read takes the manager lock** and the handler lock for the SPI exchange, and so does `VisitDriver()`; keep
+  the function you pass short, because it blocks every other encoder call. See
+  [Threading](../architecture/threading.md).
 - **The TMC9660 can use the same encoder.** The position benches feed the AS5047U angle to the host while the
   TMC9660 uses its own ABN input; decide which side owns the feedback before you close a loop on it.
