@@ -11,7 +11,7 @@
 
 static const char* TAG = "vortex_motor_comms";
 
-static void log_pin_state(const char* name, const std::shared_ptr<BaseGpio>& pin) noexcept {
+static void log_pin_state(const char* name, BaseGpio* pin) noexcept {
   if (!pin) {
     ESP_LOGW(TAG, "  %s: (not registered)", name);
     return;
