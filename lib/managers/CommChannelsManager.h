@@ -9,9 +9,10 @@
  *            - UART : TMC9660 TMCL protocol communication
  *            - CAN  : TWAI 500 kbps network bus
  *
- *          Follows hf HAL's ownership pattern: fixed-size arrays for known
- *          compile-time device counts, unique_ptr for bus objects, single
- *          RtosMutex for thread safety.
+ *          MCU-free: the bus objects are created by the board binding
+ *          (bsp_bind/VortexBoardBind.h, ESP32-C6 implementation in
+ *          bsp_bind/esp32c6/), which keeps them in static storage. This manager
+ *          holds device indices and non-owning Base* pointers, and one RtosMutex.
  *
  *          Extends with runtime I2C device creation for ImuManager
  *          (external BNO08x devices).
@@ -27,13 +28,6 @@
 #include <cstdint>
 #include <memory>
 
-// Forward declarations — defined in .cpp where types are complete
-class EspSpiBus;
-class EspSpiDevice;
-class EspI2cBus;
-class EspI2cDevice;
-class EspUart;
-class EspCan;
 
 #include "base/BaseSpi.h"
 #include "base/BaseI2c.h"
@@ -326,27 +320,26 @@ private:
     bool Initialize() noexcept;
 
     //==========================================================================
-    // HARDWARE RESOURCES — heap-allocated via unique_ptr (singleton lifetime)
+    // BUS RESOURCES — created by the board binding (bsp_bind/VortexBoardBind.h),
+    // which owns the bus objects in static storage; this manager keeps indices
+    // and non-owning pointers.
     //==========================================================================
 
     // SPI bus + device indices
     static constexpr uint8_t kSpiDeviceCount =
         static_cast<uint8_t>(SpiDeviceId::DEVICE_COUNT);
-
-    std::unique_ptr<EspSpiBus> spi_bus_;
     std::array<int, kSpiDeviceCount> spi_device_indices_{};
     bool spi_bus_valid_{false};
+    bool uart_bus_valid_{false};
+    bool can_bus_valid_{false};
 
     // I2C bus — built-in devices + bounded runtime slots
     static constexpr uint8_t kI2cBuiltinCount =
         static_cast<uint8_t>(I2cDeviceId::DEVICE_COUNT);
     static constexpr uint8_t kMaxI2cRuntimeDevices = 4;
-
-    std::unique_ptr<EspI2cBus> i2c_bus_;
     std::array<int, kI2cBuiltinCount> i2c_builtin_indices_{};
     bool i2c_bus_valid_{false};
 
-    /// Slot for tracking runtime-created I2C devices (external IMUs, etc.)
     struct RuntimeI2cSlot {
         int device_index{-1};
         uint8_t address{0xFF};
@@ -354,13 +347,9 @@ private:
     };
     std::array<RuntimeI2cSlot, kMaxI2cRuntimeDevices> i2c_runtime_slots_{};
 
-    // UART bus (TMC9660 TMCL)
-    std::unique_ptr<EspUart> uart_bus_;
-    bool uart_bus_valid_{false};
-
-    // CAN bus
-    std::unique_ptr<EspCan> can_bus_;
-    bool can_bus_valid_{false};
+    // UART bus (TMC9660 TMCL) and CAN bus
+    BaseUart* uart_bus_{nullptr};
+    BaseCan* can_bus_{nullptr};
 
     std::atomic<bool> initialized_{false};
     std::atomic<CommError> last_error_{CommError::SUCCESS};

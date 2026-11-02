@@ -2,27 +2,24 @@
  * @file CommChannelsManager.cpp
  * @brief Implementation of the Vortex V1 communication channels manager.
  *
- * @details Configures four communication buses for the Vortex board:
+ * @details Configures four communication buses for the Vortex board through the board
+ *          binding (bsp_bind/VortexBoardBind.h); no MCU type appears here:
  *          - UART : TMC9660 TMCL protocol (115200 8N1)
  *          - SPI  : TMC9660 (Mode 3) + AS5047U (Mode 1) + 2 ext (Mode 0)
  *          - I2C  : BNO08x IMU (0x4A) + PCAL95555 (0x20) @ 100 kHz; BNO device uses extended
  *                   scl_wait_us for SH-2 clock stretching (see add_builtin_device)
  *          - CAN  : TWAI 500 kbps
  *
- * @version 2.0
+ * @version 2.1
  */
 
 #include "CommChannelsManager.h"
 
-#include "mcu/esp32/EspSpi.h"
-#include "mcu/esp32/EspI2c.h"
-#include "mcu/esp32/EspUart.h"
-#include "mcu/esp32/EspCan.h"
+#include "bsp_bind/VortexBoardBind.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 #include "handlers/logger/Logger.h"
 
 #include <algorithm>
-#include <vector>
 
 static constexpr const char* TAG = "VortexComm";
 
@@ -74,166 +71,96 @@ bool CommChannelsManager::EnsureInitialized() noexcept {
 bool CommChannelsManager::Initialize() noexcept {
     Logger::GetInstance().Info(TAG, "Initializing Vortex V1 communication channels");
 
-    //==========================================================================
-    // UART — TMC9660 TMCL protocol (115200 8N1)
-    //==========================================================================
+    //--------------------------------------------------------------------------
+    // 1. UART — TMC9660 TMCL (115200 8N1, port 1)
+    //--------------------------------------------------------------------------
     {
         auto* tx_map = GetGpioMapping(HfFunctionalGpioPin::UART_TXD);
         auto* rx_map = GetGpioMapping(HfFunctionalGpioPin::UART_RXD);
-
         if (tx_map && rx_map) {
-            hf_uart_config_t uart_cfg = {};
-            // Port 1, NOT 0. ESP-IDF's `CONFIG_ESP_CONSOLE_UART_NUM=0` keeps UART0
-            // claimed by the console driver (mirrored alongside USB-Serial-JTAG).
-            // Sharing UART0 between the console and the TMC9660 means every
-            // `ESP_LOGI` becomes raw bytes on the same TX line that carries
-            // bootloader frames, the IC can never sync to 0x55, and any reply is
-            // consumed by the console driver before our HAL sees it.
-            uart_cfg.port_number     = 1;
-            uart_cfg.baud_rate       = 115200;
-            uart_cfg.data_bits       = hf_uart_data_bits_t::HF_UART_DATA_8_BITS;
-            uart_cfg.parity          = hf_uart_parity_t::HF_UART_PARITY_DISABLE;
-            uart_cfg.stop_bits       = hf_uart_stop_bits_t::HF_UART_STOP_BITS_1;
-            uart_cfg.flow_control    = hf_uart_flow_ctrl_t::HF_UART_HW_FLOWCTRL_DISABLE;
-            uart_cfg.tx_pin          = tx_map->physical_pin;
-            uart_cfg.rx_pin          = rx_map->physical_pin;
-            uart_cfg.rts_pin         = HF_UART_IO_UNUSED;
-            uart_cfg.cts_pin         = HF_UART_IO_UNUSED;
-            uart_cfg.tx_buffer_size  = 256;
-            uart_cfg.rx_buffer_size  = 512;
-            uart_cfg.event_queue_size = 20;
-            uart_cfg.operating_mode  = hf_uart_operating_mode_t::HF_UART_MODE_INTERRUPT;
-            uart_cfg.timeout_ms      = 100;
-            uart_cfg.enable_pattern_detection = false;
-            uart_cfg.enable_wakeup   = false;
-            uart_cfg.enable_loopback = false;
-
-            uart_bus_ = std::make_unique<EspUart>(uart_cfg);
-            if (uart_bus_ && uart_bus_->EnsureInitialized()) {
-                uart_bus_valid_ = true;
+            vortex::bsp::UartSpec spec{};
+            spec.port = 1;
+            spec.baud = 115200;
+            spec.tx_pin = tx_map->physical_pin;
+            spec.rx_pin = rx_map->physical_pin;
+            uart_bus_ = vortex::bsp::UartOpen(spec);
+            uart_bus_valid_ = (uart_bus_ != nullptr);
+            if (uart_bus_valid_) {
                 Logger::GetInstance().Info(TAG, "UART configured: 115200 8N1, TX=GPIO%d, RX=GPIO%d",
                                           tx_map->physical_pin, rx_map->physical_pin);
             } else {
                 Logger::GetInstance().Error(TAG, "UART initialization failed");
-                uart_bus_.reset();
             }
         } else {
             Logger::GetInstance().Error(TAG, "UART pin mapping missing");
         }
     }
 
-    //==========================================================================
-    // SPI BUS (SPI2_HOST) — TMC9660 + AS5047U + 2 external slots
-    //==========================================================================
+    //--------------------------------------------------------------------------
+    // 2. SPI2 bus — TMC9660, AS5047U and the two external chip selects
+    //--------------------------------------------------------------------------
     {
         auto* miso_map = GetGpioMapping(HfFunctionalGpioPin::SPI2_MISO);
         auto* mosi_map = GetGpioMapping(HfFunctionalGpioPin::SPI2_MOSI);
         auto* sck_map  = GetGpioMapping(HfFunctionalGpioPin::SPI2_SCK);
-
         if (miso_map && mosi_map && sck_map) {
-            hf_spi_bus_config_t spi_cfg = {};
-            spi_cfg.host        = static_cast<hf_host_id_t>(1); // SPI2_HOST
-            spi_cfg.miso_pin    = miso_map->physical_pin;
-            spi_cfg.mosi_pin    = mosi_map->physical_pin;
-            spi_cfg.sclk_pin    = sck_map->physical_pin;
-            spi_cfg.dma_channel = 0;    // auto-select
-            spi_cfg.timeout_ms  = 1000;
-            spi_cfg.use_iomux   = true;
-
-            spi_bus_ = std::make_unique<EspSpiBus>(spi_cfg);
-            if (spi_bus_ && spi_bus_->Initialize()) {
+            vortex::bsp::SpiBusSpec bus{};
+            bus.host = 1;  // SPI2
+            bus.miso_pin = miso_map->physical_pin;
+            bus.mosi_pin = mosi_map->physical_pin;
+            bus.sclk_pin = sck_map->physical_pin;
+            bus.timeout_ms = 1000;
+            if (vortex::bsp::SpiOpen(bus)) {
                 spi_bus_valid_ = true;
-
-                // Create devices for each CS pin (order matches SpiDeviceId enum)
                 for (uint8_t i = 0; i < kSpiDeviceCount; ++i) {
                     auto* cs_map = GetGpioMapping(kSpiCsPins[i]);
                     if (!cs_map) continue;
-
-                    hf_spi_device_config_t dev_cfg = {};
-                    dev_cfg.cs_pin         = cs_map->physical_pin;
-                    dev_cfg.clock_speed_hz = 10'000'000; // 10 MHz default
-
-                    // Per-device SPI mode
-                    if (i == static_cast<uint8_t>(SpiDeviceId::TMC9660_MOTOR_CONTROLLER)) {
-                        dev_cfg.mode = hf_spi_mode_t::HF_SPI_MODE_3;
-                    } else if (i == static_cast<uint8_t>(SpiDeviceId::AS5047U_POSITION_ENCODER)) {
-                        dev_cfg.mode = hf_spi_mode_t::HF_SPI_MODE_1;
-                    } else {
-                        dev_cfg.mode = hf_spi_mode_t::HF_SPI_MODE_0;
-                    }
-
-                    int idx = spi_bus_->CreateDevice(dev_cfg);
+                    vortex::bsp::SpiDeviceSpec dev{};
+                    dev.cs_pin = cs_map->physical_pin;
+                    dev.clock_hz = 10'000'000;  // 10 MHz default
+                    dev.mode = (i == static_cast<uint8_t>(SpiDeviceId::TMC9660_MOTOR_CONTROLLER)) ? 3
+                             : (i == static_cast<uint8_t>(SpiDeviceId::AS5047U_POSITION_ENCODER)) ? 1
+                             : 0;
+                    const int idx = vortex::bsp::SpiAddDevice(dev);
                     spi_device_indices_[i] = idx;
                     Logger::GetInstance().Info(TAG, "SPI device %d added (CS=GPIO%d, mode=%d, idx=%d)",
-                                              i, cs_map->physical_pin,
-                                              static_cast<int>(dev_cfg.mode), idx);
+                                              i, cs_map->physical_pin, dev.mode, idx);
                 }
             } else {
                 Logger::GetInstance().Error(TAG, "SPI bus initialization failed");
-                spi_bus_.reset();
             }
         } else {
             Logger::GetInstance().Error(TAG, "SPI pin mapping missing");
         }
     }
 
-    //==========================================================================
-    // I2C BUS — BNO08x IMU (0x4A) + PCAL95555 GPIO expander (0x20)
-    //==========================================================================
+    //--------------------------------------------------------------------------
+    // 3. I2C bus — BNO08x IMU + PCAL95555 expander
+    //--------------------------------------------------------------------------
     {
         auto* sda_map = GetGpioMapping(HfFunctionalGpioPin::I2C_SDA);
         auto* scl_map = GetGpioMapping(HfFunctionalGpioPin::I2C_SCL);
-
         if (sda_map && scl_map) {
-            hf_i2c_master_bus_config_t i2c_cfg = {};
-            i2c_cfg.i2c_port   = I2C_NUM_0;
-            i2c_cfg.sda_io_num = static_cast<hf_pin_num_t>(sda_map->physical_pin);
-            i2c_cfg.scl_io_num = static_cast<hf_pin_num_t>(scl_map->physical_pin);
-            i2c_cfg.flags.enable_internal_pullup = sda_map->has_pull && scl_map->has_pull;
-            i2c_cfg.clk_source = hf_i2c_clock_source_t::HF_I2C_CLK_SRC_DEFAULT;
-            i2c_cfg.glitch_ignore_cnt = hf_i2c_glitch_filter_t::HF_I2C_GLITCH_FILTER_7_CYCLES;
-            // SYNC mode → trans_queue_depth must be 0 (EspI2cBus enforces this and
-            // logs a warning when non-zero). ESP-IDF v5.5 returns ESP_ERR_INVALID_STATE
-            // from i2c_master_transmit_receive when sync APIs run on an async-configured
-            // bus, which manifests as the "clear bus failed / reset hardware failed"
-            // chain we previously saw on hardware.
-            i2c_cfg.trans_queue_depth = 0;
-            // ESP32-C6 / IDF: priority 5 is rejected by i2c_new_master_bus ("invalid interrupt priority").
-            // 0 selects the driver default (matches EspI2c comprehensive tests on this platform).
-            i2c_cfg.intr_priority = 0;
-            i2c_cfg.flags.allow_pd = false;
-
-            i2c_bus_ = std::make_unique<EspI2cBus>(i2c_cfg);
-            if (i2c_bus_ && i2c_bus_->Initialize()) {
+            vortex::bsp::I2cBusSpec bus{};
+            bus.port = 0;
+            bus.sda_pin = sda_map->physical_pin;
+            bus.scl_pin = scl_map->physical_pin;
+            bus.internal_pullups = sda_map->has_pull && scl_map->has_pull;
+            if (vortex::bsp::I2cOpen(bus)) {
                 i2c_bus_valid_ = true;
                 Logger::GetInstance().Info(TAG, "I2C bus configured (SDA=GPIO%d, SCL=GPIO%d, sync mode)",
                                           sda_map->physical_pin, scl_map->physical_pin);
-                // EspI2cBus::Initialize() already ran i2c_master_bus_reset once. A second
-                // reset here often logs "clear bus failed" / ESP_ERR_INVALID_STATE on
-                // ESP32-C6 without improving bring-up — skip to keep the first PCAL xfer clean.
 
-                // 100 kHz for the shared I²C bus by default — matches the proven
-                // PCAL95555 / BNO08x bring-up examples and is far more tolerant of
-                // weak (internal) pull-ups during board bring-up.
+                // 100 kHz is safer for PCAL95555 / BNO08x on long traces and weak pull-ups.
                 constexpr uint32_t kBuiltinSclHz = 100000;
-
                 auto add_builtin_device = [&](I2cDeviceId id, uint8_t addr,
                                               const char* name) noexcept {
-                    hf_i2c_device_config_t dev = {};
-                    dev.device_address    = addr;
-                    dev.dev_addr_length   = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
-                    dev.scl_speed_hz      = kBuiltinSclHz;
-                    dev.disable_ack_check = false;
-                    // BNO08x SH-2 hub stretches SCL while preparing SHTP payloads. Our standalone
-                    // Esp32Bno08xI2cBus example sets scl_wait_us = 50000; leaving the default (0)
-                    // relies on ESP-IDF's per-byte stretch limit and commonly trips I2C hardware
-                    // timeouts on ESP32-class masters (see hf-bno08x-driver esp32_bno08x_bus.hpp).
-                    // PCAL95555 does not need an extended wait; keep 0 for that device.
-                    if (id == I2cDeviceId::BNO08X_IMU) {
-                        dev.scl_wait_us = 50000;
-                    }
-
-                    int idx = i2c_bus_->CreateDevice(dev);
+                    vortex::bsp::I2cDeviceSpec dev{};
+                    dev.address = addr;
+                    dev.scl_hz = kBuiltinSclHz;
+                    // BNO08x SH-2 clock-stretches well past the default (see hf-bno08x-driver ESP32 examples).
+                    dev.scl_wait_us = (id == I2cDeviceId::BNO08X_IMU) ? 50000u : 0u;
+                    const int idx = vortex::bsp::I2cAddDevice(dev);
                     i2c_builtin_indices_[static_cast<uint8_t>(id)] = idx;
                     if (idx < 0) {
                         Logger::GetInstance().Error(TAG,
@@ -241,9 +168,8 @@ bool CommChannelsManager::Initialize() noexcept {
                                                     name, addr);
                         return;
                     }
-
-                    BaseI2c* dev_iface = i2c_bus_->GetDevice(idx);
-                    bool inited = dev_iface && dev_iface->EnsureInitialized();
+                    BaseI2c* dev_iface = vortex::bsp::I2cDevice(idx);
+                    const bool inited = dev_iface && dev_iface->EnsureInitialized();
                     Logger::GetInstance().Info(
                         TAG,
                         "%s I2C device added (addr=0x%02X, idx=%d, scl=%lu Hz, scl_wait_us=%lu, "
@@ -252,50 +178,38 @@ bool CommChannelsManager::Initialize() noexcept {
                         static_cast<unsigned long>(dev.scl_wait_us), inited ? "yes" : "no");
                 };
 
-                // Device 0: BNO08x IMU @ 0x4A
                 add_builtin_device(I2cDeviceId::BNO08X_IMU, 0x4A, "BNO08x IMU");
-
-                // Device 1: PCAL95555 GPIO expander @ 0x20
                 add_builtin_device(I2cDeviceId::PCAL9555_GPIO_EXPANDER, 0x20,
                                    "PCAL95555");
             } else {
                 Logger::GetInstance().Error(TAG, "I2C bus initialization failed");
-                i2c_bus_.reset();
             }
         } else {
             Logger::GetInstance().Error(TAG, "I2C pin mapping missing");
         }
     }
 
-    //==========================================================================
-    // CAN (TWAI) BUS — 500 kbps
-    //==========================================================================
+    //--------------------------------------------------------------------------
+    // 4. CAN — TWAI 500 kbps (non-critical)
+    //--------------------------------------------------------------------------
     {
         auto* tx_map = GetGpioMapping(HfFunctionalGpioPin::TWAI_TX);
         auto* rx_map = GetGpioMapping(HfFunctionalGpioPin::TWAI_RX);
-
         if (tx_map && rx_map) {
-            hf_esp_can_config_t can_cfg = {};
-            can_cfg.controller_id = hf_can_controller_id_t::HF_CAN_CONTROLLER_0;
-            can_cfg.tx_pin    = tx_map->physical_pin;
-            can_cfg.rx_pin    = rx_map->physical_pin;
-            can_cfg.baud_rate = 500000;
-
-            can_bus_ = std::make_unique<EspCan>(can_cfg);
-            if (can_bus_ && can_bus_->EnsureInitialized()) {
-                can_bus_valid_ = true;
+            vortex::bsp::CanSpec spec{};
+            spec.tx_pin = tx_map->physical_pin;
+            spec.rx_pin = rx_map->physical_pin;
+            spec.bitrate = 500000;
+            can_bus_ = vortex::bsp::CanOpen(spec);
+            can_bus_valid_ = (can_bus_ != nullptr);
+            if (can_bus_valid_) {
                 Logger::GetInstance().Info(TAG, "CAN bus configured (TX=GPIO%d, RX=GPIO%d, 500kbps)",
                                           tx_map->physical_pin, rx_map->physical_pin);
             } else {
                 Logger::GetInstance().Warn(TAG, "CAN bus init failed — non-critical");
-                can_bus_.reset();
             }
         }
     }
-
-    //==========================================================================
-    // RESULT
-    //==========================================================================
 
     Logger::GetInstance().Info(TAG, "Vortex V1 comm channels initialized (UART=%s, SPI=%s, I2C=%s, CAN=%s)",
                               uart_bus_valid_ ? "OK" : "FAIL",
@@ -303,7 +217,7 @@ bool CommChannelsManager::Initialize() noexcept {
                               i2c_bus_valid_  ? "OK" : "FAIL",
                               can_bus_valid_  ? "OK" : "FAIL");
 
-    // At least SPI or I2C must succeed (hard requirements for motor + sensor)
+    // At minimum SPI or I2C must work for the system to be useful
     return spi_bus_valid_ || i2c_bus_valid_;
 }
 
@@ -320,7 +234,7 @@ BaseSpi* CommChannelsManager::GetSpiDevice(uint8_t device_index) noexcept {
     if (device_index >= kSpiDeviceCount) return nullptr;
     int idx = spi_device_indices_[device_index];
     if (idx < 0) return nullptr;
-    return spi_bus_->GetDevice(idx);
+    return vortex::bsp::SpiDevice(idx);
 }
 
 //==============================================================================
@@ -333,14 +247,14 @@ BaseI2c* CommChannelsManager::GetI2cDevice(I2cDeviceId device_id) noexcept {
     if (id >= kI2cBuiltinCount) return nullptr;
     int idx = i2c_builtin_indices_[id];
     if (idx < 0) return nullptr;
-    return i2c_bus_->GetDevice(idx);
+    return vortex::bsp::I2cDevice(idx);
 }
 
 BaseI2c* CommChannelsManager::GetI2cDevice(uint8_t bus_index, int device_index) noexcept {
     if (bus_index != 0) return nullptr; // only Bus 0 supported
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) return nullptr;
     if (device_index < 0) return nullptr;
-    return i2c_bus_->GetDevice(device_index);
+    return vortex::bsp::I2cDevice(device_index);
 }
 
 //==============================================================================
@@ -348,7 +262,7 @@ BaseI2c* CommChannelsManager::GetI2cDevice(uint8_t bus_index, int device_index) 
 //==============================================================================
 
 int CommChannelsManager::CreateI2cDevice(uint8_t device_address, uint32_t speed_hz) noexcept {
-    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         Logger::GetInstance().Error(TAG, "Cannot create I2C device: bus not available");
         return -1;
     }
@@ -383,13 +297,11 @@ int CommChannelsManager::CreateI2cDevice(uint8_t device_address, uint32_t speed_
     }
 
     // Create device on the I2C bus
-    hf_i2c_device_config_t dev_cfg = {};
-    dev_cfg.device_address   = device_address;
-    dev_cfg.dev_addr_length  = hf_i2c_address_bits_t::HF_I2C_ADDR_7_BIT;
-    dev_cfg.scl_speed_hz     = speed_hz;
-    dev_cfg.disable_ack_check = false;
+    vortex::bsp::I2cDeviceSpec dev{};
+    dev.address = device_address;
+    dev.scl_hz = speed_hz;
 
-    int device_index = i2c_bus_->CreateDevice(dev_cfg);
+    int device_index = vortex::bsp::I2cAddDevice(dev);
     if (device_index < 0) {
         Logger::GetInstance().Error(TAG, "Failed to create I2C device at 0x%02X", device_address);
         return -1;
@@ -429,9 +341,7 @@ bool CommChannelsManager::RemoveI2cDevice(int device_index) noexcept {
     for (auto& slot : i2c_runtime_slots_) {
         if (slot.active && slot.device_index == device_index) {
             // Remove from bus
-            if (i2c_bus_) {
-                i2c_bus_->RemoveDevice(device_index);
-            }
+            (void)vortex::bsp::I2cRemoveDevice(device_index);
             Logger::GetInstance().Info(TAG, "Removed runtime I2C device (addr=0x%02X, idx=%d)",
                                       slot.address, device_index);
             slot = RuntimeI2cSlot{}; // Reset to default
@@ -456,35 +366,28 @@ bool CommChannelsManager::RemoveI2cDevice(int device_index) noexcept {
 //==============================================================================
 
 bool CommChannelsManager::I2cProbeAddress(uint8_t address, uint32_t timeout_ms) noexcept {
-    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         return false;
     }
-    return i2c_bus_->ProbeDevice(static_cast<uint16_t>(address),
-                                 static_cast<uint32_t>(timeout_ms));
+    return vortex::bsp::I2cProbe(address, timeout_ms);
 }
 
 size_t CommChannelsManager::I2cScanBus(uint8_t* out, size_t max_results) noexcept {
-    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         return 0;
     }
     if (out == nullptr || max_results == 0) {
         return 0;
     }
 
-    std::vector<uint16_t> found;
-    const size_t total = i2c_bus_->ScanDevices(found, 0x08, 0x77, /*timeout_ms*/ 25);
-    const size_t copy_count = std::min(total, max_results);
-    for (size_t i = 0; i < copy_count; ++i) {
-        out[i] = static_cast<uint8_t>(found[i] & 0x7F);
-    }
-    return copy_count;
+    return vortex::bsp::I2cScan(out, max_results, 0x08, 0x77, /*timeout_ms*/ 25);
 }
 
 bool CommChannelsManager::I2cResetBus() noexcept {
-    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_ || !i2c_bus_) {
+    if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         return false;
     }
-    return i2c_bus_->ResetBus();
+    return vortex::bsp::I2cReset();
 }
 
 //==============================================================================
@@ -493,12 +396,12 @@ bool CommChannelsManager::I2cResetBus() noexcept {
 
 BaseUart* CommChannelsManager::GetUartBus() noexcept {
     if (!initialized_.load(std::memory_order_acquire) || !uart_bus_valid_) return nullptr;
-    return uart_bus_.get();
+    return uart_bus_;
 }
 
 BaseCan* CommChannelsManager::GetCanBus() noexcept {
     if (!initialized_.load(std::memory_order_acquire) || !can_bus_valid_) return nullptr;
-    return can_bus_.get();
+    return can_bus_;
 }
 
 //==============================================================================
@@ -571,22 +474,26 @@ bool CommChannelsManager::Deinitialize() noexcept {
 
     // Clean up runtime I2C devices first
     for (auto& slot : i2c_runtime_slots_) {
-        if (slot.active && i2c_bus_) {
-            i2c_bus_->RemoveDevice(slot.device_index);
+        if (slot.active) {
+            (void)vortex::bsp::I2cRemoveDevice(slot.device_index);
         }
         slot = RuntimeI2cSlot{};
     }
 
-    spi_bus_.reset();
+    vortex::bsp::SpiClose();
+    spi_device_indices_.fill(-1);
     spi_bus_valid_ = false;
 
-    i2c_bus_.reset();
+    vortex::bsp::I2cClose();
+    i2c_builtin_indices_.fill(-1);
     i2c_bus_valid_ = false;
 
-    uart_bus_.reset();
+    vortex::bsp::UartClose();
+    uart_bus_ = nullptr;
     uart_bus_valid_ = false;
 
-    can_bus_.reset();
+    vortex::bsp::CanClose();
+    can_bus_ = nullptr;
     can_bus_valid_ = false;
 
     initialized_.store(false, std::memory_order_release);
