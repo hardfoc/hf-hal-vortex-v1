@@ -16,6 +16,7 @@
 #include <functional>
 #include <array>
 #include "RtosMutex.h"
+#include "SignalSemaphore.h"
 #include "handlers/bno08x/Bno08xHandler.h"
 
 // Forward declarations (types defined in other managers)
@@ -582,7 +583,8 @@ private:
     bool interrupt_configured_ = false;
     bool interrupt_enabled_ = false;
     std::atomic<uint32_t> interrupt_count_{0};
-    void* interrupt_semaphore_ = nullptr;  ///< FreeRTOS semaphore for WaitForInterrupt()
+    SignalSemaphore interrupt_semaphore_{"VxImuInt"};  ///< Signalled per INT edge; WaitForInterrupt() takes it
+    bool interrupt_semaphore_ready_ = false;
 };
 
 //==============================================================================

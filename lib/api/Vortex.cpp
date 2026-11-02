@@ -236,7 +236,7 @@ bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
     // 3. GpioManager — extract from diagnostics
     {
         GpioSystemDiagnostics gdiag{};
-        gpio.GetSystemDiagnostics(gdiag);
+        (void)gpio.GetSystemDiagnostics(gdiag);
         addEntry(2, "GPIO", gpio_initialized_.load(),
                  static_cast<uint8_t>(gdiag.last_error));
     }
@@ -248,7 +248,7 @@ bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
     // 5. AdcManager — extract from diagnostics
     {
         AdcSystemDiagnostics adiag{};
-        adc.GetSystemDiagnostics(adiag);
+        (void)adc.GetSystemDiagnostics(adiag);
         addEntry(4, "ADC", adc_initialized_.load(),
                  static_cast<uint8_t>(adiag.last_error));
     }
@@ -268,7 +268,7 @@ bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
     // 9. TemperatureManager — extract from diagnostics
     {
         TempSystemDiagnostics tdiag{};
-        temp.GetSystemDiagnostics(tdiag);
+        (void)temp.GetSystemDiagnostics(tdiag);
         addEntry(8, "Temperature", temp_initialized_.load(),
                  static_cast<uint8_t>(tdiag.last_error));
     }
@@ -322,7 +322,7 @@ bool Vortex::PerformHealthCheck() noexcept {
     
     // Collect per-manager error health
     ManagerHealthSnapshot health{};
-    CollectManagerHealth(health);
+    (void)CollectManagerHealth(health);
     
     // Log per-manager status with error codes
     for (size_t i = 0; i < health.count; ++i) {
@@ -359,11 +359,11 @@ bool Vortex::Shutdown() noexcept {
 
     // Reverse initialization order: Temp → … → Comms → NVS
     if (temp_initialized_) {
-        temp.Deinitialize();
+        (void)temp.Deinitialize();
         temp_initialized_ = false;
     }
     if (leds_initialized_) {
-        leds.Deinitialize();
+        (void)leds.Deinitialize();
         leds_initialized_ = false;
     }
     if (encoders_initialized_) {
@@ -375,7 +375,7 @@ bool Vortex::Shutdown() noexcept {
         imu_initialized_ = false;
     }
     if (adc_initialized_) {
-        adc.Deinitialize();
+        (void)adc.Deinitialize();
         adc_initialized_ = false;
     }
     if (motors_initialized_) {
@@ -383,7 +383,7 @@ bool Vortex::Shutdown() noexcept {
         motors_initialized_ = false;
     }
     if (gpio_initialized_) {
-        gpio.Deinitialize();
+        (void)gpio.Deinitialize();
         gpio_initialized_ = false;
     }
     if (comms_initialized_) {
@@ -391,7 +391,7 @@ bool Vortex::Shutdown() noexcept {
         comms_initialized_ = false;
     }
     if (nvs_initialized_) {
-        nvs.Deinitialize();
+        (void)nvs.Deinitialize();
         nvs_initialized_ = false;
     }
 
