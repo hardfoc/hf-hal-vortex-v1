@@ -40,12 +40,18 @@ the chip temperature from the TMC9660.
 
 ## What happens when a step fails
 
-- **Required steps (NVS, comms, GPIO, LEDs).** If one fails, `EnsureInitialized()` logs an error, stops and returns
-  `false`. `IsInitialized()` stays `false`, and calling `EnsureInitialized()` again retries from the start.
+- **Required steps (NVS, comms, GPIO, LEDs).** If one fails, `EnsureInitialized()` fails *closed*: it shuts down,
+  in reverse order, every manager that had come up, so no bus, pin or handler is left open behind a facade that
+  says it is not initialised. It returns `false`, `GetLastError()` says why (`BusUnavailable`, `InitFailed`, ...), and
+  calling `EnsureInitialized()` again retries from the start. Each manager also fails closed on its own: a manager
+  whose `Initialize()` fails releases what it had opened before it returns.
 - **Best-effort steps (motors, ADC, IMU, encoders, temperature).** A failure is logged as a warning and the manager
   stays unavailable; the remaining steps still run and `EnsureInitialized()` returns `true`. The log then says
   `Initialized in degraded mode` and lists which of Motors, ADC, IMU, Enc and Temp are `OFF`. Check
   `vortex.motors.IsInitialized()` (or the [diagnostics](errors.md)) before relying on a best-effort manager.
+- **The motor controller is the exception to "just a warning".** If `MotorController` does not come up, the facade
+  drives the TMC9660 driver-enable line (`PCAL_TMC_DRV_EN`) inactive, so a chip that half-booted cannot leave its
+  gate drivers enabled. `Shutdown()` does the same before it releases the motor controller.
 
 This lets a bench with only some chips fitted, or with the motor supply off, still come up and log.
 

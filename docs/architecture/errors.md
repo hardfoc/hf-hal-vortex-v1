@@ -11,6 +11,14 @@ in the return value. This page lists the error types, where to read the last err
 3. Every manager has `GetLastError()`. Prefer the value a call returns: the last error is shared by every caller
    of that manager and may already describe a later call.
 
+## One catalog: `ManagerError`
+
+Each manager keeps its own error type (table below), and the facade maps all of them onto one catalog,
+[`ManagerError`](../../lib/api/VortexDiagnostics.h): `None`, `NotInitialized`, `DependencyNotReady`,
+`BusUnavailable`, `DeviceNotFound`, `InitFailed`, `CommunicationFailed`, `InvalidParameter`, `HardwareFault`,
+`Unknown`. `Vortex::GetLastError()` uses it to say why the last `EnsureInitialized()` failed, and
+`CollectDiagnostics()` reports every manager in it, with the manager's own code alongside.
+
 ## Error types by manager
 
 | Manager | Error type | To text |
@@ -32,10 +40,12 @@ are shared with every HardFOC board.
 ## System diagnostics
 
 All of these are on the `Vortex` object. `CollectManagerHealth()` and `PerformHealthCheck()` return `false` until
-`EnsureInitialized()` has succeeded.
+`EnsureInitialized()` has succeeded; `CollectDiagnostics()` works at any time.
 
 | Call | Gives you |
 | --- | --- |
+| `CollectDiagnostics(VortexBoardDiagnostics&)` | Everything in one snapshot, without a bus transfer or an allocation: per manager (in init order) whether it is required, up, and its `ManagerError`; the four buses; GPIO pin, motor, IMU, encoder, ADC and temperature counts; failed components, warnings, start-up time. Safe from a periodic health task |
+| `GetLastError()` | `ManagerError` of the last failed `EnsureInitialized()` (`None` after a success) |
 | `GetSystemDiagnostics(VortexSystemDiagnostics&)` | Which managers initialised, how many failed (and their names), start-up time, uptime; `system_healthy` |
 | `GetComponentInitializationStatus()` | `std::array<bool, 9>`, one flag per manager |
 | `GetFailedComponents(out, max)` | Names of managers whose initialisation failed |

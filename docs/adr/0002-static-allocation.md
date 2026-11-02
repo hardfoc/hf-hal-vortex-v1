@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Accepted (records the current design, with the exceptions listed) |
+| Status | Accepted; tightened by the static-allocation change (see "Decision" and "Consequences") |
 | Date | 2026-11-01 |
 
 ## Context
@@ -29,9 +29,15 @@ Option 2:
   (`SpiDeviceId::DEVICE_COUNT`), the handler slots (`MAX_TMC9660_DEVICES`, `MAX_IMU_DEVICES`,
   `MAX_ENCODER_DEVICES`, all 4), the bounded runtime I2C slots, and the facade's diagnostics arrays
   (`kVortexManagerCount`).
-- Bus objects, handlers and drivers are held in `std::unique_ptr` (GPIO pins in `std::shared_ptr`, because their
-  owners differ), created when the owning manager initialises or when you create a device.
-- No manager allocates in its read, write, motion or LED calls.
+- Handlers live in place in fixed slots (`std::array<std::optional<Handler>, N>`, emplaced when a device is created,
+  reset when it is deleted or the manager shuts down). Bus objects and MCU pins live in the board binding's static
+  storage. GPIO entries are plain `BaseGpio*` into those objects.
+- `lib/api` and `lib/managers` contain no `new`, `make_unique`, `make_shared` or `std::function`; callbacks are a
+  function pointer plus a `void*`.
+- No manager allocates in its read, write, motion, LED or diagnostics calls; a host test counts `operator new`
+  across steady-state calls and requires zero.
+- Initialisation fails closed: a manager whose bring-up fails releases what it opened, and the facade shuts down
+  every manager again if a required one fails.
 
 ## Consequences
 
@@ -40,10 +46,9 @@ Option 2:
 
 Where this is not strictly true today:
 
-- Run-time device creation allocates: `CreateI2cDevice()`, `MotorController::CreateExternalDevice()`,
-  `ImuManager::CreateExternalBno08xDevice()`, `EncoderManager::CreateAs5047uDevice()`. Create devices during your
-  own start-up.
-- Most managers use `std::make_unique` / `std::make_shared`; with exceptions off, an allocation failure aborts
-  instead of failing initialisation. Only `TemperatureManager` uses `hf::utils::make_unique_nothrow`.
-- `ImuManager::ConfigureInterrupt()` stores a `std::function`, which may allocate for a capturing callback.
-- Allocations inside ESP-IDF and the chip drivers are not covered by this decision.
+- Run-time device creation (`MotorController::CreateExternalDevice()`, `ImuManager::CreateExternalBno08xDevice()`,
+  `EncoderManager::CreateAs5047uDevice()`) emplaces into a fixed slot; the manager itself no longer allocates. The
+  handler it builds may (next point), so create devices during your own start-up.
+- Allocations inside hf-core handlers and the ESP-IDF drivers are outside this decision: `Tmc9660Handler`,
+  `As5047uHandler`, `Bno08xHandler`, `Pcal95555Handler`, `NtcTemperatureHandler` and `Ws2812Handler` create their
+  drivers with `std::unique_ptr` when they initialise. Moving those in place is hf-core work.

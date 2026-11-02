@@ -46,7 +46,7 @@ same object; prefer the facade in application code so the start-up order is resp
 | SPI2 bus and its device handles, I2C bus and devices, UART, TWAI | The board binding (static storage in `bsp_bind/esp32c6/`); `CommChannelsManager` holds device indices and bounded runtime I2C slots | `GetSpiDevice()`, `GetI2cDevice()`, `GetUartBus()`, `GetCanBus()` return borrowed pointers |
 | `Tmc9660Handler` (onboard at index 0, external TMC9660s at indices 2 and 3) | `MotorController` (`std::array<std::unique_ptr<Tmc9660Handler>, 4>`) | `handler(index)`, `visitDriver()`; `GpioManager`, `AdcManager` and `TemperatureManager` borrow the onboard handler |
 | `Pcal95555Handler` | `GpioManager` | Through the expander pins it registers |
-| GPIO pin objects | `GpioManager` (one `std::shared_ptr<BaseGpio>` per registered pin) | `Get(name)` / `Get(enum)` return a `std::shared_ptr` |
+| GPIO pin objects | Static storage (see below); `GpioManager` holds one `BaseGpio*` per registered pin | `Get(name)` / `Get(enum)` return a `BaseGpio*`, valid until `GpioManager` is de-initialised |
 | `Bno08xHandler` (onboard at index 0, up to three external) | `ImuManager` | `GetBno08xHandler(index)` |
 | `As5047uHandler` (none by default, up to four) | `EncoderManager` | `GetAs5047uHandler(index)`, `GetAs5047uDriver(index)` |
 | `Tmc9660AdcWrapper` | `AdcManager` | `Get(name)` / `Get(enum)` return `BaseAdc*` |
@@ -60,20 +60,25 @@ manager's own `Deinitialize()`). Do not keep them across a shutdown.
 
 ## GPIO pins have three owners
 
-`GpioManager` stores every pin as a `std::shared_ptr<BaseGpio>`, because the pins come from three places:
+`GpioManager` stores every pin as a plain `BaseGpio*`; no pin object is on the heap or reference counted. The
+objects come from three places:
 
-- **ESP32 pins**: the board binding creates them (`McuGpioOpen()`, static storage); `GpioManager` holds a
-  non-owning shared pointer.
-- **PCAL95555 pins**: the expander handler creates the pin object; the shared pointer keeps it alive.
-- **TMC9660 pins** (`TMC_GPIO17`, `TMC_GPIO18`): the TMC9660 handler owns them; `GpioManager` holds a non-owning
-  shared pointer, registered by `RegisterTmc9660BridgePinsIfNeeded()` once the onboard handler exists.
+- **ESP32 pins**: the board binding creates them (`McuGpioOpen()`, static storage).
+- **PCAL95555 pins**: `GpioManager` keeps them in a fixed array of 16 and attaches each to the expander handler
+  (`Pcal95555Handler::AttachStaticPin()`); they are destroyed, after their pointers are cleared, in `Deinitialize()`.
+- **TMC9660 pins** (`TMC_GPIO17`, `TMC_GPIO18`): the TMC9660 handler owns them. They are registered by
+  `RegisterTmc9660BridgePinsIfNeeded()` once the onboard handler has come up, and removed by
+  `UnregisterTmc9660BridgePins()`, which `MotorController::Deinitialize()` calls before it destroys the handler.
+
+So a pointer from `Get()` cannot outlive its object: every owner clears the entry before the object goes.
 
 ## Allocation
 
-Device tables are fixed-size arrays sized at compile time (from the pin map or a `MAX_*_DEVICES` constant), so
-there are no growing containers. The objects in those tables (buses, handlers, drivers, pin objects) are created on
-the heap during initialisation with `std::make_unique` / `std::make_shared` and live as long as the manager. After
-start-up, the heap is used again only when you create or delete a device at run time: `CreateI2cDevice()`,
-`MotorController::CreateExternalDevice()`, `ImuManager::CreateExternalBno08xDevice()`,
-`EncoderManager::CreateAs5047uDevice()`. [ADR 0002](../adr/0002-static-allocation.md) records this rule and where
-the code does not yet meet it.
+Device tables are fixed-size arrays sized at compile time (from the pin map or a `MAX_*_DEVICES` constant), and the
+objects in them live in place: handlers in `std::optional` slots (`MotorController`, `ImuManager`,
+`EncoderManager`, `AdcManager`, `TemperatureManager`, the PCAL95555 handler), pin objects in fixed arrays, buses in
+the board binding's static storage. Nothing in `lib/api` or `lib/managers` calls `new`, `make_unique` or
+`make_shared`, and no manager stores a `std::function`. A host test counts `operator new` during steady-state calls
+(LED, GPIO, bus lookups, `CollectDiagnostics()`) and requires zero. Allocation still happens inside hf-core handlers
+and ESP-IDF drivers while they initialise; [ADR 0002](../adr/0002-static-allocation.md) records the rule and that
+boundary.

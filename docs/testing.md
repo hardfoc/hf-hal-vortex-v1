@@ -34,6 +34,7 @@ a failure. One file is one executable and one ctest entry.
 | `test_board_config` | The board NTC config reads TMC9660 AIN3 (not AIN0) on a shared ADC; the examples' GPIO numbers equal the pin map |
 | `test_boot_report` | What `Vortex::GetFailedComponents()` and `GetSystemWarnings()` return: no duplicates, bounded, overflow counted |
 | `test_encoder_manager` | `EncoderManager` reads on an AS5047U register model: `ReadDiagnostics()` makes one ERRFL read, `ReadFieldStrength()` returns AGC and magnitude, empty slots touch no SPI |
+| `test_fail_closed` | A required manager that fails (no bus, LED) shuts every manager down again and sets `GetLastError()`; a retry succeeds; `CollectDiagnostics()` after a degraded boot; GPIO pointers are stable and cleared on shutdown; steady-state calls make zero heap allocations |
 | `test_board_bind` | `Vortex::EnsureInitialized()` on the host binding: bus pins, SPI modes, I2C devices, UART, CAN, LED pin and NVS namespaces as the pin map says; LED frames; `Shutdown()` closes what init opened |
 
 ```bash
