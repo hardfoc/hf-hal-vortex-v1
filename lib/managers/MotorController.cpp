@@ -534,9 +534,9 @@ namespace {
 /** Run a batch helper and time it; returns the number of elements answered OK. */
 template <typename Fn>
 size_t TimedBatch(Fn&& fn, uint32_t& duration_us) noexcept {
-    const uint64_t t0 = RtosTime::GetCurrentTimeUs();
+    const uint64_t t0 = vortex::bsp::MonotonicMicros();
     const size_t ok = fn();
-    duration_us = static_cast<uint32_t>(RtosTime::GetCurrentTimeUs() - t0);
+    duration_us = static_cast<uint32_t>(vortex::bsp::MonotonicMicros() - t0);
     return ok;
 }
 

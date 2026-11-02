@@ -36,7 +36,7 @@
 #include <cstdint>
 #include <span>
 
-#include "RtosMutex.h"  // RtosTime::GetCurrentTimeUs()
+#include "bsp_bind/VortexBoardBind.h"  // MonotonicMicros()
 #include "core/hf-core-drivers/external/hf-tmc9660-driver/inc/tmc9660.hpp"
 
 namespace vortex::motor {
@@ -247,9 +247,9 @@ size_t ReadTelemetry(Driver& driver, TelemetrySet set, MotorTelemetrySnapshot& s
             ++n;
         }
     }
-    const uint64_t t0 = RtosTime::GetCurrentTimeUs();
+    const uint64_t t0 = vortex::bsp::MonotonicMicros();
     const size_t ok = BatchRead(driver, std::span<ParamAccess>(items.data(), n));
-    const uint64_t t1 = RtosTime::GetCurrentTimeUs();
+    const uint64_t t1 = vortex::bsp::MonotonicMicros();
 
     snap.sequence = seq;
     snap.requested_mask = mask;
@@ -393,9 +393,9 @@ bool ReadDriveDiagnostics(Driver& driver, MotorDriveDiagnostics& out) noexcept {
     items[1].id = Param::GENERAL_ERROR_FLAGS;
     items[2].id = Param::GDRV_ERROR_FLAGS;
     items[3].id = Param::ADC_STATUS_FLAGS;
-    const uint64_t t0 = RtosTime::GetCurrentTimeUs();
+    const uint64_t t0 = vortex::bsp::MonotonicMicros();
     (void)BatchRead(driver, std::span<ParamAccess>(items));
-    const uint64_t t1 = RtosTime::GetCurrentTimeUs();
+    const uint64_t t1 = vortex::bsp::MonotonicMicros();
     out = DecodeDriveStatus(items[0].value, items[1].value, items[2].value, items[3].value);
     out.words_valid = 0;
     for (size_t i = 0; i < items.size(); ++i) {

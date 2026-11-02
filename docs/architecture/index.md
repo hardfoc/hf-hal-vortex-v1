@@ -50,6 +50,7 @@ the `vortex::bsp::` calls in the managers and the `#include` lines of
 | `CommChannelsManager` | `CanClose()`, `CanOpen()`, `I2cAddDevice()`, `I2cClose()`, `I2cDevice()`, `I2cOpen()`, `I2cProbe()`, `I2cRemoveDevice()`, `I2cReset()`, `I2cScan()`, `SpiAddDevice()`, `SpiClose()`, `SpiDevice()`, `SpiOpen()`, `UartClose()`, `UartOpen()` |
 | `GpioManager` | `McuGpioCloseAll()`, `McuGpioOpen()` |
 | `LedManager` | `StatusLedClose()`, `StatusLedOpen()`, `StatusLedShow()` |
+| `MotorController` | `MonotonicMicros()` |
 | `NvsManager` | `Nvs()` |
 | `TemperatureManager` | `McuTemperature()` |
 

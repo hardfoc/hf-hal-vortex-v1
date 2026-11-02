@@ -5,6 +5,8 @@
 
 #include "bsp_bind/host/VortexBoardBindHost.h"
 
+#include "RtosMutex.h"  // RtosTime: FakeClock on the host
+
 #include <algorithm>
 #include <array>
 #include <optional>
@@ -211,6 +213,8 @@ void McuGpioCloseAll() noexcept {
 BaseNvs& Nvs(NvsRegion region) noexcept { return host::NvsMock(region); }
 
 BaseTemperature* McuTemperature() noexcept { return &S().temperature; }
+
+uint64_t MonotonicMicros() noexcept { return RtosTime::GetCurrentTimeUs(); }
 
 bool StatusLedOpen(int data_pin, uint32_t led_count) noexcept {
     auto& s = S();
