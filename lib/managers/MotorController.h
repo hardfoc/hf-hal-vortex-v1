@@ -4,7 +4,8 @@
 #include "handlers/tmc9660/Tmc9660Handler.h"
 #include "CommChannelsManager.h"
 #include "RtosMutex.h"
-#include <memory>
+#include "api_helpers/Tmc9660DriveObservability.h"
+#include <span>
 #include <array>
 #include <atomic>
 #include <optional>
@@ -79,6 +80,28 @@ struct MotorMechanics {
      * coupling reverses rotation direction.
      */
     bool invert_output{false};
+};
+
+//==============================================================================
+// DRIVE OBSERVABILITY TYPES (see api_helpers/Tmc9660DriveObservability.h)
+//==============================================================================
+
+using MotorParameterAccess = vortex::motor::ParamAccess;          ///< One element of a batch read / write
+using MotorParameterWrite = vortex::motor::ParamWrite;            ///< One entry of a parameter image
+using MotorTelemetrySet = vortex::motor::TelemetrySet;            ///< Which signals a telemetry read fetches
+using MotorTelemetryField = vortex::motor::TelemetryField;
+using MotorTelemetrySnapshot = vortex::motor::MotorTelemetrySnapshot;
+using MotorDriveDiagnostics = vortex::motor::MotorDriveDiagnostics;
+using MotorApplyOptions = vortex::motor::ApplyOptions;
+using MotorApplyResult = vortex::motor::ApplyResult;
+
+/** @brief TMCL access accounting per device (every batch MotorController sends on the device's behalf). */
+struct MotorAccessStats {
+    uint32_t batches{0};            ///< Batches sent (one per telemetry / diagnostics / parameter call)
+    uint32_t accesses{0};           ///< TMCL accesses in those batches
+    uint32_t failed_accesses{0};    ///< Accesses not answered REPLY_OK
+    uint32_t last_batch_us{0};      ///< Duration of the latest batch
+    uint32_t max_batch_us{0};       ///< Longest batch since the last reset
 };
 
 //==============================================================================
@@ -301,6 +324,67 @@ public:
      * @return Same codes as GetTmclSpiStats().
      */
     [[nodiscard]] MotorError ResetTmclSpiStats(uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    //**************************************************************************//
+    //**        DRIVE OBSERVABILITY: BATCH ACCESS, TELEMETRY, DIAGNOSTICS    **//
+    //**************************************************************************//
+    // Every call below is one (or, for an image, a few) pipelined TMCL batch, sent through the
+    // handler's visitDriver() while this manager's device lock is held. A device that is not
+    // active returns DEVICE_NOT_FOUND; one whose bring-up did not succeed returns NOT_INITIALIZED
+    // (no call here starts a bootloader bring-up). COMMUNICATION_FAILED means at least one access
+    // was not answered REPLY_OK; per-element results are in the items / snapshot / result.
+
+    /**
+     * @brief Read several axis parameters in pipelined batches (GAP).
+     * @param items In: ids (and axis). Out: values and per-element TMCL status.
+     */
+    [[nodiscard]] MotorError ReadParameters(std::span<MotorParameterAccess> items,
+                                            uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Write several axis parameters in pipelined batches (SAP); per-element status in @p items. */
+    [[nodiscard]] MotorError WriteParameters(std::span<MotorParameterAccess> items,
+                                             uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /**
+     * @brief Refresh a caller-owned telemetry snapshot from one batch.
+     * @details MotorTelemetrySet::Cyclic is the drive-observability design's fixed slots (position,
+     *          velocity, packed Iq/Id, status, and the error words alternating); Status adds power, thermal
+     *          and I²t words; Full reads every field. Each field keeps the sequence number of its last good
+     *          read, so a consumer can judge its age (MotorTelemetrySnapshot::Age()).
+     */
+    [[nodiscard]] MotorError ReadTelemetry(MotorTelemetrySet set, MotorTelemetrySnapshot& snapshot,
+                                           uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /**
+     * @brief Read the four status words (289/299/300/301) in one batch and decode them.
+     * @details Includes the chip-reset indication (watchdog bit: re-apply the parameter image), heartbeat
+     *          stop, gate-driver faults per phase and side, I²t and thermal conditions, and a severity.
+     *          On SPI the TMCL link counters are copied into @p out as well.
+     */
+    [[nodiscard]] MotorError ReadDriveDiagnostics(MotorDriveDiagnostics& out,
+                                                  uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief Clear latched (write-1-to-clear) bits of the general error, gate-driver and ADC words. */
+    [[nodiscard]] MotorError ClearLatchedFaults(uint32_t general_errors, uint32_t gate_driver_errors,
+                                                uint32_t adc_status,
+                                                uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /**
+     * @brief Apply a parameter image (MOTOR_TYPE first), optionally only where the chip differs and with
+     *        read-back verification. The TMC9660's own NVM is not used (design §4.7).
+     * @param[out] result Counts of written, skipped, rejected and mismatched entries, and the first bad one.
+     * @return SUCCESS when result.ok(); COMMUNICATION_FAILED otherwise.
+     */
+    [[nodiscard]] MotorError ApplyParameterImage(std::span<const MotorParameterWrite> image,
+                                                 const MotorApplyOptions& options, MotorApplyResult& result,
+                                                 uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /** @brief TMCL access accounting of one device (batches, accesses, failures, batch latency). */
+    [[nodiscard]] MotorError GetAccessStats(MotorAccessStats& stats,
+                                            uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) const noexcept;
+
+    /** @brief Zero the access accounting of one device. */
+    void ResetAccessStats(uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
 
     //**************************************************************************//
     //**                  HANDLER AND DRIVER MANAGEMENT                       **//
@@ -611,6 +695,30 @@ private:
      * @brief Run @p fn on the SPI driver of a ready device, through the handler (handler lock held).
      * @return true if @p fn ran (device active, driver up, transport is SPI). Caller holds deviceMutex_.
      */
+    /**
+     * @brief Run @p fn(driver) on a ready device through the handler, SPI or UART (handler lock held).
+     * @return SUCCESS, or why it did not run (DEVICE_NOT_FOUND / NOT_INITIALIZED). Caller holds deviceMutex_.
+     */
+    template <typename Fn>
+    MotorError withReadyDriverLocked(uint8_t device_index, Fn&& fn) noexcept {
+        if (device_index >= MAX_TMC9660_DEVICES || !deviceActive_[device_index] || !tmcHandlers_[device_index]) {
+            return MotorError::DEVICE_NOT_FOUND;
+        }
+        // Never start a bootloader bring-up from an observability call: only drivers that are up.
+        if (!tmcHandlers_[device_index]->IsDriverReady()) {
+            return MotorError::NOT_INITIALIZED;
+        }
+        bool ran = false;
+        tmcHandlers_[device_index]->visitDriver([&](auto& driver) {
+            ran = true;
+            fn(driver);
+        });
+        return ran ? MotorError::SUCCESS : MotorError::NOT_INITIALIZED;
+    }
+
+    /** @brief Account one batch in accessStats_. Caller holds deviceMutex_. */
+    void recordBatchLocked(uint8_t device_index, size_t accesses, size_t failed, uint32_t duration_us) noexcept;
+
     template <typename Fn>
     bool withSpiDriverLocked(uint8_t device_index, Fn&& fn) noexcept {
         // A handler that is not up would run its full bootloader init inside visitDriver(); that
@@ -636,6 +744,7 @@ private:
     std::array<std::atomic<uint32_t>, MAX_TMC9660_DEVICES> deviceErrorCounts_{}; ///< Per-device error counters
     std::array<MotorMechanics, MAX_TMC9660_DEVICES> mechanics_{}; ///< Per-device mechanical mapping (default 1:1)
     std::array<tmc9660::TmclSpiTiming, MAX_TMC9660_DEVICES> tmclSpiTiming_{}; ///< Per-device SPI TMCL timing
+    std::array<MotorAccessStats, MAX_TMC9660_DEVICES> accessStats_{};          ///< Per-device TMCL access accounting
     
     bool onboardDeviceCreated_;         ///< Track if onboard device has been created
     std::atomic<bool> initialized_;      ///< Track if system has been initialized

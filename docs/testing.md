@@ -36,6 +36,7 @@ a failure. One file is one executable and one ctest entry.
 | `test_encoder_manager` | `EncoderManager` reads on an AS5047U register model: `ReadDiagnostics()` makes one ERRFL read, `ReadFieldStrength()` returns AGC and magnitude, empty slots touch no SPI |
 | `test_fail_closed` | A required manager that fails (no bus, LED) shuts every manager down again and sets `GetLastError()`; a retry succeeds; `CollectDiagnostics()` after a degraded boot; GPIO pointers are stable and cleared on shutdown; steady-state calls make zero heap allocations |
 | `test_lock_discipline` | `ImuManager::VisitSensor()` refuses an absent IMU; `MotorController::visitDriver()` returns a default and runs nothing without a device; SPI statistics need a ready SPI device |
+| `test_motor_observability` | On the TMC9660 SPI driver over a TMCL slave model: batches are pipelined (N + 1 frames), chunked and report per-element status; telemetry snapshots alternate the error words, age and keep stale values; fault decoding; latch clearing; image apply writes `MOTOR_TYPE` first, skips equal entries and reports rejections and mismatches; `MotorController` refuses without a ready device and sends nothing |
 | `test_board_bind` | `Vortex::EnsureInitialized()` on the host binding: bus pins, SPI modes, I2C devices, UART, CAN, LED pin and NVS namespaces as the pin map says; LED frames; `Shutdown()` closes what init opened |
 
 ```bash

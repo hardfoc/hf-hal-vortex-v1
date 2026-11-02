@@ -194,6 +194,17 @@ BaseNvs& Nvs(NvsRegion region) noexcept;
 BaseTemperature* McuTemperature() noexcept;
 
 //==============================================================================
+// Time
+//==============================================================================
+
+/**
+ * @brief Monotonic microseconds since boot, at the MCU's high-resolution timer (not the RTOS tick).
+ * @details Used to time TMCL batches; the RTOS tick (10 ms at CONFIG_FREERTOS_HZ=100) is far too coarse.
+ *          Callable from any task.
+ */
+uint64_t MonotonicMicros() noexcept;
+
+//==============================================================================
 // Status LED (one WS2812 on Vortex V1)
 //==============================================================================
 

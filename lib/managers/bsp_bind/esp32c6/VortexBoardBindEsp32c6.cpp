@@ -19,6 +19,7 @@
 #include <optional>
 #include <vector>
 
+#include "esp_timer.h"
 #include "handlers/ws2812/Ws2812Handler.h"
 #include "mcu/esp32/EspCan.h"
 #include "mcu/esp32/EspGpio.h"
@@ -308,6 +309,12 @@ BaseTemperature* McuTemperature() noexcept {
     static EspTemperature sensor;
     return &sensor;
 }
+
+//==============================================================================
+// Time
+//==============================================================================
+
+uint64_t MonotonicMicros() noexcept { return static_cast<uint64_t>(esp_timer_get_time()); }
 
 //==============================================================================
 // Status LED

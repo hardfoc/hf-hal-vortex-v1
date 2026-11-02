@@ -20,7 +20,10 @@ host tests that run the same node against a simulated motor.
 
 The HAL's part is small by design: the CAN port stays a `BaseCan*` from
 [`CommChannelsManager`](managers/comms.md), and the drive talks to the TMC9660 through
-[`MotorController`](managers/motors.md).
+[`MotorController`](managers/motors.md), whose
+[drive-observability hooks](managers/motors.md#drive-observability) (batched TMCL access, telemetry snapshots with
+ages, decoded fault words, parameter-image apply with verification) are what the object dictionary's telemetry,
+health and configuration objects are built on.
 
 ## Another MCU and CAN FD
 
