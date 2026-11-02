@@ -1,0 +1,51 @@
+{
+  "board-overview": {
+    "title": "Vortex V1: buses and chips",
+    "alt": "Block diagram of the Vortex V1 board: the ESP32-C6 connects over SPI2 to the TMC9660 and AS5047U, over UART to the TMC9660, over I2C to the PCAL95555 expander and BNO08x IMU, over TWAI to the CAN transceiver and to a WS2812 LED; the PCAL95555 drives the TMC9660 and IMU control lines.",
+    "description": "The ESP32-C6 on the left runs all the software. Each arrow to the right is one bus or signal, labelled with the GPIOs it uses: SPI2 to the TMC9660 motor controller and the AS5047U encoder (plus two external chip selects), a UART that is the TMC9660's default host link, I2C to the PCAL95555 I/O expander and the BNO08x IMU, TWAI to the CAN transceiver, and one data line to the WS2812 status LED. The PCAL95555 drives the TMC9660 control lines (driver enable, reset, wake, SPI mux) and the IMU's boot and reset lines, and reads their fault and interrupt outputs. The layout is drawn by hand; every GPIO number, expander bit, chip select, SPI mode and I2C address is read from the functional pin map and the comms manager, so a pin change rebuilds this figure.",
+    "profile": "detail",
+    "width": 1200,
+    "source": "docs/diagrams/figures/board-overview.py",
+    "sources": [
+      "lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp:HF_FUNCTIONAL_GPIO_PIN_LIST",
+      "lib/managers/CommChannelsManager.h:SpiDeviceId",
+      "lib/managers/CommChannelsManager.cpp:add_builtin_device"
+    ]
+  },
+  "hal-layers": {
+    "title": "Vortex V1 HAL, layer by layer",
+    "alt": "Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 managers, 5 hf-core handlers, 6 chip drivers, and the interface wrap on ESP-IDF and the ESP32-C6.",
+    "description": "From top to bottom, each layer only calls the one under it. Your application asks the facade singleton for the managers. The managers (one per board function) own the hf-core handlers, which wrap one chip driver each; a manager may also use a driver directly. Drivers talk to hardware only through the interface classes of the internal interface wrap, whose ESP32 implementations sit on ESP-IDF. Every name in a band is read from the code: the managers from the facade's member references, the handlers, drivers and interface classes from the managers' and handlers' #include lines.",
+    "profile": "overview",
+    "width": 1200,
+    "source": "docs/diagrams/figures/hal-layers.py",
+    "sources": [
+      "lib/api/Vortex.h:Vortex (manager references)",
+      "lib/managers:#includes",
+      "lib/core/handlers:#includes"
+    ]
+  },
+  "init-order": {
+    "title": "Vortex::EnsureInitialized()",
+    "alt": "Initialisation order: NvsManager, CommChannelsManager, GpioManager, LedManager are required; then MotorController, AdcManager, ImuManager, EncoderManager, TemperatureManager are best effort and only produce warnings if they fail.",
+    "description": "Left to right, then the second row. The facade initialises the managers one at a time, in the order of the calls in its init function. The first group is required: if any of them fails, EnsureInitialized() returns false and the application should not continue. The second group is best effort: a failure there is logged as a warning, the manager stays unavailable and the system reports itself as degraded, so a bench with only some chips fitted still comes up. The order and the required / best-effort split are read from the init function, which returns false only in the required branches.",
+    "profile": "detail",
+    "width": 1200,
+    "source": "docs/diagrams/figures/init-order.py",
+    "sources": [
+      "lib/api/Vortex.cpp:Vortex::InitializeAllComponents"
+    ]
+  },
+  "manager-dependencies": {
+    "title": "Managers, handlers and drivers",
+    "alt": "Graph from each manager to the hf-core handlers it uses and from each handler to the chip driver it wraps; the TMC9660 handler is shared by the motor, GPIO, ADC and temperature managers.",
+    "description": "Managers on the left, hf-core handlers in the middle, chip drivers on the right. An arrow means \"includes and uses\": a manager owns or borrows the handler it points at, and each handler wraps exactly one driver. Several managers share the TMC9660 handler, because that one chip provides motor control, GPIO, ADC channels and a temperature sensor; MotorController owns it and the others reach it through MotorController. LedManager uses its driver directly, without a handler. Managers with no arrow (communication buses, NVS) talk to the interface wrap only.",
+    "profile": "detail",
+    "width": 1200,
+    "source": "docs/diagrams/figures/manager-dependencies.py",
+    "sources": [
+      "lib/managers:#includes",
+      "lib/core/handlers:#includes"
+    ]
+  }
+}

@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="858" viewBox="0 0 1200 858" role="img" aria-labelledby="hal-layers-title hal-layers-desc" font-family="Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+<title id="hal-layers-title">Vortex V1 HAL, layer by layer</title>
+<desc id="hal-layers-desc">Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 managers, 5 hf-core handlers, 6 chip drivers, and the interface wrap on ESP-IDF and the ESP32-C6.</desc>
+<defs><marker id="fk-arrow-rail" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8893A2"/></marker></defs>
+<rect x="0.5" y="0.5" width="1199" height="857" rx="16" fill="#FFFFFF" stroke="#E2E7EE"/>
+<text x="32" y="46.8" font-size="16" font-weight="700" letter-spacing="1.2" fill="#3730A3">ARCHITECTURE</text>
+<text x="32" y="85.6" font-size="32" font-weight="700" fill="#17202C">Vortex V1 HAL, layer by layer</text>
+<text x="32" y="115.4" font-size="18" fill="#566070">Each layer calls only the one below it. Every name is read from the code.</text>
+<rect x="32" y="131.4" width="1136" height="1" fill="#E2E7EE"/>
+<rect x="32" y="149.4" width="1136" height="92" rx="16" fill="#F1F4F8" stroke="#CBD5E1" stroke-width="1.2"/>
+<rect x="32" y="263.4" width="1136" height="92" rx="16" fill="#EEF0FF" stroke="#C7CBF8" stroke-width="1.2"/>
+<rect x="32" y="377.4" width="1136" height="96" rx="16" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1.2"/>
+<rect x="32" y="495.4" width="1136" height="96" rx="16" fill="#E6F6F4" stroke="#A6DCD5" stroke-width="1.2"/>
+<rect x="32" y="613.4" width="1136" height="96" rx="16" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1.2"/>
+<rect x="32" y="731.4" width="1136" height="96" rx="16" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1.2"/>
+<path d="M1108 243.4 L1108 261.4" fill="none" stroke="#8893A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-rail)"/>
+<path d="M1108 357.4 L1108 375.4" fill="none" stroke="#8893A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-rail)"/>
+<path d="M1108 475.4 L1108 493.4" fill="none" stroke="#8893A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-rail)"/>
+<path d="M1108 593.4 L1108 611.4" fill="none" stroke="#8893A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-rail)"/>
+<path d="M1108 711.4 L1108 729.4" fill="none" stroke="#8893A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-rail)"/>
+<rect x="32" y="159.4" width="6" height="72" rx="3" fill="#64748B"/>
+<rect x="32" y="273.4" width="6" height="72" rx="3" fill="#4F46E5"/>
+<rect x="32" y="387.4" width="6" height="76" rx="3" fill="#2563EB"/>
+<rect x="32" y="505.4" width="6" height="76" rx="3" fill="#0F8B80"/>
+<rect x="32" y="623.4" width="6" height="76" rx="3" fill="#7C3AED"/>
+<rect x="32" y="741.4" width="6" height="76" rx="3" fill="#C26A05"/>
+<text x="58" y="191.4" font-size="20" font-weight="700" fill="#334155">Your application</text>
+<text x="58" y="217.4" font-size="16" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" fill="#334155">app_main()</text>
+<rect x="332" y="182.4" width="103" height="26" rx="13" fill="#F1F4F8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="340" y="200.5" font-size="16" font-weight="700" fill="#334155">your tasks</text>
+<rect x="443" y="182.4" width="154.7" height="26" rx="13" fill="#F1F4F8" stroke="#CBD5E1" stroke-width="1"/>
+<text x="451" y="200.5" font-size="16" font-weight="700" fill="#334155">examples/esp32</text>
+<text x="58" y="305.4" font-size="20" font-weight="700" fill="#3730A3">Facade</text>
+<text x="58" y="331.4" font-size="16" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" fill="#3730A3">Vortex::GetInstance()</text>
+<rect x="332" y="296.4" width="167" height="26" rx="13" fill="#EEF0FF" stroke="#C7CBF8" stroke-width="1"/>
+<text x="340" y="314.5" font-size="16" font-weight="700" fill="#3730A3">EnsureInitialized()</text>
+<rect x="507" y="296.4" width="112.6" height="26" rx="13" fill="#EEF0FF" stroke="#C7CBF8" stroke-width="1"/>
+<text x="515" y="314.5" font-size="16" font-weight="700" fill="#3730A3">diagnostics</text>
+<text x="58" y="421.4" font-size="20" font-weight="700" fill="#1E429F">Managers</text>
+<text x="58" y="447.4" font-size="16" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" fill="#1E429F">lib/managers</text>
+<rect x="332" y="395.4" width="221.9" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="340" y="413.5" font-size="16" font-weight="700" fill="#1E429F">CommChannelsManager</text>
+<rect x="561.9" y="395.4" width="122.4" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="569.9" y="413.5" font-size="16" font-weight="700" fill="#1E429F">NvsManager</text>
+<rect x="692.3" y="395.4" width="128.2" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="700.3" y="413.5" font-size="16" font-weight="700" fill="#1E429F">GpioManager</text>
+<rect x="828.5" y="395.4" width="148.9" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="836.5" y="413.5" font-size="16" font-weight="700" fill="#1E429F">MotorController</text>
+<rect x="985.5" y="395.4" width="123.1" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="993.5" y="413.5" font-size="16" font-weight="700" fill="#1E429F">AdcManager</text>
+<rect x="332" y="429.4" width="120.6" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="340" y="447.5" font-size="16" font-weight="700" fill="#1E429F">ImuManager</text>
+<rect x="460.6" y="429.4" width="158.7" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="468.6" y="447.5" font-size="16" font-weight="700" fill="#1E429F">EncoderManager</text>
+<rect x="627.3" y="429.4" width="120.2" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="635.3" y="447.5" font-size="16" font-weight="700" fill="#1E429F">LedManager</text>
+<rect x="755.5" y="429.4" width="198" height="26" rx="13" fill="#EAF2FF" stroke="#BCD2F9" stroke-width="1"/>
+<text x="763.5" y="447.5" font-size="16" font-weight="700" fill="#1E429F">TemperatureManager</text>
+<text x="58" y="539.4" font-size="20" font-weight="700" fill="#115E59">hf-core handlers</text>
+<text x="58" y="565.4" font-size="16" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" fill="#115E59">lib/core/handlers</text>
+<rect x="332" y="513.4" width="157.4" height="26" rx="13" fill="#E6F6F4" stroke="#A6DCD5" stroke-width="1"/>
+<text x="340" y="531.5" font-size="16" font-weight="700" fill="#115E59">As5047uHandler</text>
+<rect x="497.4" y="513.4" width="145.9" height="26" rx="13" fill="#E6F6F4" stroke="#A6DCD5" stroke-width="1"/>
+<text x="505.4" y="531.5" font-size="16" font-weight="700" fill="#115E59">Bno08xHandler</text>
+<rect x="651.3" y="513.4" width="218.7" height="26" rx="13" fill="#E6F6F4" stroke="#A6DCD5" stroke-width="1"/>
+<text x="659.3" y="531.5" font-size="16" font-weight="700" fill="#115E59">NtcTemperatureHandler</text>
+<rect x="878" y="513.4" width="170" height="26" rx="13" fill="#E6F6F4" stroke="#A6DCD5" stroke-width="1"/>
+<text x="886" y="531.5" font-size="16" font-weight="700" fill="#115E59">Pcal95555Handler</text>
+<rect x="332" y="547.4" width="162.6" height="26" rx="13" fill="#E6F6F4" stroke="#A6DCD5" stroke-width="1"/>
+<text x="340" y="565.5" font-size="16" font-weight="700" fill="#115E59">Tmc9660Handler</text>
+<text x="58" y="657.4" font-size="20" font-weight="700" fill="#5B21B6">Chip drivers</text>
+<text x="58" y="683.4" font-size="16" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" fill="#5B21B6">hf-core-drivers</text>
+<rect x="332" y="631.4" width="171.8" height="26" rx="13" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1"/>
+<text x="340" y="649.5" font-size="16" font-weight="700" fill="#5B21B6">hf-as5047u-driver</text>
+<rect x="511.8" y="631.4" width="162.5" height="26" rx="13" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1"/>
+<text x="519.8" y="649.5" font-size="16" font-weight="700" fill="#5B21B6">hf-bno08x-driver</text>
+<rect x="682.3" y="631.4" width="220.1" height="26" rx="13" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1"/>
+<text x="690.3" y="649.5" font-size="16" font-weight="700" fill="#5B21B6">hf-ntc-thermistor-driver</text>
+<rect x="910.4" y="631.4" width="186.9" height="26" rx="13" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1"/>
+<text x="918.4" y="649.5" font-size="16" font-weight="700" fill="#5B21B6">hf-pcal95555-driver</text>
+<rect x="332" y="665.4" width="174.7" height="26" rx="13" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1"/>
+<text x="340" y="683.5" font-size="16" font-weight="700" fill="#5B21B6">hf-tmc9660-driver</text>
+<rect x="514.7" y="665.4" width="198.7" height="26" rx="13" fill="#F3EEFF" stroke="#D5C5FA" stroke-width="1"/>
+<text x="522.7" y="683.5" font-size="16" font-weight="700" fill="#5B21B6">hf-ws2812-rmt-driver</text>
+<text x="58" y="775.4" font-size="20" font-weight="700" fill="#8A3C0B">Interface wrap</text>
+<text x="58" y="801.4" font-size="16" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" fill="#8A3C0B">ESP-IDF on ESP32-C6</text>
+<rect x="332" y="749.4" width="90" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="340" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseAdc</text>
+<rect x="430" y="749.4" width="89.6" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="438" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseCan</text>
+<rect x="527.6" y="749.4" width="95.1" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="535.6" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseGpio</text>
+<rect x="630.7" y="749.4" width="82.1" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="638.7" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseI2c</text>
+<rect x="720.8" y="749.4" width="89.3" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="728.8" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseNvs</text>
+<rect x="818.1" y="749.4" width="83.1" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="826.1" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseSpi</text>
+<rect x="909.1" y="749.4" width="164.9" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="917.1" y="767.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseTemperature</text>
+<rect x="332" y="783.4" width="92" height="26" rx="13" fill="#FFF5E3" stroke="#F1CF93" stroke-width="1"/>
+<text x="340" y="801.5" font-size="16" font-weight="700" fill="#8A3C0B">BaseUart</text>
+</svg>

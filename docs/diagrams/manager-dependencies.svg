@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="784" viewBox="0 0 1200 784" role="img" aria-labelledby="manager-dependencies-title manager-dependencies-desc" font-family="Inter, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+<title id="manager-dependencies-title">Managers, handlers and drivers</title>
+<desc id="manager-dependencies-desc">Graph from each manager to the hf-core handlers it uses and from each handler to the chip driver it wraps; the TMC9660 handler is shared by the motor, GPIO, ADC and temperature managers.</desc>
+<defs><marker id="fk-arrow-blue-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2563EB"/></marker><marker id="fk-arrow-teal-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0F8B80"/></marker><marker id="fk-arrow-violet-strong" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7C3AED"/></marker></defs>
+<rect x="0.5" y="0.5" width="1199" height="783" rx="16" fill="#FFFFFF" stroke="#E2E7EE"/>
+<text x="32" y="44" font-size="12.5" font-weight="700" letter-spacing="1.2" fill="#3730A3">ARCHITECTURE</text>
+<text x="32" y="77.3" font-size="26" font-weight="700" fill="#17202C">Managers, handlers and drivers</text>
+<text x="32" y="103.8" font-size="15" fill="#566070">An arrow means the left side includes and uses the right side. Read from the #include lines of lib/managers and lib/core/handlers.</text>
+<rect x="32" y="119.8" width="1136" height="1" fill="#E2E7EE"/>
+<path d="M286 160.8 L303.1 160.8 Q310 160.8 310 153.9 L310 153.9 Q310 147 316.9 147 L471 147" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 280.8 L302 280.8 Q310 280.8 310 272.8 L310 164.2 Q310 156.2 318 156.2 L471 156.2" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 460.8 L302 460.8 Q310 460.8 310 452.8 L310 173.4 Q310 165.4 318 165.4 L471 165.4" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 520.8 L302 520.8 Q310 520.8 310 512.8 L310 182.6 Q310 174.6 318 174.6 L471 174.6" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 220.8 L324 220.8 Q332 220.8 332 228.8 L332 246.4 Q332 254.4 340 254.4 L471 254.4" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 280.8 L346 280.8 Q354 280.8 354 288.8 L354 340 Q354 348 362 348 L471 348" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 340.8 L368 340.8 Q376 340.8 376 348.8 L376 433.6 Q376 441.6 384 441.6 L471 441.6" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M286 520.8 L390.8 520.8 Q398 520.8 398 528 L398 528 Q398 535.2 405.2 535.2 L471 535.2" fill="none" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-blue-strong)"/>
+<path d="M729 160.8 L904 160.8" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M729 254.4 L904 254.4" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M729 348 L904 348" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M729 441.6 L904 441.6" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M729 535.2 L904 535.2" fill="none" stroke="#0F8B80" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#fk-arrow-teal-strong)"/>
+<path d="M286 400.8 L412 400.8 Q420 400.8 420 408.8 L420 704.8 Q420 712.8 428 712.8 L860 712.8 Q868 712.8 868 704.8 L868 671.8 Q868 663.8 876 663.8 L904 663.8" fill="none" stroke="#7C3AED" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5" marker-end="url(#fk-arrow-violet-strong)"/>
+<rect x="32" y="137.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="145.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="197.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="205.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="257.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="265.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="317.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="325.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="377.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="385.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="437.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="445.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="497.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="505.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="557.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="565.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="32" y="617.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="32" y="625.8" width="4" height="30" rx="2" fill="#2563EB"/>
+<rect x="475" y="137.8" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="475" y="145.8" width="4" height="30" rx="2" fill="#0F8B80"/>
+<rect x="475" y="231.4" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="475" y="239.4" width="4" height="30" rx="2" fill="#0F8B80"/>
+<rect x="475" y="325" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="475" y="333" width="4" height="30" rx="2" fill="#0F8B80"/>
+<rect x="475" y="418.6" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="475" y="426.6" width="4" height="30" rx="2" fill="#0F8B80"/>
+<rect x="475" y="512.2" width="250" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="475" y="520.2" width="4" height="30" rx="2" fill="#0F8B80"/>
+<rect x="908" y="137.8" width="260" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="908" y="145.8" width="4" height="30" rx="2" fill="#7C3AED"/>
+<rect x="908" y="231.4" width="260" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="908" y="239.4" width="4" height="30" rx="2" fill="#7C3AED"/>
+<rect x="908" y="325" width="260" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="908" y="333" width="4" height="30" rx="2" fill="#7C3AED"/>
+<rect x="908" y="418.6" width="260" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="908" y="426.6" width="4" height="30" rx="2" fill="#7C3AED"/>
+<rect x="908" y="512.2" width="260" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="908" y="520.2" width="4" height="30" rx="2" fill="#7C3AED"/>
+<rect x="908" y="640.8" width="260" height="46" rx="10" fill="#FFFFFF" stroke="#C9D1DB" stroke-width="1"/>
+<rect x="908" y="648.8" width="4" height="30" rx="2" fill="#7C3AED"/>
+<text x="52" y="164.6" font-size="15" font-weight="700" fill="#17202C">AdcManager</text>
+<text x="52" y="224.6" font-size="15" font-weight="700" fill="#17202C">EncoderManager</text>
+<text x="52" y="284.6" font-size="15" font-weight="700" fill="#17202C">GpioManager</text>
+<text x="52" y="344.6" font-size="15" font-weight="700" fill="#17202C">ImuManager</text>
+<text x="52" y="404.6" font-size="15" font-weight="700" fill="#17202C">LedManager</text>
+<text x="52" y="464.6" font-size="15" font-weight="700" fill="#17202C">MotorController</text>
+<text x="52" y="524.5" font-size="15" font-weight="700" fill="#17202C">TemperatureManager</text>
+<text x="52" y="584.5" font-size="15" font-weight="700" fill="#17202C">CommChannelsManager</text>
+<text x="52" y="644.5" font-size="15" font-weight="700" fill="#17202C">NvsManager</text>
+<text x="495" y="164.6" font-size="15" font-weight="700" fill="#17202C">Tmc9660Handler</text>
+<text x="495" y="258.2" font-size="15" font-weight="700" fill="#17202C">As5047uHandler</text>
+<text x="495" y="351.8" font-size="15" font-weight="700" fill="#17202C">Pcal95555Handler</text>
+<text x="495" y="445.4" font-size="15" font-weight="700" fill="#17202C">Bno08xHandler</text>
+<text x="495" y="539" font-size="15" font-weight="700" fill="#17202C">NtcTemperatureHandler</text>
+<text x="928" y="164.6" font-size="15" font-weight="700" fill="#17202C">hf-tmc9660-driver</text>
+<text x="928" y="258.2" font-size="15" font-weight="700" fill="#17202C">hf-as5047u-driver</text>
+<text x="928" y="351.8" font-size="15" font-weight="700" fill="#17202C">hf-pcal95555-driver</text>
+<text x="928" y="445.4" font-size="15" font-weight="700" fill="#17202C">hf-bno08x-driver</text>
+<text x="928" y="539" font-size="15" font-weight="700" fill="#17202C">hf-ntc-thermistor-driver</text>
+<text x="928" y="667.5" font-size="15" font-weight="700" fill="#17202C">hf-ws2812-rmt-driver</text>
+<rect x="491.1" y="702.8" width="305.9" height="20" rx="10" fill="#FFFFFF"/>
+<text x="644" y="717.1" font-size="12" font-weight="500" text-anchor="middle" fill="#566070">LedManager uses hf-ws2812-rmt-driver directly</text>
+<rect x="32" y="738.2" width="14" height="14" rx="4" fill="#EAF2FF" stroke="#2563EB" stroke-width="1.4"/>
+<text x="54" y="749.8" font-size="12.5" fill="#566070">manager (lib/managers)</text>
+<rect x="228" y="738.2" width="14" height="14" rx="4" fill="#E6F6F4" stroke="#0F8B80" stroke-width="1.4"/>
+<text x="250" y="749.8" font-size="12.5" fill="#566070">hf-core handler</text>
+<rect x="371.9" y="738.2" width="14" height="14" rx="4" fill="#F3EEFF" stroke="#7C3AED" stroke-width="1.4"/>
+<text x="393.9" y="749.8" font-size="12.5" fill="#566070">chip driver</text>
+</svg>
