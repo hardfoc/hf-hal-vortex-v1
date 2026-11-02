@@ -63,10 +63,41 @@ bench examples (`vortex_bldc_*` in [Examples](../examples/index.md)) show the fu
 `GetSystemDiagnostics()` fills `MotorSystemDiagnostics`: whether the manager is up, how many device slots are active
 and initialised, the last error, and per device whether it is active, initialised and its error count.
 
-The TMC9660's own telemetry (currents, voltages, temperatures, fault flags, every axis and global parameter) is
-reached through `visitDriver()`. How the product firmware exposes all of it through the CANopen object dictionary,
-a CLI and a dashboard, and what the SPI access time costs, is in the
-[drive observability design](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md).
+## Drive observability
+
+The hooks the [drive observability design](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/drive-observability.md)
+needs from the HAL. Each call is one pipelined TMCL batch (on SPI, N accesses cost N + 1 frames instead of 2N), sent
+through the handler's `visitDriver()` with the device lock held. A call never starts a bootloader bring-up: a device
+that is not up returns `NOT_INITIALIZED` and sends nothing. The helpers live in
+[`api_helpers/Tmc9660DriveObservability.h`](../../lib/managers/api_helpers/Tmc9660DriveObservability.h).
+
+| Call | Does |
+| --- | --- |
+| `ReadParameters(span<MotorParameterAccess>)`, `WriteParameters(...)` | Batch GAP / SAP of any axis parameters; per-element value and TMCL status |
+| `ReadTelemetry(set, MotorTelemetrySnapshot&)` | Refreshes a caller-owned snapshot. `Cyclic` = the design's fixed slots (position 144, velocity 125, packed Iq/Id 331, status 289, and the error words 299 / 300 on alternate calls: 5 accesses); `Status` = status, error, ADC, supply, temperatures, total current, I²t sums; `Full` = all 16 fields. Each field keeps the sequence of its last good read (`Age()`), a failed access keeps the old value, and the batch time is recorded |
+| `ReadDriveDiagnostics(MotorDriveDiagnostics&)` | Reads 289/299/300/301 in one batch and decodes them: regulation stopped, chip reset seen (watchdog bit, so re-apply the image), heartbeat stopped, retries failed, thermal and I²t conditions, gate-driver faults per phase and side, ADC clipping, and a severity (`Ok`, `Warning`, `Fault`); on SPI also the TMCL link counters |
+| `ClearLatchedFaults(general, gate_driver, adc)` | Write-1-to-clear of the latched bits |
+| `ApplyParameterImage(image, options, result)` | Writes a parameter image with `MOTOR_TYPE` first (FW051V100 answers most parameters with `WRONG_TYPE` until it is set); `differential` writes only what differs on the chip, `verify` reads everything back. The result counts written, skipped, rejected and mismatched entries and names the first bad one. The TMC9660's own NVM is not used |
+| `GetAccessStats()`, `ResetAccessStats()` | Per device: batches, accesses, failed accesses, last and longest batch time |
+
+Values are raw chip units. The snapshot's helpers convert what the design marks as solid (supply 0.1 V, chip
+temperature, total current in mA); the packed 331/332 values stay unscaled until calibrated. The CANopen object
+dictionary, the CLI and the dashboard that use these hooks belong to the product firmware, not to this HAL.
+
+```cpp
+auto& motors = Vortex::GetInstance().motors;
+MotorTelemetrySnapshot snap{};          // keep it: ages are counted across calls
+if (motors.ReadTelemetry(MotorTelemetrySet::Cyclic, snap) == MotorError::SUCCESS) {
+    const int32_t pos = snap.ActualPosition();
+    const int16_t iq_raw = snap.TorqueCurrentRaw();
+}
+MotorDriveDiagnostics diag{};
+if (motors.ReadDriveDiagnostics(diag) == MotorError::SUCCESS && diag.chip_reset_detected) {
+    // the TMC9660 restarted: apply the parameter image again
+}
+```
+
+Anything else on the chip (every axis and global parameter, RAMDebug) is reached through `visitDriver()`.
 
 ## Pitfalls
 
