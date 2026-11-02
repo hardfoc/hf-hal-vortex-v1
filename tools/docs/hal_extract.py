@@ -22,6 +22,8 @@ BOARD = {
     "facade_class": "Vortex",
     "init_function": "InitializeAllComponents",
     "managers_dir": "lib/managers",
+    "bind_header": "lib/managers/bsp_bind/VortexBoardBind.h",
+    "bind_platform_dir": "lib/managers/bsp_bind/esp32c6",
     "handlers_dir": "lib/core/handlers",
     "pin_header": "lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp",
     "comms_header": "lib/managers/CommChannelsManager.h",
@@ -246,6 +248,35 @@ def dependencies() -> dict:
         "handler_drivers": handler_drivers,
         # "path:what" so the docs can link the path; the paths are folders.
         "sources": [f"{BOARD['managers_dir']}:#includes", f"{BOARD['handlers_dir']}:#includes"],
+    }
+
+
+# ----------------------------------------------------------------------------------------------- binding
+
+
+def binding() -> dict:
+    """The board binding: its functions, which managers call which, and what the platform implementation uses."""
+    hdr = BOARD["bind_header"]
+    h = strip_comments(read(hdr))
+    functions = re.findall(r"^\s*(?:[\w:]+[&*]?\s+)+(\w+)\([^;]*\)\s*noexcept;", h, flags=re.M)
+    mdir = ROOT / BOARD["managers_dir"]
+    callers = {}
+    for f in sorted(mdir.glob("*.cpp")):
+        calls = sorted(set(re.findall(r"vortex::bsp::(\w+)\(", strip_comments(f.read_text(errors="replace")))))
+        if calls:
+            callers[f.stem] = calls
+    pdir = ROOT / BOARD["bind_platform_dir"]
+    plat_inc = _includes(sorted(pdir.glob("*.cpp")))
+    mcu_classes = sorted({m.group(1) for i in plat_inc if (m := re.search(r"mcu/\w+/(\w+)\.h$", i))})
+    plat_handlers = sorted({m.group(1) for i in plat_inc if (m := re.match(r"handlers/(\w+)/", i))})
+    return {
+        "functions": functions,
+        "callers": callers,
+        "platform": BOARD["bind_platform_dir"],
+        "mcu_classes": mcu_classes,
+        "platform_handlers": plat_handlers,
+        "sources": [f"{hdr}:vortex::bsp", f"{BOARD['managers_dir']}:vortex::bsp:: calls",
+                    f"{BOARD['bind_platform_dir']}:#includes"],
     }
 
 

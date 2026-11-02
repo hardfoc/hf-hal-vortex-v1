@@ -32,8 +32,9 @@ Drawn from:
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="hal-layers.dark.svg">
   <img src="hal-layers.svg"
-    alt="Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 managers, 5 hf-core handlers, 6
-    chip drivers, and the interface wrap on ESP-IDF and the ESP32-C6.">
+    alt="Layer stack of the Vortex V1 HAL: application, the Vortex facade, 9 MCU-free managers, the board
+    binding that constructs the ESP32-C6 peripherals, 5 hf-core handlers, 5 chip drivers, and the
+    interface wrap on ESP-IDF.">
 </picture>
 <!-- /figure -->
 
@@ -44,6 +45,7 @@ Drawn from:
 - `Vortex (manager references)` in [`lib/api/Vortex.h`](../../lib/api/Vortex.h)
 - `#includes` in [`lib/managers`](../../lib/managers)
 - `#includes` in [`lib/core/handlers`](../../lib/core/handlers)
+- `#includes` in [`lib/managers/bsp_bind/esp32c6`](../../lib/managers/bsp_bind/esp32c6)
 
 ## Vortex::EnsureInitialized()
 

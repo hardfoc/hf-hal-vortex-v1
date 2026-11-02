@@ -1,6 +1,6 @@
 """Architecture tables, generated from the facade and the managers' #includes.
 
-Regions: ``init-order``, ``manager-map``.
+Regions: ``init-order``, ``manager-map``, ``board-binding``.
 """
 
 from __future__ import annotations
@@ -46,4 +46,23 @@ def manager_map(page) -> str:
     return "\n".join(out)
 
 
-REGIONS = {"init-order": init_order, "manager-map": manager_map}
+def board_binding(page) -> str:
+    b = hx.binding()
+    hdr = hx.BOARD["bind_header"]
+    out = [
+        f"From [`{hdr.rsplit('/', 1)[-1]}`]({page.rel(hdr)}),\nthe `vortex::bsp::` calls in the managers and the `#include` lines of\n"
+        f"[`{b['platform']}`]({page.rel(b['platform'])}); do not edit.",
+        "",
+        "| Manager | Binding functions it calls |",
+        "| --- | --- |",
+    ]
+    for name, calls in b["callers"].items():
+        out.append(f"| `{name}` | {', '.join(f'`{c}()`' for c in calls)} |")
+    mcu = ", ".join(f"`{c}`" for c in b["mcu_classes"]) or "-"
+    hand = ", ".join(f"`{h}`" for h in b["platform_handlers"]) or "-"
+    out += ["", f"The ESP32-C6 implementation constructs {mcu},\nand drives the status LED through the {hand} "
+            f"handler. No other HAL source names an ESP32 type."]
+    return "\n".join(out)
+
+
+REGIONS = {"init-order": init_order, "manager-map": manager_map, "board-binding": board_binding}

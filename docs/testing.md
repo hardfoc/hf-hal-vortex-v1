@@ -10,7 +10,7 @@ What runs on a pull request, what each check means, and how to run it on your ma
 | Workflow | File | Runs on | Checks |
 | --- | --- | --- | --- |
 | ESP32 Examples Build CI | `esp32-examples-build-ci.yml` | push, pull request | Builds every app in `app_config.yml` (all have `ci_enabled: true`), Debug and Release, with ESP-IDF release/v5.5 |
-| Host Tests CI | `ci-host-tests.yml` | push, every pull request | Builds the MCU-free HAL sources on Linux with GCC and Clang against hf-core's host mocks and runs `tests/host` |
+| Host Tests CI | `ci-host-tests.yml` | push, every pull request | Builds every HAL source above `bsp_bind/` on Linux with GCC and Clang against the host binding and runs `tests/host`; runs the HAL boundary lint (`tools/lint/lint_hal_boundary.sh`, allowlist may not grow) |
 | C++ Lint CI | `ci-cpp-lint.yml` | push, pull request | clang-format and clang-tidy with `_config/.clang-format` and `_config/.clang-tidy` |
 | C++ Analysis CI | `ci-cpp-analysis.yml` | push, pull request | cppcheck on `lib/managers` and `lib/api` (C++20) |
 | Docs Publish CI | `ci-docs-publish.yml` | push to main, `v*` tags, pull request | `hardfoc-docs check` (figures and generated tables current), strict MkDocs build, Doxygen under `api/`, offline link check of the built site, Lighthouse budget, phone and desktop screenshots (artifact `docs-screenshots`); publishes on main and tags |
@@ -23,16 +23,18 @@ The examples are integration tests: they run on a board, not in CI. CI proves th
 
 ## Host unit tests
 
-[`tests/host`](../tests/host) builds the HAL sources that do not need ESP-IDF, with hf-core added as a
-subdirectory (`HF_CORE_MCU=NONE`, `HF_CORE_RTOS=NONE`), and runs them against hf-core's scriptable `Base*` fakes
-(`hf_core_host_mocks`): a test hands a manager a `MockSpi` with a chip model behind it and checks the frames it
-sends. One file is one executable and one ctest entry.
+[`tests/host`](../tests/host) builds every source in `lib/api` and `lib/managers`, with hf-core added as a
+subdirectory (`HF_CORE_MCU=NONE`, `HF_CORE_RTOS=NONE`) and the host board binding (`bsp_bind/host/`) in place of the
+ESP32-C6 one. The binding hands the managers hf-core's scriptable `Base*` fakes (`hf_core_host_mocks`) and logs
+what they asked for; a test reaches the fakes through `vortex::bsp::host` to put a chip model behind them or inject
+a failure. One file is one executable and one ctest entry.
 
 | Test | Proves |
 | --- | --- |
 | `test_board_config` | The board NTC config reads TMC9660 AIN3 (not AIN0) on a shared ADC; the examples' GPIO numbers equal the pin map |
 | `test_boot_report` | What `Vortex::GetFailedComponents()` and `GetSystemWarnings()` return: no duplicates, bounded, overflow counted |
 | `test_encoder_manager` | `EncoderManager` reads on an AS5047U register model: `ReadDiagnostics()` makes one ERRFL read, `ReadFieldStrength()` returns AGC and magnitude, empty slots touch no SPI |
+| `test_board_bind` | `Vortex::EnsureInitialized()` on the host binding: bus pins, SPI modes, I2C devices, UART, CAN, LED pin and NVS namespaces as the pin map says; LED frames; `Shutdown()` closes what init opened |
 
 ```bash
 cd tests/host
@@ -58,6 +60,9 @@ python3 -m pip install "git+https://github.com/hardfoc/hf-general-ci-tools@v1#su
 hardfoc-docs gen --check
 hardfoc-docs figures --check
 mkdocs build --strict
+
+# HAL boundary (no MCU header above bsp_bind/)
+tools/lint/lint_hal_boundary.sh --base origin/main
 
 # Markdown and YAML lint
 npx markdownlint-cli2 --config _config/.markdownlint.json "docs/**/*.md" README.md
