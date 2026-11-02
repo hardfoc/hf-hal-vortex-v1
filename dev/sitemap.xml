@@ -1,139 +1,131 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/getting-started/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/api-reference/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/roadmap/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/bring-up/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/adr/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/changelog/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/adr/0001-mcu-agnostic-boundary/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/quickstart/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/adr/0002-static-allocation/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/roadmap/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/adr/0003-pin-map-ownership/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/testing/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/adr/template/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/writing-docs/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/architecture/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/adr/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/architecture/errors/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/adr/0001-mcu-agnostic-boundary/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/architecture/initialization/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/adr/0002-static-allocation/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/architecture/ownership/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/adr/0003-pin-map-ownership/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/architecture/threading/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/adr/template/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/diagrams/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/architecture/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/examples/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/architecture/errors/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/guides/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/architecture/initialization/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/guides/testing-and-ci/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/architecture/ownership/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/guides/troubleshooting/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/architecture/threading/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/guides/writing-docs/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/diagrams/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/hardware/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/examples/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/hardware/pin-map/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/hardware/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/learn/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/hardware/pin-map/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/adc/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/adc/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/comms/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/comms/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/encoders/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/encoders/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/gpio/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/gpio/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/imu/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/imu/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/leds/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/leds/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/motors/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/motors/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/nvs/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/nvs/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
     <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/managers/temperature/</loc>
-         <lastmod>2026-11-02</lastmod>
-    </url>
-    <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/reference/</loc>
-         <lastmod>2026-11-02</lastmod>
-    </url>
-    <url>
-         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/dev/reference/api/</loc>
+         <loc>https://hardfoc.github.io/hf-hal-vortex-v1/latest/managers/temperature/</loc>
          <lastmod>2026-11-02</lastmod>
     </url>
 </urlset>

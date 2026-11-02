@@ -1,9 +1,0 @@
-<map id="ImuManager::~ImuManager" name="ImuManager::~ImuManager">
-<area shape="rect" id="Node000001" title="Private destructor." alt="" coords="5,35,211,60"/>
-<area shape="rect" id="Node000002" href="$classImuManager.html#af14969cef25b005a45843b042099a136" title="Deinitialize all IMUs and release resources." alt="" coords="259,35,445,60"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,45,245,45,245,50,211,50"/>
-<area shape="rect" id="Node000003" href="$classImuManager.html#a9e06f8873040d540ef308b0601c8a2f1" title="Disable BNO08x GPIO interrupt for specific device." alt="" coords="493,5,711,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="445,34,480,30,480,35,446,39"/>
-<area shape="rect" id="Node000004" href="$classCommChannelsManager.html#a37780fe331686ddce6d40b3b8a1a1722" title="Remove a runtime&#45;created I2C device." alt="" coords="511,55,693,95"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="446,55,497,61,497,66,445,60"/>
-</map>

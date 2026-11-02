@@ -1,7 +1,0 @@
-<map id="ImuManager::Deinitialize" name="ImuManager::Deinitialize">
-<area shape="rect" id="Node000001" title="Deinitialize all IMUs and release resources." alt="" coords="259,31,445,56"/>
-<area shape="rect" id="Node000002" href="$classVortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="40,5,176,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,35,176,28,176,22,245,30"/>
-<area shape="rect" id="Node000003" href="$classImuManager.html#a0eadd4b870e4b43aad883ea8426a0d57" title="Private destructor." alt="" coords="5,55,211,80"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="245,56,211,60,211,55,245,51"/>
-</map>

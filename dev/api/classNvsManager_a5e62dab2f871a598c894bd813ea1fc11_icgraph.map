@@ -1,5 +1,0 @@
-<map id="NvsManager::Deinitialize" name="NvsManager::Deinitialize">
-<area shape="rect" id="Node000001" title="Close namespaces (call after other subsystems if they may persist on shutdown)." alt="" coords="189,5,376,31"/>
-<area shape="rect" id="Node000002" href="$classVortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,5,141,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,21,142,21,142,15,175,15"/>
-</map>

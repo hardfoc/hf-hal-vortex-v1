@@ -1,5 +1,0 @@
-<map id="MotorController::DumpStatistics" name="MotorController::DumpStatistics">
-<area shape="rect" id="Node000001" title="Dump comprehensive system statistics to log as INFO level. Logs all device statistics,..." alt="" coords="5,13,236,38"/>
-<area shape="rect" id="Node000002" href="$classMotorController.html#a61f9e00e9cd9e2544728b3d51c89a9b4" title="Get indices of all active devices." alt="" coords="284,5,480,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
-</map>

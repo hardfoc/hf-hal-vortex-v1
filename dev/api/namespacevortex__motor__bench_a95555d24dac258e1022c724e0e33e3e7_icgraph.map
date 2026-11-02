@@ -1,5 +1,0 @@
-<map id="vortex_motor_bench::probe_gate_current_with_no_motor_type" name="vortex_motor_bench::probe_gate_current_with_no_motor_type">
-<area shape="rect" id="Node000001" title="Probe NR 245/246 with MOTOR_TYPE = NO_MOTOR (chip default after reset)." alt="" coords="140,5,303,60"/>
-<area shape="rect" id="Node000002" href="$vortex__bldc__telemetry__sweep_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,20,92,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,35,92,35,92,30,126,30"/>
-</map>

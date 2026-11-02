@@ -1,7 +1,0 @@
-<map id="vortex_motor_diagnostics::diagnose_and_log" name="vortex_motor_diagnostics::diagnose_and_log">
-<area shape="rect" id="Node000001" title="Take a snapshot via the vendor Diagnostics subsystem, run check against exp, and pretty&#45;print everyth..." alt="" coords="5,5,196,45"/>
-<area shape="rect" id="Node000002" href="$namespacevortex__motor__diagnostics.html#a77feee705a3722de3a25a09569b134bc" title="Compare the snapshot against exp and produce a DiagnosticReport. Pure function (no I/O)." alt="" coords="244,5,435,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,23,230,23,230,28,196,28"/>
-<area shape="rect" id="Node000003" href="$structvortex__motor__diagnostics_1_1DiagnosticReport.html#a1058bd985362274c95ae956412a051fa" title=" " alt="" coords="483,5,673,45"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,23,469,23,469,28,435,28"/>
-</map>

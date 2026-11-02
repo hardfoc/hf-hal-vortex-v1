@@ -1,9 +1,0 @@
-<map id="init_test_progress_indicator" name="init_test_progress_indicator">
-<area shape="rect" id="Node000001" title=" " alt="" coords="577,5,716,45"/>
-<area shape="rect" id="Node000002" href="$TestFramework_8h.html#a57a48f91a141d98e45f82937581e1a97" title=" " alt="" coords="341,13,529,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="564,28,529,28,529,23,564,23"/>
-<area shape="rect" id="Node000003" href="$TestFramework_8h.html#ab7e4c076755ecdf2ad6212cb8f6578ab" title=" " alt="" coords="140,13,293,38"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="328,28,294,28,294,23,328,23"/>
-<area shape="rect" id="Node000004" href="$adc__calibration__test_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,13,92,38"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,28,92,28,92,23,126,23"/>
-</map>

@@ -1,9 +1,0 @@
-<map id="app_main" name="app_main">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,31,92,56"/>
-<area shape="rect" id="Node000002" href="$vortex__pcal__gpio__imu__bringup_8cpp.html#a65f0f8e399dbb9f8f77dcb484a14fc91" title=" " alt="" coords="140,5,305,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,34,126,29,127,35,93,40"/>
-<area shape="rect" id="Node000004" href="$vortex__pcal__gpio__imu__bringup_8cpp.html#af8f31ec19bc74e7c460ff3e372bf93aa" title=" " alt="" coords="159,55,286,80"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="93,47,145,54,145,59,92,52"/>
-<area shape="rect" id="Node000003" href="$vortex__pcal__gpio__imu__bringup_8cpp.html#af660944ba5dd7af46d53d44601250c0d" title=" " alt="" coords="353,5,509,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="305,15,340,15,340,21,305,21"/>
-</map>

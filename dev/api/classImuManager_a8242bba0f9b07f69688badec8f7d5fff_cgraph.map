@@ -1,5 +1,0 @@
-<map id="ImuManager::InitializeInterruptGpio" name="ImuManager::InitializeInterruptGpio">
-<area shape="rect" id="Node000001" title="Initialize GPIO interrupt for BNO08x INT pin." alt="" coords="5,5,260,31"/>
-<area shape="rect" id="Node000002" href="$classGpioManager.html#a6448b8e73cd569e1a2b37d66f8f368d9" title="Get the BaseGpio driver for a named pin. Returns nullptr if not found." alt="" coords="308,5,448,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,15,294,15,294,21,260,21"/>
-</map>

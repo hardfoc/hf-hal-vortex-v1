@@ -1,7 +1,0 @@
-<map id="EncoderManager::CreateAs5047uDevice" name="EncoderManager::CreateAs5047uDevice">
-<area shape="rect" id="Node000001" title="Create an AS5047U encoder device on a given SPI device slot." alt="" coords="289,37,528,77"/>
-<area shape="rect" id="Node000002" href="$classEncoderManager.html#af87f1ab59777a56d281213f407c1d405" title=" " alt="" coords="5,5,241,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="275,45,241,41,242,36,276,40"/>
-<area shape="rect" id="Node000003" href="$classEncoderManager.html#ac6a14be98b269963d66ba36ef75d4437" title=" " alt="" coords="5,69,241,109"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="276,75,242,79,241,73,275,70"/>
-</map>

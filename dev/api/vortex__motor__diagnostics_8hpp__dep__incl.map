@@ -1,9 +1,0 @@
-<map id="vortex_motor_diagnostics.hpp" name="vortex_motor_diagnostics.hpp">
-<area shape="rect" id="Node000001" title="Bench&#45;side policy / expectation checker on top of the vendor tmc9660::diagnostics::MotorSnapshot." alt="" coords="201,5,419,31"/>
-<area shape="rect" id="Node000002" href="$vortex__bldc__abn__as5047__dynamics_8cpp.html" title="Closed&#45;loop ABN&#45;FOC velocity test with dual rotor&#45;position feedback paths exposed to the host:" alt="" coords="5,79,188,119"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="267,38,149,81,147,76,265,33"/>
-<area shape="rect" id="Node000003" href="$vortex__bldc__dynamics_8cpp.html" title="Closed&#45;loop hall&#45;FOC dynamics test for a robot&#45;dog&#45;class BLDC actuator. Same multi&#45;phase trajectory a..." alt="" coords="213,86,407,111"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="313,44,313,86,307,86,307,44"/>
-<area shape="rect" id="Node000004" href="$vortex__bldc__open__loop_8cpp.html" title="Open&#45;loop BLDC spin on the onboard SPI TMCL path (PCAL mux enables SPI_COMM_EN — see Vortex::SetOnboa..." alt="" coords="432,86,631,111"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="356,33,500,83,498,88,354,38"/>
-</map>

@@ -1,9 +1,0 @@
-<map id="vortex_motor_bench::motor_stop_safe" name="vortex_motor_bench::motor_stop_safe">
-<area shape="rect" id="Node000001" title=" " alt="" coords="399,30,555,70"/>
-<area shape="rect" id="Node000002" href="$vortex__bldc__abn__as5047__dynamics_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="202,5,289,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="385,40,289,27,289,21,385,35"/>
-<area shape="rect" id="Node000003" href="$namespaceanonymous__namespace_02vortex__bldc__open__loop__uart_8cpp_03.html#a53881a42450f02326fb2cdc184efd8a9" title=" " alt="" coords="140,55,351,109"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="385,65,351,70,351,65,385,60"/>
-<area shape="rect" id="Node000004" href="$vortex__bldc__open__loop__uart_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,69,92,95"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,85,92,85,92,79,126,79"/>
-</map>

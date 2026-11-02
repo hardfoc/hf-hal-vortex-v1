@@ -1,5 +1,0 @@
-<map id="vortex_tmcl_param_existence.hpp" name="vortex_tmcl_param_existence.hpp">
-<area shape="rect" id="Node000001" title="For each axis parameter number (NR), determine whether the running TMC9660 ROM accepts a read via GAP..." alt="" coords="5,5,252,31"/>
-<area shape="rect" id="Node000002" href="$vortex__tmcl__param__existence_8cpp.html" title="ESP32 harness: per&#45;NR read path inventory (GAP vs GGP) for TMC9660 parameter mode ROM." alt="" coords="5,79,252,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,44,131,79,126,79,126,44"/>
-</map>

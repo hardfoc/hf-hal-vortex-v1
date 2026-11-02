@@ -1,7 +1,0 @@
-<map id="run_animation_ticks" name="run_animation_ticks">
-<area shape="rect" id="Node000001" title=" " alt="" coords="316,5,471,31"/>
-<area shape="rect" id="Node000002" href="$vortex__led__ws2812__cycle_8cpp.html#acf82aa2215363ae6e01458a82682e0cd" title=" " alt="" coords="140,5,268,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="302,21,268,21,268,15,302,15"/>
-<area shape="rect" id="Node000003" href="$vortex__led__ws2812__cycle_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,5,92,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="126,21,92,21,92,15,126,15"/>
-</map>
