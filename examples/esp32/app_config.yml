@@ -43,7 +43,7 @@ apps:
   vortex_led_ws2812_cycle:
     source_file: "vortex_led_ws2812_cycle.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_i2c_scan_pcal_bno_pca:
     source_file: "vortex_i2c_scan_pcal_bno_pca.cpp"
     category: "component"
@@ -63,63 +63,63 @@ apps:
   vortex_bldc_open_loop:
     source_file: "vortex_bldc_open_loop.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_dynamics:
     source_file: "vortex_bldc_dynamics.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_open_loop_uart:
     source_file: "vortex_bldc_open_loop_uart.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_probe:
     source_file: "vortex_bldc_probe.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_param_scan:
     source_file: "vortex_tmcl_param_scan.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_param_scan_spi:
     source_file: "vortex_tmcl_param_scan.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_param_scan_post_config:
     source_file: "vortex_tmcl_param_scan_post_config.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_param_scan_post_config_spi:
     source_file: "vortex_tmcl_param_scan_post_config.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_manual_compliance:
     source_file: "vortex_tmcl_manual_compliance.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_param_existence:
     source_file: "vortex_tmcl_param_existence.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_tmcl_gap_smoke:
     source_file: "vortex_tmcl_gap_smoke.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_velocity_foc_hall:
     source_file: "vortex_bldc_velocity_foc_hall.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_velocity_foc_abn:
     source_file: "vortex_bldc_velocity_foc_abn.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_position_foc_as5047:
     source_file: "vortex_bldc_position_foc_as5047.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_abn_as5047_dynamics:
     source_file: "vortex_bldc_abn_as5047_dynamics.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_bldc_telemetry_sweep:
     source_file: "vortex_bldc_telemetry_sweep.cpp"
     category: "component"
@@ -127,11 +127,11 @@ apps:
   vortex_bldc_torque_foc_hall:
     source_file: "vortex_bldc_torque_foc_hall.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
   vortex_brake_dissipator_gpio:
     source_file: "vortex_brake_dissipator_gpio.cpp"
     category: "component"
-    ci_enabled: false
+    ci_enabled: true
 
 build_config:
   build_types:

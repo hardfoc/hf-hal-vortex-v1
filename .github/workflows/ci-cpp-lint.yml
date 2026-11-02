@@ -4,8 +4,8 @@ on:
   push:
     branches: [main, "release/*"]
     tags: ["v*"]
+  # Every pull request, including stacked ones whose base is another branch.
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 # ru-cpp-lint.yml requests pull-requests: write; a called workflow can only

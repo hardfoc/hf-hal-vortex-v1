@@ -10,8 +10,8 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  # Every pull request, including stacked ones whose base is another branch.
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
