@@ -1,0 +1,23 @@
+<map id="EncoderManager::Initialize" name="EncoderManager::Initialize">
+<area shape="rect" id="Node000001" title="Initialize the encoder manager system (no devices auto&#45;created)." alt="" coords="5,171,200,197"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#af67cc44d654cf6c433e4d7ef4d3927d8" title="Initialise all communication buses if not already initialised." alt="" coords="269,56,452,96"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,169,179,139,247,107,271,98,273,103,249,112,181,144,127,174"/>
+<area shape="rect" id="Node000004" href="$class_gpio_manager.html#a88a01fcf59a2db604d59b5cca4503112" title="Register all GPIO pins and initialise drivers (idempotent)." alt="" coords="248,121,473,146"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="168,169,281,146,282,151,169,174"/>
+<area shape="rect" id="Node000007" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="1028,63,1211,103"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="200,184,385,187,609,187,825,178,913,169,979,156,1032,135,1078,108,1081,113,1035,140,981,161,913,174,825,183,610,192,384,193,200,190"/>
+<area shape="rect" id="Node000009" href="$class_gpio_manager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="263,222,458,247"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="169,194,282,217,281,222,168,199"/>
+<area shape="rect" id="Node000010" href="$class_encoder_manager.html#a8a109df9de4160a471d7f40c0cece28a" title="Initialize all active encoder devices." alt="" coords="263,272,458,312"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="126,194,181,225,249,258,270,265,268,270,247,262,178,230,124,199"/>
+<area shape="rect" id="Node000003" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="521,56,704,96"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="452,73,507,73,507,79,452,79"/>
+<area shape="rect" id="Node000005" href="$class_gpio_manager.html#a71081920f92fb76254ccd258ec539c9e" title=" " alt="" coords="526,121,699,146"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="474,131,512,131,512,136,474,136"/>
+<area shape="rect" id="Node000006" href="$class_gpio_manager.html#a9ce1eed8b041919d8bb970b729077993" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="752,5,980,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="673,118,703,106,717,95,726,85,736,73,751,62,778,48,780,53,753,66,739,77,730,88,720,99,705,110,675,123"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="679,118,752,107,889,93,1014,85,1015,90,889,99,752,112,679,123"/>
+<area shape="rect" id="Node000008" href="$_gpio_manager_8cpp.html#a21c68b780d73db23df2fb67f98b2aff1" title=" " alt="" coords="796,121,936,146"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="700,131,782,131,782,136,700,136"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="956,43,1018,57,1016,62,954,48"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="GpioManager" name="GpioManager">
+<area shape="rect" id="Node000001" title="Singleton managing GPIO pins across ESP32, PCAL95555 I/O expander, and TMC9660 controllers." alt="" coords="959,78,1068,103"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="592,41,759,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="772,67,959,83,958,89,772,72"/>
+<area shape="rect" id="Node000003" href="$struct_gpio_entry.html" title="A single GPIO entry in the fixed&#45;size registry." alt="" coords="307,43,393,69"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="407,54,591,57,591,63,407,60"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,17,216,42"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="230,21,481,16,629,19,776,27,857,33,892,39,936,51,991,75,989,80,934,56,891,44,856,38,776,32,629,24,481,22,230,26"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="230,40,307,49,306,54,229,45"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="599,106,752,131"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="766,118,848,116,934,108,969,101,970,106,935,113,848,121,766,123"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="575,156,776,196"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="790,169,862,159,934,139,968,121,996,101,999,106,971,126,936,144,863,164,790,174"/>
+</map>

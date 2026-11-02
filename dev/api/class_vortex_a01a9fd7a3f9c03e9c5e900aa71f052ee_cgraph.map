@@ -1,0 +1,123 @@
+<map id="Vortex::InitializeAllComponents" name="Vortex::InitializeAllComponents">
+<area shape="rect" id="Node000001" title="Initialize all component handlers in proper order." alt="" coords="5,333,232,358"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#aad6f79f9a69637dae4e5f162ff12710c" title="Add warning message to system warnings." alt="" coords="563,431,761,457"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,356,203,387,241,404,281,416,349,430,419,439,549,444,549,450,419,444,348,435,279,421,239,409,201,392,140,361"/>
+<area shape="rect" id="Node000003" href="$class_vortex_boot_report.html#af4135b68aac5cefb7d9d164ba8f9b4f0" title="Forget every entry (start of a new initialisation attempt)." alt="" coords="296,135,475,161"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="126,331,148,298,182,254,227,208,279,170,292,163,294,168,281,174,230,212,186,258,152,301,130,334"/>
+<area shape="rect" id="Node000004" href="$class_vortex.html#a74ad27e8f8f6f37c1f01382b610ae8de" title="Initialize ADC management (step 6)" alt="" coords="309,382,461,407"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="188,355,303,377,302,382,187,361"/>
+<area shape="rect" id="Node000012" href="$class_vortex.html#a02af0d0d5718570ba6e916e6875677a0" title="Initialize communication channels (step 2)" alt="" coords="296,86,475,111"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="123,331,142,290,175,232,221,172,248,144,279,120,288,115,291,119,281,125,252,148,225,175,180,235,147,292,128,333"/>
+<area shape="rect" id="Node000015" href="$class_vortex.html#ad5c50fdca14e9b2768bc49a8a509cf25" title="Initialize encoder management (step 8)" alt="" coords="292,185,479,210"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="131,331,191,276,233,245,279,219,296,212,298,217,281,224,236,250,194,281,134,335"/>
+<area shape="rect" id="Node000025" href="$class_vortex.html#a0bee80a7c3452bf978cc97fec0b553f8" title="Initialize GPIO management (step 3)" alt="" coords="306,234,465,259"/>
+<area shape="poly" id="edge29_Node000001_Node000025" title=" " alt="" coords="142,330,203,300,279,268,305,260,307,265,281,273,205,304,144,335"/>
+<area shape="rect" id="Node000026" href="$class_vortex.html#a185e42ede3c9fec7dbe84b322806b74b" title="Initialize IMU management (step 7)" alt="" coords="309,283,462,309"/>
+<area shape="poly" id="edge32_Node000001_Node000026" title=" " alt="" coords="187,330,302,309,303,314,188,335"/>
+<area shape="rect" id="Node000036" href="$class_vortex.html#a63871edd060b1e80f4db1271432598d3" title="Initialize LED management (step 4 — early for LED&#45;only benches)" alt="" coords="306,333,465,358"/>
+<area shape="poly" id="edge42_Node000001_Node000036" title=" " alt="" coords="232,343,292,343,292,348,232,348"/>
+<area shape="rect" id="Node000041" href="$class_vortex.html#a306065b01a984ac3a714a0de35c8ddad" title="Initialize motor controllers (step 5 — after GPIO + LEDs)" alt="" coords="299,622,472,647"/>
+<area shape="poly" id="edge46_Node000001_Node000041" title=" " alt="" coords="134,356,365,609,361,613,130,360"/>
+<area shape="rect" id="Node000055" href="$class_vortex.html#aa2345f3768f6cd5ba035d953abf9012f" title=" " alt="" coords="309,671,462,697"/>
+<area shape="poly" id="edge64_Node000001_Node000055" title=" " alt="" coords="125,358,139,413,168,495,189,539,215,582,246,622,282,657,297,666,294,671,278,661,242,626,211,585,185,541,164,497,134,415,120,359"/>
+<area shape="rect" id="Node000058" href="$class_vortex.html#af5b5154114dfd9afe622d066d7e9b6f2" title="Initialize temperature management (step 9)" alt="" coords="280,721,491,746"/>
+<area shape="poly" id="edge68_Node000001_Node000058" title=" " alt="" coords="124,358,136,421,162,515,183,567,209,618,242,665,282,706,290,712,287,716,278,710,238,669,205,621,178,569,157,517,130,422,119,359"/>
+<area shape="rect" id="Node000005" href="$class_vortex_boot_report.html#a8561e1b05dacd63c7e89c9765100a103" title="Record a component that failed to initialise." alt="" coords="558,283,766,309"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="460,379,489,367,504,355,512,343,522,330,537,318,551,311,554,316,540,322,525,334,517,346,508,359,492,372,462,384"/>
+<area shape="rect" id="Node000007" href="$class_adc_manager.html#a93d9add5dfe70a4605297be247318c71" title="Initialise the ADC subsystem if not already initialised." alt="" coords="553,382,771,407"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="462,392,539,392,539,397,462,397"/>
+<area shape="rect" id="Node000006" href="$class_vortex_boot_report.html#ae4e34ba98fdc68473668afc554eb2616" title=" " alt="" coords="863,283,1034,309"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="766,293,850,293,850,299,766,299"/>
+<area shape="rect" id="Node000008" href="$class_adc_manager.html#a3561cebd5b27e351c066236543a0bc59" title=" " alt="" coords="865,934,1032,959"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="771,405,787,417,814,444,838,475,878,542,907,614,927,688,940,760,947,825,951,920,945,921,942,825,934,761,922,690,902,616,873,544,834,478,810,448,784,421,768,410"/>
+<area shape="rect" id="Node000009" href="$class_motor_controller.html#a2800ce6994196eaf98678cf543aaa1ca" title="Get the singleton instance." alt="" coords="1119,973,1330,998"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1032,956,1121,968,1120,973,1032,961"/>
+<area shape="rect" id="Node000010" href="$class_motor_controller.html#a88881cf3614bf87b7bc72100ca57ba3a" title="Get access to Tmc9660Handler by device index." alt="" coords="1134,1022,1315,1047"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="983,957,1113,1007,1147,1016,1146,1021,1111,1012,981,962"/>
+<area shape="rect" id="Node000011" href="$class_motor_controller.html#acf27e234e70f790b44b24f1b1db7f7ad" title="Check whether the motor controller subsystem has been initialised." alt="" coords="1121,923,1328,949"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="1032,941,1107,938,1108,943,1032,946"/>
+<area shape="poly" id="edge12_Node000012_Node000005" title=" " alt="" coords="476,109,492,121,508,139,515,158,517,197,519,234,526,252,541,269,548,274,544,278,537,273,522,254,514,235,512,197,510,160,503,142,489,125,473,114"/>
+<area shape="rect" id="Node000013" href="$class_comm_channels_manager.html#af67cc44d654cf6c433e4d7ef4d3927d8" title="Initialise all communication buses if not already initialised." alt="" coords="1133,5,1316,45"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="475,88,1119,32,1119,37,475,94"/>
+<area shape="rect" id="Node000014" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="1388,5,1571,45"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="1316,23,1374,23,1374,28,1316,28"/>
+<area shape="poly" id="edge16_Node000015_Node000005" title=" " alt="" coords="466,208,492,219,508,231,517,245,526,257,540,268,558,276,555,281,537,273,522,261,512,248,504,235,489,224,464,213"/>
+<area shape="rect" id="Node000016" href="$class_encoder_manager.html#aa4e1573f518410b96e8fda9e42fa238c" title="Ensure the encoder manager system is initialized." alt="" coords="539,133,785,158"/>
+<area shape="poly" id="edge17_Node000015_Node000016" title=" " alt="" coords="453,182,580,158,581,163,454,187"/>
+<area shape="rect" id="Node000017" href="$class_encoder_manager.html#a17703c5ee6e6b3ee1512dba7e856874b" title="Initialize the encoder manager system (no devices auto&#45;created)." alt="" coords="851,133,1046,158"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="785,143,838,143,838,148,785,148"/>
+<area shape="poly" id="edge19_Node000017_Node000013" title=" " alt="" coords="969,130,1031,94,1111,55,1132,47,1134,52,1113,60,1034,98,972,135"/>
+<area shape="rect" id="Node000018" href="$class_gpio_manager.html#a88a01fcf59a2db604d59b5cca4503112" title="Register all GPIO pins and initialise drivers (idempotent)." alt="" coords="1112,234,1337,259"/>
+<area shape="poly" id="edge20_Node000017_Node000018" title=" " alt="" coords="1016,156,1065,175,1080,186,1090,198,1099,209,1113,219,1132,227,1130,232,1111,224,1095,213,1086,201,1077,190,1063,180,1014,161"/>
+<area shape="rect" id="Node000021" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="1897,285,2080,325"/>
+<area shape="poly" id="edge26_Node000017_Node000021" title=" " alt="" coords="1046,137,1236,129,1470,127,1586,130,1692,137,1783,150,1850,170,1887,190,1919,217,1968,272,1964,276,1916,221,1884,195,1848,174,1782,156,1692,143,1586,135,1470,132,1237,134,1046,142"/>
+<area shape="rect" id="Node000023" href="$class_gpio_manager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="1127,185,1322,210"/>
+<area shape="poly" id="edge27_Node000017_Node000023" title=" " alt="" coords="1017,155,1144,180,1143,185,1016,161"/>
+<area shape="rect" id="Node000024" href="$class_encoder_manager.html#a8a109df9de4160a471d7f40c0cece28a" title="Initialize all active encoder devices." alt="" coords="1127,69,1322,109"/>
+<area shape="poly" id="edge28_Node000017_Node000024" title=" " alt="" coords="1011,130,1114,109,1115,114,1013,135"/>
+<area shape="rect" id="Node000019" href="$class_gpio_manager.html#a71081920f92fb76254ccd258ec539c9e" title=" " alt="" coords="1393,234,1566,259"/>
+<area shape="poly" id="edge21_Node000018_Node000019" title=" " alt="" coords="1338,244,1379,244,1379,249,1338,249"/>
+<area shape="rect" id="Node000020" href="$class_gpio_manager.html#a9ce1eed8b041919d8bb970b729077993" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="1621,285,1849,325"/>
+<area shape="poly" id="edge22_Node000019_Node000020" title=" " alt="" coords="1536,257,1635,280,1633,285,1535,262"/>
+<area shape="poly" id="edge24_Node000019_Node000021" title=" " alt="" coords="1566,246,1700,254,1850,271,1898,280,1897,285,1849,276,1699,260,1566,252"/>
+<area shape="rect" id="Node000022" href="$_gpio_manager_8cpp.html#a21c68b780d73db23df2fb67f98b2aff1" title=" " alt="" coords="1665,185,1805,210"/>
+<area shape="poly" id="edge25_Node000019_Node000022" title=" " alt="" coords="1545,231,1655,210,1656,215,1546,237"/>
+<area shape="poly" id="edge23_Node000020_Node000021" title=" " alt="" coords="1850,303,1884,303,1884,308,1850,308"/>
+<area shape="poly" id="edge30_Node000025_Node000005" title=" " alt="" coords="458,257,577,278,576,283,457,262"/>
+<area shape="poly" id="edge31_Node000025_Node000018" title=" " alt="" coords="448,231,538,219,686,208,801,205,917,208,1064,219,1146,229,1145,234,1064,224,916,214,801,210,686,213,539,224,449,237"/>
+<area shape="poly" id="edge33_Node000026_Node000005" title=" " alt="" coords="462,293,544,293,544,299,462,299"/>
+<area shape="rect" id="Node000027" href="$class_imu_manager.html#a1e8ab61f8992c5dc6427a24d4c6902f9" title="Ensure the IMU manager system is initialized." alt="" coords="552,234,772,259"/>
+<area shape="poly" id="edge34_Node000026_Node000027" title=" " alt="" coords="457,281,576,259,577,264,458,286"/>
+<area shape="rect" id="Node000028" href="$class_imu_manager.html#a3cd907c4f640e418916930e1c6b0777f" title="Initialize the IMU manager system." alt="" coords="865,234,1033,259"/>
+<area shape="poly" id="edge35_Node000027_Node000028" title=" " alt="" coords="772,244,851,244,851,249,772,249"/>
+<area shape="poly" id="edge36_Node000028_Node000013" title=" " alt="" coords="976,232,1020,205,1042,188,1062,168,1078,138,1083,111,1090,83,1098,69,1110,55,1120,48,1123,52,1114,59,1102,72,1095,85,1088,112,1083,140,1066,171,1046,192,1023,210,979,236"/>
+<area shape="poly" id="edge37_Node000028_Node000018" title=" " alt="" coords="1033,244,1098,244,1098,249,1033,249"/>
+<area shape="poly" id="edge40_Node000028_Node000021" title=" " alt="" coords="1034,256,1065,268,1081,281,1090,295,1098,307,1113,318,1164,338,1217,354,1327,375,1439,383,1549,382,1654,373,1750,359,1904,326,1905,331,1751,364,1654,378,1549,387,1438,389,1326,380,1216,359,1163,343,1111,322,1095,311,1085,298,1077,285,1063,273,1032,261"/>
+<area shape="poly" id="edge41_Node000028_Node000023" title=" " alt="" coords="1020,231,1139,210,1140,215,1021,237"/>
+<area shape="rect" id="Node000029" href="$class_gpio_manager.html#a6448b8e73cd569e1a2b37d66f8f368d9" title="Get the BaseGpio driver for a named pin. Returns nullptr if not found." alt="" coords="1155,441,1295,466"/>
+<area shape="poly" id="edge38_Node000028_Node000029" title=" " alt="" coords="1034,252,1066,269,1079,282,1087,296,1093,323,1098,351,1104,365,1114,380,1147,409,1183,432,1181,437,1144,414,1110,383,1099,367,1093,352,1088,324,1082,297,1074,285,1062,273,1032,257"/>
+<area shape="rect" id="Node000030" href="$class_imu_manager.html#a060cedf87725a844b6d0a9303621febd" title="Get the number of active IMU devices." alt="" coords="1115,283,1334,309"/>
+<area shape="poly" id="edge39_Node000028_Node000030" title=" " alt="" coords="1021,257,1140,278,1139,283,1020,262"/>
+<area shape="poly" id="edge43_Node000036_Node000005" title=" " alt="" coords="457,330,576,309,577,314,458,335"/>
+<area shape="rect" id="Node000037" href="$class_led_manager.html#afa325e20cb2d4356fb870fdd86d4c729" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="553,333,771,358"/>
+<area shape="poly" id="edge44_Node000036_Node000037" title=" " alt="" coords="465,343,539,343,539,348,465,348"/>
+<area shape="rect" id="Node000038" href="$class_led_manager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="865,333,1032,358"/>
+<area shape="poly" id="edge45_Node000037_Node000038" title=" " alt="" coords="772,343,851,343,851,348,772,348"/>
+<area shape="poly" id="edge48_Node000041_Node000002" title=" " alt="" coords="393,620,448,550,489,509,537,474,572,458,574,463,540,478,493,513,452,554,397,623"/>
+<area shape="poly" id="edge47_Node000041_Node000005" title=" " alt="" coords="390,621,537,318,544,313,547,317,541,322,395,623"/>
+<area shape="poly" id="edge59_Node000041_Node000010" title=" " alt="" coords="474,643,493,657,511,681,523,706,530,731,532,757,526,807,513,856,501,905,497,952,500,975,507,998,521,1020,540,1042,559,1055,583,1065,646,1079,723,1085,809,1083,987,1068,1138,1047,1139,1052,988,1074,809,1089,723,1090,645,1084,581,1070,556,1060,537,1046,516,1023,502,1000,494,977,491,953,496,904,508,855,521,806,526,756,525,732,518,708,507,684,489,661,471,647"/>
+<area shape="poly" id="edge54_Node000041_Node000029" title=" " alt="" coords="397,620,453,568,494,540,538,518,588,503,656,490,821,472,995,460,1140,453,1141,458,995,465,821,477,656,496,590,508,540,522,496,545,457,572,400,624"/>
+<area shape="rect" id="Node000042" href="$class_motor_controller.html#afe36094ea42c94597e08573ef1966d27" title="Drive the onboard TMC9660 host SPI mux (PCAL_TMC_SPI_COMM_EN) on Vortex." alt="" coords="550,583,774,623"/>
+<area shape="poly" id="edge49_Node000041_Node000042" title=" " alt="" coords="472,622,536,615,536,620,473,627"/>
+<area shape="rect" id="Node000043" href="$class_motor_controller.html#a64dee66639b575d299dd6d361ec0745f" title="Create the onboard TMC9660 device using an SPI interface." alt="" coords="547,647,777,687"/>
+<area shape="poly" id="edge50_Node000041_Node000043" title=" " alt="" coords="473,642,533,649,533,654,472,647"/>
+<area shape="rect" id="Node000044" href="$class_motor_controller.html#aa911d938241c59a18cf48fe4ee2b230f" title="Initialise all registered motor controllers if not already done." alt="" coords="542,533,782,558"/>
+<area shape="poly" id="edge51_Node000041_Node000044" title=" " alt="" coords="411,620,469,594,538,568,574,558,575,564,539,573,471,599,414,624"/>
+<area shape="rect" id="Node000049" href="$class_motor_controller.html#a803bc74e1c421b5b249a5d791785223f" title="Get the number of active TMC9660 devices." alt="" coords="562,711,762,751"/>
+<area shape="poly" id="edge55_Node000041_Node000049" title=" " alt="" coords="462,645,492,656,507,666,517,677,526,687,540,696,555,703,553,708,537,701,523,691,513,680,503,670,489,661,460,650"/>
+<area shape="rect" id="Node000050" href="$class_vortex.html#aff5212af83e632d076367bc3af677148" title="Effective transport for InitializeMotors() (default: Uart)." alt="" coords="557,775,767,815"/>
+<area shape="poly" id="edge56_Node000041_Node000050" title=" " alt="" coords="473,645,492,657,505,669,512,683,517,710,523,736,529,749,540,761,546,765,543,769,537,765,525,752,518,738,512,711,507,685,500,673,489,661,471,650"/>
+<area shape="rect" id="Node000051" href="$class_comm_channels_manager.html#aa0371889de5d7bdd19d432cf5c38d047" title="Get an SPI device handle by enum identifier." alt="" coords="571,839,753,879"/>
+<area shape="poly" id="edge57_Node000041_Node000051" title=" " alt="" coords="474,644,492,657,509,678,517,699,518,742,518,785,525,805,541,825,560,839,556,843,537,829,521,807,513,785,512,742,511,700,504,680,489,661,471,648"/>
+<area shape="rect" id="Node000052" href="$class_comm_channels_manager.html#a2afac670a23c96c77a1ebada7eee011f" title="Get the UART bus (TMC9660 TMCL)." alt="" coords="571,903,753,943"/>
+<area shape="poly" id="edge58_Node000041_Node000052" title=" " alt="" coords="474,643,493,657,513,686,522,716,522,745,518,775,514,804,514,832,521,861,541,889,560,903,556,908,537,893,516,863,508,833,508,803,512,774,516,745,516,716,508,688,489,661,471,648"/>
+<area shape="rect" id="Node000053" href="$_motor_controller_8h.html#a02fdccc8a6e5f78c5a6f1d0adc5a71c4" title="Convert MotorError to a human&#45;readable string." alt="" coords="591,967,733,993"/>
+<area shape="poly" id="edge60_Node000041_Node000053" title=" " alt="" coords="474,643,493,657,507,676,518,694,526,732,524,770,517,808,510,845,508,881,516,917,526,935,541,953,558,966,578,974,576,979,555,970,537,957,522,938,511,919,502,882,504,844,512,807,519,769,521,733,513,696,503,678,489,661,470,647"/>
+<area shape="rect" id="Node000054" href="$class_gpio_manager.html#aaa771acc4c28b3d20cf2f5035882b190" title="After MotorController::CreateOnboardDevice(), register TMC9660 GPIO17/18 in the table." alt="" coords="833,1004,1064,1044"/>
+<area shape="poly" id="edge61_Node000041_Node000054" title=" " alt="" coords="474,643,493,657,509,679,521,701,527,724,529,746,524,791,514,836,503,879,500,922,503,942,510,963,523,983,540,1002,559,1014,585,1022,655,1033,737,1035,819,1032,819,1037,737,1040,655,1038,584,1028,557,1018,537,1006,518,986,506,965,498,944,495,922,498,879,508,834,519,790,524,746,522,725,516,703,505,682,489,661,471,647"/>
+<area shape="rect" id="Node000045" href="$class_motor_controller.html#a8038d2348a025fe7840ba50d3148fb11" title="Initialize all registered motor controller devices." alt="" coords="1385,466,1573,491"/>
+<area shape="poly" id="edge52_Node000044_Node000045" title=" " alt="" coords="782,533,1064,511,1371,485,1372,490,1064,516,782,539"/>
+<area shape="poly" id="edge53_Node000045_Node000021" title=" " alt="" coords="1548,463,1688,431,1769,407,1848,379,1898,356,1943,330,1946,335,1901,360,1850,384,1771,412,1690,436,1549,469"/>
+<area shape="poly" id="edge62_Node000054_Node000009" title=" " alt="" coords="1064,1005,1119,997,1120,1003,1065,1010"/>
+<area shape="poly" id="edge63_Node000054_Node000010" title=" " alt="" coords="1064,1026,1120,1028,1120,1033,1064,1031"/>
+<area shape="poly" id="edge65_Node000055_Node000005" title=" " alt="" coords="461,675,476,667,489,657,505,636,515,615,524,574,521,531,511,489,502,446,499,404,502,382,508,361,520,339,537,318,544,312,548,315,541,322,524,342,513,363,507,383,504,404,507,446,516,488,526,531,529,574,520,617,509,639,493,661,479,672,464,679"/>
+<area shape="rect" id="Node000056" href="$class_nvs_manager.html#a96ef9087cc96c674f3eafb99b11ee883" title="Initialize NVS flash (once) and open all Vortex namespaces." alt="" coords="552,1119,772,1145"/>
+<area shape="poly" id="edge66_Node000055_Node000056" title=" " alt="" coords="463,687,479,695,493,706,512,731,524,756,531,781,534,806,530,855,518,904,506,953,502,1001,504,1025,511,1050,523,1074,541,1098,555,1110,551,1114,537,1102,518,1077,506,1052,499,1026,496,1001,501,952,513,903,524,854,529,806,526,782,519,758,507,734,489,710,476,699,461,692"/>
+<area shape="rect" id="Node000057" href="$class_nvs_manager.html#a4faeb9380248f065480cbd92a65b4163" title=" " alt="" coords="853,1119,1044,1145"/>
+<area shape="poly" id="edge67_Node000056_Node000057" title=" " alt="" coords="772,1129,839,1129,839,1135,772,1135"/>
+<area shape="poly" id="edge69_Node000058_Node000005" title=" " alt="" coords="474,718,489,706,507,682,519,658,525,634,528,611,523,562,511,514,499,465,495,416,498,391,505,367,518,342,537,318,544,311,548,315,541,322,522,345,510,369,503,392,500,416,505,464,516,512,528,561,533,611,530,635,524,660,511,685,493,710,477,723"/>
+<area shape="rect" id="Node000059" href="$class_temperature_manager.html#abacecf9ec508cefbff22be8aec0a85cb" title="Initialise the temperature subsystem if not already initialised." alt="" coords="581,1169,743,1209"/>
+<area shape="poly" id="edge70_Node000058_Node000059" title=" " alt="" coords="390,746,397,817,405,870,418,928,437,989,463,1050,497,1106,540,1155,569,1173,567,1178,537,1159,493,1110,459,1052,432,991,413,929,400,871,391,818,384,746"/>
+<area shape="rect" id="Node000060" href="$class_temperature_manager.html#affefc5063769540fccf0f63b255281a9" title=" " alt="" coords="868,1169,1029,1209"/>
+<area shape="poly" id="edge71_Node000059_Node000060" title=" " alt="" coords="743,1187,854,1187,854,1192,743,1192"/>
+</map>

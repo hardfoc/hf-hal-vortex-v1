@@ -1,0 +1,25 @@
+<map id="TemperatureManager" name="TemperatureManager">
+<area shape="rect" id="Node000001" title="Singleton manager for all temperature sensors on Vortex V1." alt="" coords="1191,150,1352,175"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="820,5,992,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1007,37,1087,56,1168,86,1219,116,1257,147,1254,152,1216,121,1166,90,1085,61,1006,42"/>
+<area shape="rect" id="Node000003" href="$struct_temp_entry.html" title="A single temperature sensor entry in the fixed&#45;size registry." alt="" coords="511,13,601,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="615,23,820,23,820,28,615,28"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="227,13,352,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="366,23,510,23,510,28,366,28"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="5,5,172,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="186,23,226,23,226,28,186,28"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="779,70,1033,95"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1004,95,1167,128,1233,147,1232,152,1166,133,1003,100"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="787,120,1025,160"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1039,146,1190,155,1190,160,1039,151"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="809,184,1003,224"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1017,190,1166,173,1190,170,1191,176,1167,179,1017,195"/>
+<area shape="rect" id="Node000009" href="$class_tmc9660_temperature_wrapper.html" title="Adapter wrapping Tmc9660Handler&#39;s internal temperature into BaseTemperature." alt="" coords="447,191,665,217"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="679,201,808,201,808,207,679,207"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="221,191,357,217"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="371,201,446,201,446,207,371,207"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="829,249,983,274"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="996,246,1079,230,1166,207,1208,190,1245,173,1247,178,1210,195,1167,212,1080,235,997,251"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="824,299,988,339"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1001,306,1083,287,1126,273,1165,255,1194,237,1220,215,1258,174,1261,178,1223,218,1197,241,1168,260,1127,278,1085,292,1002,311"/>
+</map>

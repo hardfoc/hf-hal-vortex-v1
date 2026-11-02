@@ -1,0 +1,18 @@
+<map id="Vortex::InitializeGpio" name="Vortex::InitializeGpio">
+<area shape="rect" id="Node000001" title="Initialize GPIO management (step 3)" alt="" coords="5,46,164,71"/>
+<area shape="rect" id="Node000002" href="$class_vortex_boot_report.html#a8561e1b05dacd63c7e89c9765100a103" title="Record a component that failed to initialise." alt="" coords="221,21,429,46"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,48,207,43,207,48,165,53"/>
+<area shape="rect" id="Node000004" href="$class_gpio_manager.html#a88a01fcf59a2db604d59b5cca4503112" title="Register all GPIO pins and initialise drivers (idempotent)." alt="" coords="212,70,437,95"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,64,199,67,198,73,164,69"/>
+<area shape="rect" id="Node000003" href="$class_vortex_boot_report.html#ae4e34ba98fdc68473668afc554eb2616" title=" " alt="" coords="487,21,657,46"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="429,31,473,31,473,36,429,36"/>
+<area shape="rect" id="Node000005" href="$class_gpio_manager.html#a71081920f92fb76254ccd258ec539c9e" title=" " alt="" coords="485,70,659,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="438,80,472,80,472,85,438,85"/>
+<area shape="rect" id="Node000006" href="$class_gpio_manager.html#a9ce1eed8b041919d8bb970b729077993" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="707,5,935,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="627,67,720,46,721,51,629,73"/>
+<area shape="rect" id="Node000007" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="983,35,1165,75"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="659,75,969,58,969,63,659,81"/>
+<area shape="rect" id="Node000008" href="$_gpio_manager_8cpp.html#a21c68b780d73db23df2fb67f98b2aff1" title=" " alt="" coords="751,121,891,146"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="636,93,745,115,744,120,635,98"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="935,36,969,40,969,45,935,41"/>
+</map>
