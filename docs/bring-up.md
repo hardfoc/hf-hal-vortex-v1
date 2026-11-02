@@ -38,7 +38,7 @@ app is built and flashed as in the [quickstart](quickstart.md)
 | `fatal: not a git repository` or empty `lib/core` | Submodules not initialised | `git submodule update --init --recursive` |
 | `APP_TYPE not defined` | `idf.py build` run directly | Build with `./scripts/build_app.sh <app> <Debug\|Release>` |
 | `No supported board variant defined!` | The pin-map selector got no `HARDFOC_BOARD_*` define | Build through this repository's CMake; it defines `HARDFOC_BOARD_VORTEX_V1` |
-| Errors in ESP-IDF headers | Wrong ESP-IDF version or target | Use release/v5.5 and `esp32c6` ([Get started](../quickstart.md)) |
+| Errors in ESP-IDF headers | Wrong ESP-IDF version or target | Use release/v5.5 and `esp32c6` ([Get started](quickstart.md)) |
 
 ## Start-up
 
