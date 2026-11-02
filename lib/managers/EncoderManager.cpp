@@ -38,7 +38,6 @@ EncoderManager& EncoderManager::GetInstance() noexcept {
 EncoderManager::EncoderManager() noexcept
     : initialized_(false), manager_mutex_() {
     // Initialize all device slots as empty and not active
-    for (auto& h : as5047u_handlers_) h.reset();
     device_initialized_.fill(false);
     device_active_.fill(false);
 }
@@ -111,7 +110,7 @@ As5047uHandler* EncoderManager::GetAs5047uHandler(uint8_t deviceIndex) noexcept 
         return nullptr;
     }
     
-    return as5047u_handlers_[deviceIndex].get();
+    return &*as5047u_handlers_[deviceIndex];
 }
 
 as5047u::AS5047U<As5047uSpiAdapter>* EncoderManager::GetAs5047uDriver(uint8_t deviceIndex) noexcept {
@@ -161,14 +160,8 @@ bool EncoderManager::CreateAs5047uDevice(uint8_t deviceIndex,
     }
     
     // Create AS5047U handler with SPI interface
-    auto handler = std::make_unique<As5047uHandler>(*spi_interface, config);
-    if (!handler) {
-        Logger::GetInstance().Error("EncoderManager", "Failed to create AS5047U handler for device %u", deviceIndex);
-        return false;
-    }
-    
     // Store handler and mark as active
-    as5047u_handlers_[deviceIndex] = std::move(handler);
+    as5047u_handlers_[deviceIndex].emplace(*spi_interface, config);
     device_active_[deviceIndex] = true;
     device_initialized_[deviceIndex] = false;
     
@@ -205,14 +198,8 @@ bool EncoderManager::CreateAs5047uDevice(uint8_t deviceIndex,
     }
     
     // Create AS5047U handler with direct SPI interface
-    auto handler = std::make_unique<As5047uHandler>(spi_interface, config);
-    if (!handler) {
-        Logger::GetInstance().Error("EncoderManager", "Failed to create AS5047U handler for device %u", deviceIndex);
-        return false;
-    }
-    
     // Store handler and mark as active
-    as5047u_handlers_[deviceIndex] = std::move(handler);
+    as5047u_handlers_[deviceIndex].emplace(spi_interface, config);
     device_active_[deviceIndex] = true;
     device_initialized_[deviceIndex] = false;
     
@@ -409,7 +396,7 @@ As5047uHandler* EncoderManager::ReadyHandlerLocked(uint8_t deviceIndex) noexcept
         !device_initialized_[deviceIndex] || !as5047u_handlers_[deviceIndex]) {
         return nullptr;
     }
-    return as5047u_handlers_[deviceIndex].get();
+    return &*as5047u_handlers_[deviceIndex];
 }
 
 EncoderError EncoderManager::FinishRead(uint8_t deviceIndex, AS5047U_Error sticky,

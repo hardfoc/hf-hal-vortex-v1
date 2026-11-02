@@ -8,8 +8,8 @@
  *          delegates to the MotorController-owned Tmc9660Handler.
  *
  *          Follows the Flux ownership pattern: fixed-size array of AdcEntry
- *          structs (no heap unordered_map), single RtosMutex, unique_ptr
- *          for the TMC9660 wrapper.
+ *          structs (no heap unordered_map), single RtosMutex, and the TMC9660
+ *          wrapper in place (std::optional): no heap.
  *
  * @version 2.0
  */
@@ -20,17 +20,17 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
-#include <memory>
+#include <optional>
 #include <string_view>
 
 #include "base/BaseAdc.h"
 #include "RtosMutex.h"
+#include "handlers/tmc9660/Tmc9660AdcWrapper.h"
 #include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
 
 // Forward declarations
 class MotorController;
 class Tmc9660Handler;
-class Tmc9660AdcWrapper;
 
 //==============================================================================
 // ADC ENTRY
@@ -42,7 +42,7 @@ class Tmc9660AdcWrapper;
 struct AdcEntry {
     HfFunctionalAdcChannel functional_channel{HfFunctionalAdcChannel::HF_FUNCTIONAL_ADC_COUNT}; ///< Functional enum for this channel
     std::string_view name;              ///< Human-readable name from pincfg
-    BaseAdc* driver{nullptr};           ///< Pointer to the ADC driver (owned by the wrapper unique_ptr)
+    BaseAdc* driver{nullptr};           ///< The ADC driver (the manager's in-place Tmc9660AdcWrapper)
     uint8_t adc_unit{0};                ///< ADC unit on the chip
     uint8_t hw_channel{0};              ///< Hardware channel within the unit
     float voltage_divider{1.0f};        ///< Divider ratio for scaled readings
@@ -237,8 +237,8 @@ private:
     [[nodiscard]] size_t FindByEnum(HfFunctionalAdcChannel channel) const noexcept;
 
     //==========================================================================
-    // STORAGE — entries are fixed-size; Tmc9660AdcWrapper is heap-allocated
-    //           via unique_ptr (singleton lifetime)
+    // STORAGE — entries are fixed-size; the Tmc9660AdcWrapper lives in place
+    //           (std::optional, emplaced at init, reset at deinit)
     //==========================================================================
 
     static constexpr size_t kMaxChannels =
@@ -249,7 +249,7 @@ private:
     size_t registered_count_{0};
 
     /// Single TMC9660 ADC wrapper — all channels route through this.
-    std::unique_ptr<Tmc9660AdcWrapper> tmc9660_adc_;
+    std::optional<Tmc9660AdcWrapper> tmc9660_adc_;   ///< In place; emplaced at init
 
     /// MotorController dependency (non-owning pointer, set at init).
     MotorController* motor_controller_{nullptr};

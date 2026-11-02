@@ -38,7 +38,6 @@ ImuManager& ImuManager::GetInstance() noexcept {
 ImuManager::ImuManager() noexcept 
     : initialized_(false), last_error_(ImuError::SUCCESS), manager_mutex_(), onboard_device_created_(false) {
     // Initialize all device slots as empty and not active
-    for (auto& h : bno08x_handlers_) h.reset();
     device_initialized_.fill(false);
     device_active_.fill(false);
     i2c_device_indices_.fill(-1); // Initialize to -1 (no I2C device)
@@ -89,8 +88,9 @@ bool ImuManager::Deinitialize() noexcept {
     interrupt_enabled_ = false;
     interrupt_count_.store(0);
     interrupt_callback_ = nullptr;
+    interrupt_callback_user_ = nullptr;
 
-    // Destroy handlers while RST/INT BaseGpio* from GpioManager remain valid (shared_ptrs below).
+    // Destroy handlers while the RST/INT pins from GpioManager are still valid (cleared below).
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
         if (device_active_[i] && bno08x_handlers_[i]) {
             // Clean up I2C device if this slot had one
@@ -108,10 +108,9 @@ bool ImuManager::Deinitialize() noexcept {
     }
 
     interrupt_gpio_ = nullptr;
-    interrupt_gpio_shared_.reset();
-    onboard_bno_reset_gpio_shared_.reset();
-    onboard_bno_boot_gpio_shared_.reset();
-    onboard_bno_int_gpio_shared_.reset();
+    onboard_bno_reset_gpio_ = nullptr;
+    onboard_bno_boot_gpio_ = nullptr;
+    onboard_bno_int_gpio_ = nullptr;
 
     initialized_.store(false, std::memory_order_release);
     comm_manager_ = nullptr;
@@ -133,7 +132,7 @@ Bno08xHandler* ImuManager::GetBno08xHandler(uint8_t deviceIndex) noexcept {
         return nullptr;
     }
     
-    return bno08x_handlers_[deviceIndex].get();
+    return &*bno08x_handlers_[deviceIndex];
 }
 
 IBno08xDriverOps* ImuManager::GetSensor(uint8_t deviceIndex) noexcept {
@@ -201,19 +200,7 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
         UpdateLastError(ImuError::COMMUNICATION_FAILED, deviceIndex);
         return ImuError::COMMUNICATION_FAILED;
     }
-    
-    // Create external BNO08x handler
-    auto external_handler = std::make_unique<Bno08xHandler>(*i2c_interface, config);
-    if (!external_handler) {
-        Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        // Clean up the I2C device
-        comm_manager_->RemoveI2cDevice(i2c_device_index);
-        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
-        return ImuError::HANDLER_CREATION_FAILED;
-    }
-    
-    // Store the handler and track the I2C device index
-    bno08x_handlers_[deviceIndex] = std::move(external_handler);
+    bno08x_handlers_[deviceIndex].emplace(*i2c_interface, config);
     device_active_[deviceIndex] = true;
     device_initialized_[deviceIndex] = false;
     i2c_device_indices_[deviceIndex] = i2c_device_index; // Track for cleanup
@@ -257,14 +244,9 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     }
     
     // Create external BNO08x handler with provided I2C interface
-    auto external_handler = std::make_unique<Bno08xHandler>(i2c_interface, config);
-    if (!external_handler) {
-        Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
-        return ImuError::HANDLER_CREATION_FAILED;
-    }
+
+    bno08x_handlers_[deviceIndex].emplace(i2c_interface, config);
     
-    bno08x_handlers_[deviceIndex] = std::move(external_handler);
     device_active_[deviceIndex] = true;
     device_initialized_[deviceIndex] = false;
     
@@ -318,14 +300,9 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     }
     
     // Create external BNO08x handler with SPI interface
-    auto external_handler = std::make_unique<Bno08xHandler>(*spi_interface, config);
-    if (!external_handler) {
-        Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
-        return ImuError::HANDLER_CREATION_FAILED;
-    }
+
+    bno08x_handlers_[deviceIndex].emplace(*spi_interface, config);
     
-    bno08x_handlers_[deviceIndex] = std::move(external_handler);
     device_active_[deviceIndex] = true;
     device_initialized_[deviceIndex] = false;
     
@@ -365,14 +342,9 @@ ImuError ImuManager::CreateExternalBno08xDevice(uint8_t deviceIndex,
     }
     
     // Create external BNO08x handler with provided SPI interface
-    auto external_handler = std::make_unique<Bno08xHandler>(spi_interface, config);
-    if (!external_handler) {
-        Logger::GetInstance().Error("ImuManager", "Failed to create BNO08x handler for device %u", deviceIndex);
-        UpdateLastError(ImuError::HANDLER_CREATION_FAILED, deviceIndex);
-        return ImuError::HANDLER_CREATION_FAILED;
-    }
+
+    bno08x_handlers_[deviceIndex].emplace(spi_interface, config);
     
-    bno08x_handlers_[deviceIndex] = std::move(external_handler);
     device_active_[deviceIndex] = true;
     device_initialized_[deviceIndex] = false;
     
@@ -538,7 +510,8 @@ const char* ImuManager::GetDeviceType(uint8_t deviceIndex) const noexcept {
 //**                  INTERRUPT SUPPORT METHODS                           **//
 //**************************************************************************//
 
-bool ImuManager::ConfigureInterrupt(uint8_t deviceIndex, std::function<void()> callback) noexcept {
+bool ImuManager::ConfigureInterrupt(uint8_t deviceIndex, ImuInterruptCallback callback,
+                                    void* user_data) noexcept {
     MutexLockGuard lock(manager_mutex_);
     
     if (!initialized_.load(std::memory_order_acquire)) {
@@ -567,6 +540,7 @@ bool ImuManager::ConfigureInterrupt(uint8_t deviceIndex, std::function<void()> c
 
     // Store user callback
     interrupt_callback_ = callback;
+    interrupt_callback_user_ = user_data;
 
     // Configure GPIO interrupt (falling edge for active-low BNO08x INT)
     auto configure_result = interrupt_gpio_->ConfigureInterrupt(
@@ -578,6 +552,7 @@ bool ImuManager::ConfigureInterrupt(uint8_t deviceIndex, std::function<void()> c
     if (configure_result != hf_gpio_err_t::GPIO_SUCCESS) {
         Logger::GetInstance().Error("ImuManager", "Failed to configure GPIO interrupt: %d", static_cast<int>(configure_result));
         interrupt_callback_ = nullptr;
+    interrupt_callback_user_ = nullptr;
         return false;
     }
 
@@ -710,24 +685,24 @@ bool ImuManager::Initialize() noexcept {
         }
     }
 
-    onboard_bno_reset_gpio_shared_.reset();
-    onboard_bno_boot_gpio_shared_.reset();
-    onboard_bno_int_gpio_shared_.reset();
+    onboard_bno_reset_gpio_ = nullptr;
+    onboard_bno_boot_gpio_ = nullptr;
+    onboard_bno_int_gpio_ = nullptr;
     if (gpio_manager_ && gpio_manager_->IsInitialized()) {
-        onboard_bno_reset_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_RST);
-        onboard_bno_boot_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_BOOT);
-        onboard_bno_int_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
-        if (!onboard_bno_reset_gpio_shared_) {
+        onboard_bno_reset_gpio_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_RST);
+        onboard_bno_boot_gpio_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_BOOT);
+        onboard_bno_int_gpio_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
+        if (!onboard_bno_reset_gpio_) {
             Logger::GetInstance().Warn(
                 "ImuManager",
                 "GPIO_PCAL_IMU_RST not registered — onboard BNO08x hardware reset line unavailable");
         }
-        if (!onboard_bno_boot_gpio_shared_) {
+        if (!onboard_bno_boot_gpio_) {
             Logger::GetInstance().Warn(
                 "ImuManager",
                 "GPIO_PCAL_IMU_BOOT not registered — BOOTN not software-driven (OK if strapped on PCB)");
         }
-        if (!onboard_bno_int_gpio_shared_) {
+        if (!onboard_bno_int_gpio_) {
             Logger::GetInstance().Warn(
                 "ImuManager",
                 "GPIO_PCAL_IMU_INT not registered — onboard BNO08x INT-driven I²C reads limited");
@@ -782,22 +757,17 @@ bool ImuManager::InitializeOnboardBno08xDevice() noexcept {
     // Create onboard BNO08x handler with I2C interface and optional PCAL control lines
     Bno08xConfig config = Bno08xHandler::GetDefaultConfig();  // Use default configuration
 
-    BaseGpio* const rst = onboard_bno_reset_gpio_shared_ ? onboard_bno_reset_gpio_shared_.get() : nullptr;
-    BaseGpio* const intr = onboard_bno_int_gpio_shared_ ? onboard_bno_int_gpio_shared_.get() : nullptr;
+    BaseGpio* const rst = onboard_bno_reset_gpio_;
+    BaseGpio* const intr = onboard_bno_int_gpio_;
 
     // BOOTN is sampled at reset (low = bootloader). The I2C transport has no
     // boot line, so hold it at the run level before the handler resets the IMU.
-    if (onboard_bno_boot_gpio_shared_ &&
-        onboard_bno_boot_gpio_shared_->SetInactive() != hf_gpio_err_t::GPIO_SUCCESS) {
+    if (onboard_bno_boot_gpio_ &&
+        onboard_bno_boot_gpio_->SetInactive() != hf_gpio_err_t::GPIO_SUCCESS) {
         Logger::GetInstance().Warn("ImuManager", "Failed to drive GPIO_PCAL_IMU_BOOT to the run level");
     }
 
-    bno08x_handlers_[ONBOARD_IMU_INDEX] = std::make_unique<Bno08xHandler>(*imu_device, config, rst, intr);
-    
-    if (!bno08x_handlers_[ONBOARD_IMU_INDEX]) {
-        Logger::GetInstance().Error("ImuManager", "Failed to create onboard BNO08x handler");
-        return false;
-    }
+    bno08x_handlers_[ONBOARD_IMU_INDEX].emplace(*imu_device, config, rst, intr);
     
     // Initialize the handler
     Bno08xError init_result = bno08x_handlers_[ONBOARD_IMU_INDEX]->Initialize();
@@ -865,11 +835,10 @@ bool ImuManager::InitializeInterruptGpio() noexcept {
     }
 
     // Re-use the same PCAL INT line already wired into Bno08xHandler (pincfg name GPIO_PCAL_IMU_INT).
-    if (!onboard_bno_int_gpio_shared_) {
-        onboard_bno_int_gpio_shared_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
+    if (!onboard_bno_int_gpio_) {
+        onboard_bno_int_gpio_ = gpio_manager_->Get(HfFunctionalGpioPin::PCAL_IMU_INT);
     }
-    interrupt_gpio_shared_ = onboard_bno_int_gpio_shared_;
-    if (!interrupt_gpio_shared_) {
+    if (onboard_bno_int_gpio_ == nullptr) {
         Logger::GetInstance().Warn(
             "ImuManager",
             "GPIO_PCAL_IMU_INT not available — GPIO interrupt path for BNO08x disabled");
@@ -877,14 +846,13 @@ bool ImuManager::InitializeInterruptGpio() noexcept {
     }
 
     // Store raw pointer for compatibility with existing callback code
-    interrupt_gpio_ = interrupt_gpio_shared_.get();
+    interrupt_gpio_ = onboard_bno_int_gpio_;
 
     // Create semaphore for WaitForInterrupt()
     interrupt_semaphore_ready_ = interrupt_semaphore_.EnsureInitialized();
     if (!interrupt_semaphore_ready_) {
         Logger::GetInstance().Error("ImuManager", "Failed to create interrupt semaphore");
         interrupt_gpio_ = nullptr;
-        interrupt_gpio_shared_.reset();
         return false;
     }
 
@@ -913,7 +881,7 @@ void ImuManager::GpioInterruptHandler(BaseGpio* /*gpio*/, hf_gpio_interrupt_trig
 
     // Call user callback if provided
     if (imu_manager->interrupt_callback_) {
-        imu_manager->interrupt_callback_();
+        imu_manager->interrupt_callback_(imu_manager->interrupt_callback_user_);
     }
 }
 
@@ -935,7 +903,7 @@ void ImuManager::DumpStatistics() const noexcept {
     
     Logger::GetInstance().Info(TAG, "Device Status Summary:");
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
-        if (bno08x_handlers_[i] != nullptr) {
+        if (bno08x_handlers_[i].has_value()) {
             bool is_active = device_active_[i];
             bool is_initialized = device_initialized_[i];
             uint32_t interrupt_count = GetInterruptCount(i);
@@ -976,7 +944,7 @@ void ImuManager::DumpStatistics() const noexcept {
     Logger::GetInstance().Info(TAG, "Memory Usage:");
     size_t handler_memory = 0;
     for (uint8_t i = 0; i < MAX_IMU_DEVICES; ++i) {
-        if (bno08x_handlers_[i] != nullptr) {
+        if (bno08x_handlers_[i].has_value()) {
             handler_memory += sizeof(Bno08xHandler);
         }
     }
