@@ -28,7 +28,7 @@ Option 2:
   whichever chip it is, `AdcManager` a channel for each ADC row; `CommChannelsManager` and the facade look pins up by
   `HfFunctionalGpioPin` (`GetGpioMapping()`, `gpio.Get(...)`). No manager writes a GPIO number.
 - The [pin map](../hardware/pin-map.md) page and the [board figure](../hardware/index.md) are generated from the same
-  rows (`tools/docs/gen.py`, `tools/figkit/build.py`), and CI fails if they are stale.
+  rows (`hardfoc-docs gen`, `hardfoc-docs figures`), and CI fails if they are stale.
 
 ## Consequences
 

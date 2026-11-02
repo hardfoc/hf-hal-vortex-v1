@@ -4,7 +4,7 @@
 
 The Vortex API provides a unified singleton interface to all component handlers in the HardFOC Vortex platform. It implements lazy initialization with proper dependency management, ensuring all systems are properly initialized in the correct order before exposing them to the user.
 
-## 🏗️ Architecture
+## Architecture
 
 ### Design Principles
 
@@ -45,7 +45,7 @@ Authoritative detail: [`docs/hal/architecture.md`](../docs/hal/architecture.md) 
 
 On Vortex V1, **`vortex.motors`** owns the onboard **`Tmc9660Handler`**. Low-level TMCL/parameter access uses **`MotorController::visitDriver()`** (template callback receiving `tmc9660::TMC9660<HalSpiTmc9660Comm>&`). For BLDC bench bring-up order, bootloader vs runtime split, and which example apps to flash in what order, see **[`examples/esp32/docs/BLDC_BRINGUP.md`](../examples/esp32/docs/BLDC_BRINGUP.md)** and **[`examples/esp32/docs/BENCH_MATRIX.md`](../examples/esp32/docs/BENCH_MATRIX.md)**.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Basic Usage
 
@@ -83,11 +83,11 @@ if (vortex.EnsureInitialized()) {
 }
 ```
 
-### ⚡ Performance-Optimized Usage
+### Performance-Optimized Usage
 
 The Vortex API provides two access patterns for optimal performance across all component handlers:
 
-#### 🔍 String-Based Access (Convenience & Extensibility)
+#### String-Based Access (Convenience & Extensibility)
 ```cpp
 // String-based API - Great for configuration and setup
 auto& vortex = Vortex::GetInstance();
@@ -110,7 +110,7 @@ if (vortex.EnsureInitialized()) {
 }
 ```
 
-#### ⚡ Cached Access (High Performance)
+#### Cached Access (High Performance)
 ```cpp
 // Cache component pointers for maximum performance
 auto& vortex = Vortex::GetInstance();
@@ -144,7 +144,7 @@ if (vortex.EnsureInitialized()) {
 }
 ```
 
-#### 📊 Performance Guidelines by Component
+#### Performance Guidelines by Component
 
 | Component | String Lookup | Cached Access | Use Cached For |
 |-----------|---------------|---------------|----------------|
@@ -180,7 +180,7 @@ printf("Uptime: %llu ms\n", vortex.GetSystemUptimeMs());
 printf("Init Time: %llu ms\n", vortex.GetInitializationTimeMs());
 ```
 
-## 📋 API Reference
+## API Reference
 
 ### Singleton Access
 
@@ -234,7 +234,7 @@ bool PerformHealthCheck() noexcept;
 std::string GetSystemVersion() const noexcept;
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Build Configuration
 
@@ -261,7 +261,7 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
 )
 ```
 
-## 📊 System Diagnostics
+## System Diagnostics
 
 ### VortexSystemDiagnostics Structure
 
@@ -289,7 +289,7 @@ struct VortexSystemDiagnostics {
 };
 ```
 
-## 🧪 Examples
+## Examples
 
 ### Complete Example
 
@@ -327,7 +327,7 @@ extern "C" void app_main(void) {
 }
 ```
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -355,7 +355,7 @@ Enable debug logging to see detailed initialization information:
 // Check serial output for detailed information
 ```
 
-## 📈 Performance
+## Performance
 
 ### Initialization Time
 
@@ -375,7 +375,7 @@ Typical initialization times:
 - **Initialization**: Thread-safe with atomic operations
 - **Component Access**: Depends on individual component implementations
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 ### Planned Features
 
@@ -398,7 +398,7 @@ The API is designed for extensibility:
 - [HAL documentation hub](../hal/README.md) — architecture and manager ↔ handler map
 - [hf-core](https://github.com/hardfoc/hf-core) submodule under `lib/core/` — handlers, drivers, utils
 
-## 🤝 Contributing
+## Contributing
 
 When contributing to the Vortex API:
 
@@ -408,7 +408,7 @@ When contributing to the Vortex API:
 4. **Test Thoroughly**: Ensure all components work together properly
 5. **Performance**: Monitor initialization time and memory usage
 
-## 📄 License
+## License
 
 This API is part of the HardFOC HAL and follows the same licensing terms.
 

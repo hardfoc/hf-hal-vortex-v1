@@ -10,7 +10,7 @@ the functional pin map and the comms manager, so a pin change rebuilds this figu
 """
 
 import hal_extract as hx
-from figkit import Fig
+from hardfoc_mkdocs_theme.figkit import Fig
 
 SOURCES = []
 
