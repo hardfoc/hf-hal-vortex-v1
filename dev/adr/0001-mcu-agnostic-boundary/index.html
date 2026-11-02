@@ -1329,9 +1329,9 @@ protocol code must not be tied to ESP-IDF.</p>
 <li><strong>Drivers and handlers</strong> (in <code>hf-core</code>) depend only on the <code>Base*</code> interface classes.</li>
 <li><strong>The ESP32 implementations</strong> (<code>EspSpiBus</code>, <code>EspI2cBus</code>, <code>EspUart</code>, <code>EspCan</code>, <code>EspGpio</code>, <code>EspNvs</code>,
   <code>EspTemperature</code>, and the WS2812 status LED through hf-core's <code>Ws2812Handler</code>) are named only in the board
-  binding, <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/esp32c6/VortexBoardBindEsp32c6.cpp"><code>lib/managers/bsp_bind/esp32c6/</code></a>.
+  binding, <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/bsp_bind/esp32c6/VortexBoardBindEsp32c6.cpp"><code>lib/managers/bsp_bind/esp32c6/</code></a>.
   The managers call the MCU-free functions of
-  <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a> and see only <code>Base*</code> objects. The generated
+  <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a> and see only <code>Base*</code> objects. The generated
   <a href="../../architecture/ownership/#managers-handlers-and-drivers">manager map</a> lists every manager's interface classes,
   read from the <code>#include</code> lines, and the <a href="../../architecture/#the-board-binding">binding table</a> which binding
   functions each manager calls.</li>

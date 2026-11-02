@@ -1323,12 +1323,12 @@ managers borrow them.</p>
 <details class="hf-figure-desc">
 <summary>Figure description and sources</summary>
 <p>Managers on the left, hf-core handlers in the middle, chip drivers on the right. An arrow means "includes and uses": a manager owns or borrows the handler it points at, and each handler wraps exactly one driver. Several managers share the TMC9660 handler, because that one chip provides motor control, GPIO, ADC channels and a temperature sensor; MotorController owns it and the others reach it through MotorController. LedManager uses its driver directly, without a handler. Managers with no arrow (communication buses, NVS) talk to the interface wrap only.</p>
-<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers"><code>lib/managers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/core/handlers"><code>lib/core/handlers</code></a> <code>#includes</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/docs/diagrams/figures/manager-dependencies.py"><code>docs/diagrams/figures/manager-dependencies.py</code></a>.</p>
+<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers"><code>lib/managers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/core/handlers"><code>lib/core/handlers</code></a> <code>#includes</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/docs/diagrams/figures/manager-dependencies.py"><code>docs/diagrams/figures/manager-dependencies.py</code></a>.</p>
 </details>
 <h2 id="managers-handlers-and-drivers">Managers, handlers and drivers<a class="headerlink" href="#managers-handlers-and-drivers" title="Permanent link">&para;</a></h2>
 <!-- generated: manager-map -->
 <p>From the <code>#include</code> lines of
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers"><code>lib/managers</code></a> and the hf-core handlers; do not edit.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers"><code>lib/managers</code></a> and the hf-core handlers; do not edit.</p>
 <table>
 <thead>
 <tr>
@@ -1341,63 +1341,63 @@ managers borrow them.</p>
 </thead>
 <tbody>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/AdcManager.h"><code>AdcManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/AdcManager.h"><code>AdcManager</code></a></td>
 <td><code>MotorController</code></td>
 <td><code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
 <td><code>BaseAdc</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/CommChannelsManager.h"><code>CommChannelsManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/CommChannelsManager.h"><code>CommChannelsManager</code></a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 <td><code>BaseCan</code>, <code>BaseI2c</code>, <code>BaseSpi</code>, <code>BaseUart</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/EncoderManager.h"><code>EncoderManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/EncoderManager.h"><code>EncoderManager</code></a></td>
 <td><code>CommChannelsManager</code>, <code>GpioManager</code></td>
 <td><code>as5047u</code> (hf-as5047u)</td>
 <td>-</td>
 <td><code>BaseGpio</code>, <code>BaseSpi</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/GpioManager.h"><code>GpioManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/GpioManager.h"><code>GpioManager</code></a></td>
 <td><code>CommChannelsManager</code>, <code>MotorController</code></td>
 <td><code>pcal95555</code> (hf-pcal95555), <code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
 <td><code>BaseGpio</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/ImuManager.h"><code>ImuManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/ImuManager.h"><code>ImuManager</code></a></td>
 <td><code>CommChannelsManager</code>, <code>GpioManager</code></td>
 <td><code>bno08x</code> (hf-bno08x)</td>
 <td>-</td>
 <td><code>BaseGpio</code>, <code>BaseI2c</code>, <code>BaseSpi</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/LedManager.h"><code>LedManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/LedManager.h"><code>LedManager</code></a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/MotorController.h"><code>MotorController</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/MotorController.h"><code>MotorController</code></a></td>
 <td><code>CommChannelsManager</code>, <code>GpioManager</code></td>
 <td><code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
 <td>-</td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/NvsManager.h"><code>NvsManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/NvsManager.h"><code>NvsManager</code></a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 <td><code>BaseNvs</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/TemperatureManager.h"><code>TemperatureManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/TemperatureManager.h"><code>TemperatureManager</code></a></td>
 <td><code>AdcManager</code>, <code>MotorController</code></td>
 <td><code>ntc</code> (hf-ntc-thermistor), <code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
@@ -1429,7 +1429,7 @@ same object; prefer the facade in application code so the start-up order is resp
 </tr>
 <tr>
 <td><code>Tmc9660Handler</code> (onboard at index 0, external TMC9660s at indices 2 and 3)</td>
-<td><code>MotorController</code> (<code>std::array&lt;std::unique_ptr&lt;Tmc9660Handler&gt;, 4&gt;</code>)</td>
+<td><code>MotorController</code> (<code>std::array&lt;std::optional&lt;Tmc9660Handler&gt;, 4&gt;</code>)</td>
 <td><code>handler(index)</code>, <code>visitDriver()</code>; <code>GpioManager</code>, <code>AdcManager</code> and <code>TemperatureManager</code> borrow the onboard handler</td>
 </tr>
 <tr>
@@ -1450,7 +1450,7 @@ same object; prefer the facade in application code so the start-up order is resp
 <tr>
 <td><code>As5047uHandler</code> (none by default, up to four)</td>
 <td><code>EncoderManager</code></td>
-<td><code>GetAs5047uHandler(index)</code>, <code>GetAs5047uDriver(index)</code></td>
+<td><code>GetAs5047uHandler(index)</code>, <code>VisitDriver(index, fn)</code></td>
 </tr>
 <tr>
 <td><code>Tmc9660AdcWrapper</code></td>

@@ -1091,7 +1091,7 @@
 
 <h1 id="testing-and-ci">Testing and CI<a class="headerlink" href="#testing-and-ci" title="Permanent link">&para;</a></h1>
 <p>What runs on a pull request, what each check means, and how to run it on your machine first. All workflows are in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/.github/workflows"><code>.github/workflows</code></a>; most call reusable workflows in
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/cee9fd2946b0107c2e513e56e2b844d279b1dff1/.github/workflows"><code>.github/workflows</code></a>; most call reusable workflows in
 <a href="https://github.com/hardfoc/hf-general-ci-tools">hf-general-ci-tools</a> or
 <a href="https://github.com/hardfoc/hf-espidf-ci-tools">hf-espidf-ci-tools</a>.</p>
 <h2 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">&para;</a></h2>
@@ -1115,7 +1115,7 @@
 <td>Host Tests CI</td>
 <td><code>ci-host-tests.yml</code></td>
 <td>push, every pull request</td>
-<td>Builds every HAL source above <code>bsp_bind/</code> on Linux with GCC and Clang against the host binding and runs <code>tests/host</code>; runs the HAL boundary lint (<code>tools/lint/lint_hal_boundary.sh</code>, allowlist may not grow)</td>
+<td>Builds every HAL source above <code>bsp_bind/</code> on Linux with GCC and Clang against the host binding and runs <code>tests/host</code>; runs the HAL boundary lint (<code>tools/lint/lint_hal_boundary.sh</code>: no MCU header above <code>bsp_bind/</code>, no raw driver accessor in <code>lib/</code>, allowlist may not grow)</td>
 </tr>
 <tr>
 <td>C++ Lint CI</td>
@@ -1163,7 +1163,7 @@
 </table>
 <p>The examples are integration tests: they run on a board, not in CI. CI proves they compile; a person flashes them.</p>
 <h2 id="host-unit-tests">Host unit tests<a class="headerlink" href="#host-unit-tests" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/tests/host"><code>tests/host</code></a> builds every source in <code>lib/api</code> and <code>lib/managers</code>, with hf-core added as a
+<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/cee9fd2946b0107c2e513e56e2b844d279b1dff1/tests/host"><code>tests/host</code></a> builds every source in <code>lib/api</code> and <code>lib/managers</code>, with hf-core added as a
 subdirectory (<code>HF_CORE_MCU=NONE</code>, <code>HF_CORE_RTOS=NONE</code>) and the host board binding (<code>bsp_bind/host/</code>) in place of the
 ESP32-C6 one. The binding hands the managers hf-core's scriptable <code>Base*</code> fakes (<code>hf_core_host_mocks</code>) and logs
 what they asked for; a test reaches the fakes through <code>vortex::bsp::host</code> to put a chip model behind them or inject
@@ -1191,6 +1191,10 @@ a failure. One file is one executable and one ctest entry.</p>
 <tr>
 <td><code>test_fail_closed</code></td>
 <td>A required manager that fails (no bus, LED) shuts every manager down again and sets <code>GetLastError()</code>; a retry succeeds; <code>CollectDiagnostics()</code> after a degraded boot; GPIO pointers are stable and cleared on shutdown; steady-state calls make zero heap allocations</td>
+</tr>
+<tr>
+<td><code>test_lock_discipline</code></td>
+<td><code>ImuManager::VisitSensor()</code> refuses an absent IMU; <code>MotorController::visitDriver()</code> returns a default and runs nothing without a device; SPI statistics need a ready SPI device</td>
 </tr>
 <tr>
 <td><code>test_board_bind</code></td>

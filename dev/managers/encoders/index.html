@@ -1362,7 +1362,7 @@
 <h1 id="encodermanager">EncoderManager<a class="headerlink" href="#encodermanager" title="Permanent link">&para;</a></h1>
 <p>Owns up to four AS5047U magnetic angle encoders. Vortex V1 has a chip select wired for one encoder
 (<code>AS5047U_POSITION_ENCODER</code>, GPIO20) and two external chip selects that can each take another, but <strong>no encoder is
-created automatically</strong>: you create each device. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/EncoderManager.h"><code>EncoderManager.h</code></a>.</p>
+created automatically</strong>: you create each device. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/lib/managers/EncoderManager.h"><code>EncoderManager.h</code></a>.</p>
 <h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1405,8 +1405,8 @@ created automatically</strong>: you create each device. Source: <a href="https:/
 <td>Every active device, under the manager lock</td>
 </tr>
 <tr>
-<td><code>GetAs5047uHandler(index)</code>, <code>GetAs5047uDriver(index)</code></td>
-<td>The handler or the typed driver for chip features</td>
+<td><code>GetAs5047uHandler(index)</code>, <code>VisitDriver(index, fn)</code></td>
+<td>The handler, or <code>fn(driver)</code> on the typed driver under the manager and handler locks, for chip features the manager does not wrap</td>
 </tr>
 <tr>
 <td><code>IsDeviceValid</code>, <code>GetActiveDeviceIndices</code>, <code>GetAvailableDevices</code>, <code>GetDeviceType</code></td>
@@ -1434,8 +1434,9 @@ created automatically</strong>: you create each device. Source: <a href="https:/
 <ul>
 <li><strong>Nothing to read until you create a device.</strong> <code>EnsureInitialized()</code> succeeds with zero devices.</li>
 <li><strong>SPI2 is shared</strong> with the TMC9660 (when on SPI) and the external slots.</li>
-<li><strong>Every read takes the manager lock</strong> and the handler lock for the SPI exchange. <code>GetAs5047uDriver()</code> returns the
-  raw driver without either; keep it to one task. See <a href="../../architecture/threading/">Threading</a>.</li>
+<li><strong>Every read takes the manager lock</strong> and the handler lock for the SPI exchange, and so does <code>VisitDriver()</code>; keep
+  the function you pass short, because it blocks every other encoder call. See
+  <a href="../../architecture/threading/">Threading</a>.</li>
 <li><strong>The TMC9660 can use the same encoder.</strong> The position benches feed the AS5047U angle to the host while the
   TMC9660 uses its own ABN input; decide which side owns the feedback before you close a loop on it.</li>
 </ul>

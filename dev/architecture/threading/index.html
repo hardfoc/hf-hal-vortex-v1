@@ -1271,9 +1271,15 @@
 <p>What you can safely call from more than one FreeRTOS task. The HAL creates <strong>no tasks of its own</strong>: every call runs
 in the task that makes it. Periodic work, such as LED animation steps, is driven by your code.</p>
 <h2 id="locks">Locks<a class="headerlink" href="#locks" title="Permanent link">&para;</a></h2>
-<p>Lock order, when one manager calls another while holding its own lock: <code>MotorController</code> → <code>GpioManager</code> (the
-TMC9660 SPI mux line is a PCAL95555 pin), and a manager's lock → its handler's lock. Nothing takes them in the other
-order.</p>
+<p><strong>Rule: every chip driver is reached through its handler's <code>visitDriver()</code></strong>, which holds the handler mutex for the
+call. The managers never use the raw accessors that bypass it (<code>GetSensor()</code>, <code>driverViaSpi()</code>, <code>driverViaUart()</code>,
+<code>GetDriver()</code>, <code>GetStrip()</code>, <code>GetAnimator()</code>); <code>tools/lint/lint_hal_boundary.sh</code> fails CI if one appears in
+<code>lib/api</code> or <code>lib/managers</code>. RTOS primitives come only from hf-utils-rtos-wrap (<code>RtosMutex</code>, <code>SignalSemaphore</code>,
+<code>os_delay_msec()</code>).</p>
+<p>Lock order, when one manager calls another while holding its own lock: <code>Vortex</code> lifecycle lock → any manager;
+<code>MotorController</code> → <code>GpioManager</code> (the TMC9660 SPI mux line is a PCAL95555 pin); <code>ImuManager</code> →
+<code>CommChannelsManager</code> (runtime I2C devices); and a manager's lock → its handler's lock. Nothing takes them in the
+other order.</p>
 <p>Each manager (except <code>NvsManager</code>) has one <code>RtosMutex</code> from <code>hf-utils-rtos-wrap</code>. <code>EnsureInitialized()</code> uses a
 double-checked pattern: an atomic "initialised" flag is read first, then the lock is taken and the flag checked again.</p>
 <table>
@@ -1287,8 +1293,8 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
 <tbody>
 <tr>
 <td><code>CommChannelsManager</code></td>
-<td><code>EnsureInitialized()</code>, <code>GetSystemDiagnostics()</code>, <code>Deinitialize()</code></td>
-<td>Bus and device accessors (<code>GetSpiDevice()</code>, <code>GetI2cDevice()</code>, <code>GetUartBus()</code>, <code>GetCanBus()</code>) and the runtime I2C calls (<code>CreateI2cDevice()</code>, <code>I2cProbeAddress()</code>, <code>I2cScanBus()</code>, <code>RemoveI2cDevice()</code>, <code>I2cResetBus()</code>)</td>
+<td>everything: <code>EnsureInitialized()</code>, <code>Deinitialize()</code>, diagnostics, the bus and device accessors (<code>GetSpiDevice()</code>, <code>GetI2cDevice()</code>, <code>GetUartBus()</code>, <code>GetCanBus()</code>) and the runtime I2C calls (<code>CreateI2cDevice()</code>, <code>I2cProbeAddress()</code>, <code>I2cScanBus()</code>, <code>RemoveI2cDevice()</code>, <code>I2cResetBus()</code>)</td>
+<td><code>IsInitialized()</code>, <code>GetLastError()</code> (atomics)</td>
 </tr>
 <tr>
 <td><code>NvsManager</code></td>
@@ -1302,23 +1308,23 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
 </tr>
 <tr>
 <td><code>MotorController</code></td>
-<td>device creation and deletion, <code>handler()</code>, diagnostics, motor mechanics, load-frame velocity and position</td>
-<td><code>setMotorVelocity()</code> / <code>getMotorVelocity()</code> / <code>setMotorPosition()</code> / <code>getMotorPosition()</code> themselves (they go through the handler)</td>
+<td>device creation and deletion, <code>handler()</code>, diagnostics, motor mechanics, load-frame velocity and position, TMCL SPI timing and statistics, and <code>visitDriver()</code> (device lock for the whole visit, then the handler lock), so every motor-frame call too</td>
+<td><code>IsInitialized()</code>, <code>GetLastError()</code> (atomics)</td>
 </tr>
 <tr>
 <td><code>AdcManager</code></td>
-<td><code>EnsureInitialized()</code>, <code>Deinitialize()</code>, <code>ReadVoltage()</code>, <code>ReadRaw()</code></td>
-<td><code>Get()</code>, <code>Contains()</code>, <code>Size()</code></td>
+<td>everything: init, reads (lookup included), <code>Get()</code>, <code>Contains()</code>, <code>Size()</code></td>
+<td><code>IsInitialized()</code>, <code>GetLastError()</code> (atomics)</td>
 </tr>
 <tr>
 <td><code>ImuManager</code></td>
-<td>device creation and lookup, interrupt enable / disable, diagnostics</td>
-<td><code>WaitForInterrupt()</code>, <code>GetSensor()</code></td>
+<td>device creation and lookup, interrupt enable / disable, diagnostics, <code>VisitSensor()</code> (manager lock, then the handler lock)</td>
+<td><code>WaitForInterrupt()</code> (it blocks on the interrupt signal, not on the lock)</td>
 </tr>
 <tr>
 <td><code>EncoderManager</code></td>
-<td>device creation and lookup, every read (<code>ReadAngle()</code>, <code>ReadAngleDegrees()</code>, <code>ReadVelocityRPM()</code>, <code>ReadDiagnostics()</code>, <code>ReadFieldStrength()</code>, <code>ReadAll*()</code>), <code>SetZeroPosition()</code>, <code>CheckAllDevicesHealth()</code>; the SPI exchange also holds the handler lock</td>
-<td><code>GetAs5047uDriver()</code> (raw driver pointer)</td>
+<td>device creation and lookup, every read (<code>ReadAngle()</code>, <code>ReadAngleDegrees()</code>, <code>ReadVelocityRPM()</code>, <code>ReadDiagnostics()</code>, <code>ReadFieldStrength()</code>, <code>ReadAll*()</code>), <code>SetZeroPosition()</code>, <code>CheckAllDevicesHealth()</code>, <code>VisitDriver()</code>; the SPI exchange also holds the handler lock</td>
+<td><code>IsInitialized()</code>, counters (atomics)</td>
 </tr>
 <tr>
 <td><code>TemperatureManager</code></td>
@@ -1348,15 +1354,16 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
    same pin. A read-modify-write of your own (read, decide, write) still needs one owner task.</li>
 <li><strong>SPI2 is shared</strong> by the TMC9660 (when on SPI), the AS5047U and the external slots. Keep each device to one task,
    and remember the TMC9660 SPI mux: while it is selected, the TMC9660 sees the SPI2 traffic.</li>
-<li><strong>Encoder reads</strong> may come from several tasks; each read holds the manager lock, so a slot cannot be deleted
-   under it. Do not use the raw pointer from <code>GetAs5047uDriver()</code> from more than one task.</li>
+<li><strong>Encoder and IMU reads</strong> may come from several tasks; each holds the manager lock, so a device cannot be
+   deleted under it, and the handler lock for the bus exchange. For a driver call the manager does not wrap, use
+   <code>EncoderManager::VisitDriver()</code> or <code>ImuManager::VisitSensor()</code>; there is no raw driver pointer to hold on to.</li>
 <li><strong>LED animations</strong> advance only when you call <code>vortex.leds.UpdateAnimation()</code>; call it from a periodic task
    about every 50 ms.</li>
 </ol>
 <h2 id="stack-size">Stack size<a class="headerlink" href="#stack-size" title="Permanent link">&para;</a></h2>
 <p><code>Vortex::EnsureInitialized()</code> brings up the TMC9660 bootloader, the BNO08x SH-2 stack and the sensors with deep call
 chains. The examples set <code>CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192</code> in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/examples/esp32/sdkconfig.defaults"><code>sdkconfig.defaults</code></a>; keep at least that much if you initialise from
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cee9fd2946b0107c2e513e56e2b844d279b1dff1/examples/esp32/sdkconfig.defaults"><code>sdkconfig.defaults</code></a>; keep at least that much if you initialise from
 <code>app_main()</code>.</p>
 
 

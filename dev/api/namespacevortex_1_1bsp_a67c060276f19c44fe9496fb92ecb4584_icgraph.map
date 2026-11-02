@@ -1,5 +1,0 @@
-<map id="vortex::bsp::I2cReset" name="vortex::bsp::I2cReset">
-<area shape="rect" id="Node000001" title="Recover a stuck bus (clock pulses + re&#45;init)." alt="" coords="236,13,395,38"/>
-<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#a7ac3fdc5b5ea39d08861cdde6afac132" title="Reset the I²C peripheral / clear&#45;bus sequence (only attempts when bus is up)." alt="" coords="5,5,188,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,28,188,28,188,23,222,23"/>
-</map>

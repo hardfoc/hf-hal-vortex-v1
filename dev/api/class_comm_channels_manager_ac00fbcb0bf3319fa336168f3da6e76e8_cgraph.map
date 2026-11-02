@@ -1,5 +1,0 @@
-<map id="CommChannelsManager::CreateI2cDevice" name="CommChannelsManager::CreateI2cDevice">
-<area shape="rect" id="Node000001" title="Create an I2C device on the primary bus at runtime." alt="" coords="5,5,188,45"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#aebf1db0755a48037f22ccf89c6079cdc" title="Add a device." alt="" coords="236,13,428,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="189,23,222,23,222,28,189,28"/>
-</map>
