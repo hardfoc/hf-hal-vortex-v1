@@ -334,7 +334,13 @@ public:
      */
     template <typename Func>
     auto visitDriver(Func&& func, uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept {
-        auto* h = handler(deviceIndex);
+        // Hold the device lock for the whole visit, so the slot cannot be deleted underneath it;
+        // the handler takes its own lock inside (order: deviceMutex_ -> handler mutex).
+        MutexLockGuard lock(deviceMutex_);
+        Tmc9660Handler* h = (deviceIndex < MAX_TMC9660_DEVICES && deviceActive_[deviceIndex] &&
+                             tmcHandlers_[deviceIndex])
+                                ? &*tmcHandlers_[deviceIndex]
+                                : nullptr;
         if (h) {
             return h->visitDriver(std::forward<Func>(func));
         }
@@ -601,7 +607,27 @@ private:
     void applyTmclSpiTimingLocked(uint8_t device_index) noexcept;
 
     /** @pre `deviceMutex_` held. SPI driver of a slot whose handler is initialized, or nullptr. */
-    [[nodiscard]] Tmc9660Handler::SpiDriver* spiDriverLocked(uint8_t device_index) noexcept;
+    /**
+     * @brief Run @p fn on the SPI driver of a ready device, through the handler (handler lock held).
+     * @return true if @p fn ran (device active, driver up, transport is SPI). Caller holds deviceMutex_.
+     */
+    template <typename Fn>
+    bool withSpiDriverLocked(uint8_t device_index, Fn&& fn) noexcept {
+        // A handler that is not up would run its full bootloader init inside visitDriver(); that
+        // belongs to the init paths (PCAL SPI mux first), so only ready drivers are touched here.
+        if (device_index >= MAX_TMC9660_DEVICES || !deviceActive_[device_index] || !tmcHandlers_[device_index] ||
+            !tmcHandlers_[device_index]->IsDriverReady()) {
+            return false;
+        }
+        bool ran = false;
+        tmcHandlers_[device_index]->visitDriver([&](auto& driver) {
+            if constexpr (std::is_same_v<std::decay_t<decltype(driver)>, Tmc9660Handler::SpiDriver>) {
+                ran = true;
+                fn(driver);
+            }
+        });
+        return ran;
+    }
 
     /// Handlers in place (no heap): a slot is emplaced by Create*Device() and reset on delete/deinit.
     std::array<std::optional<Tmc9660Handler>, MAX_TMC9660_DEVICES> tmcHandlers_;

@@ -447,22 +447,10 @@ MotorError MotorController::applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660Host
 // TMCL SPI timing
 // ---------------------------------------------------------------------------
 
-Tmc9660Handler::SpiDriver* MotorController::spiDriverLocked(uint8_t device_index) noexcept {
-    if (device_index >= MAX_TMC9660_DEVICES || !deviceActive_[device_index] || !tmcHandlers_[device_index]) {
-        return nullptr;
-    }
-    // driverViaSpi() would run the full bootloader init on a handler that is not up yet; that
-    // must stay with the init paths above (PCAL SPI mux first), so only touch ready drivers.
-    if (!tmcHandlers_[device_index]->IsDriverReady()) {
-        return nullptr;
-    }
-    return tmcHandlers_[device_index]->driverViaSpi();
-}
-
 void MotorController::applyTmclSpiTimingLocked(uint8_t device_index) noexcept {
-    if (auto* drv = spiDriverLocked(device_index)) {
-        drv->comm().setTmclTiming(tmclSpiTiming_[device_index]);
-    }
+    (void)withSpiDriverLocked(device_index, [&](Tmc9660Handler::SpiDriver& drv) {
+        drv.comm().setTmclTiming(tmclSpiTiming_[device_index]);
+    });
 }
 
 MotorError MotorController::SetTmclSpiTiming(const tmc9660::TmclSpiTiming& timing, uint8_t deviceIndex) noexcept {
@@ -499,11 +487,9 @@ MotorError MotorController::GetTmclSpiStats(tmc9660::TmclSpiStats& stats, uint8_
         tmcHandlers_[deviceIndex]->GetCommMode() != tmc9660::CommMode::SPI) {
         return MotorError::INVALID_PARAMETER;
     }
-    auto* drv = spiDriverLocked(deviceIndex);
-    if (drv == nullptr) {
+    if (!withSpiDriverLocked(deviceIndex, [&](Tmc9660Handler::SpiDriver& drv) { stats = drv.comm().tmclStats(); })) {
         return MotorError::DEVICE_NOT_FOUND;
     }
-    stats = drv->comm().tmclStats();
     return MotorError::SUCCESS;
 }
 
@@ -516,11 +502,9 @@ MotorError MotorController::ResetTmclSpiStats(uint8_t deviceIndex) noexcept {
         tmcHandlers_[deviceIndex]->GetCommMode() != tmc9660::CommMode::SPI) {
         return MotorError::INVALID_PARAMETER;
     }
-    auto* drv = spiDriverLocked(deviceIndex);
-    if (drv == nullptr) {
+    if (!withSpiDriverLocked(deviceIndex, [](Tmc9660Handler::SpiDriver& drv) { drv.comm().resetTmclStats(); })) {
         return MotorError::DEVICE_NOT_FOUND;
     }
-    drv->comm().resetTmclStats();
     return MotorError::SUCCESS;
 }
 
