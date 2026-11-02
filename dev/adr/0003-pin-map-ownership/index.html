@@ -1900,7 +1900,7 @@ repository's README and docs.</p>
 <li>Changing a pin is one edit in <code>hf-pincfg</code>, a submodule bump here, and a docs rebuild.</li>
 <li>The pin map is shared by every HardFOC HAL through <code>hf-pincfg</code>; the board is chosen at build time with
   <code>HARDFOC_BOARD_VORTEX_V1</code> (set in this repository's <code>CMakeLists.txt</code>).</li>
-<li>One copy remains: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/examples/esp32/main/common/vortex_board_pins.hpp"><code>vortex_board_pins.hpp</code></a> repeats the
+<li>One copy remains: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/examples/esp32/main/common/vortex_board_pins.hpp"><code>vortex_board_pins.hpp</code></a> repeats the
   bus and LED GPIO numbers for examples that call ESP-IDF directly. It says it must match the pin map but nothing
   checks it; a compile-time check against the pin map would close the gap.</li>
 </ul>

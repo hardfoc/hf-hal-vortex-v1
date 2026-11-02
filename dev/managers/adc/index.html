@@ -1860,7 +1860,7 @@
 <p>Gives you every ADC channel of the pin map by name or by enum. On Vortex V1 all of them are hosted by the TMC9660:
 its analog inputs AIN0 to AIN3 and its internal measurements (phase currents, supply and driver voltages, chip and
 external temperatures, motor current, velocity and position). The ESP32-C6's own ADC is not used. Source:
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/lib/managers/AdcManager.h"><code>AdcManager.h</code></a>.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/lib/managers/AdcManager.h"><code>AdcManager.h</code></a>.</p>
 <h2 id="channels">Channels<a class="headerlink" href="#channels" title="Permanent link">&para;</a></h2>
 <p>The channels and their names are in the <a href="../../hardware/pin-map/#adc-channels">pin map</a>. Every one is read through a
 single <code>Tmc9660AdcWrapper</code> that borrows the onboard TMC9660 handler from <code>MotorController</code>, so this manager is up

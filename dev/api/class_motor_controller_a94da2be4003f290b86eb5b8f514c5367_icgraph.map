@@ -1,7 +1,0 @@
-<map id="MotorController::applyOnboardTmc9660HostSpiGateModeLocked" name="MotorController::applyOnboardTmc9660HostSpiGateModeLocked">
-<area shape="rect" id="Node000001" title=" " alt="" coords="444,5,688,45"/>
-<area shape="rect" id="Node000002" href="$class_motor_controller.html#a86b069c6ccf6511a76fa862790cd35d8" title="Shut down all motor controller devices and release resources." alt="" coords="189,13,396,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="430,28,396,28,396,23,430,23"/>
-<area shape="rect" id="Node000003" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,13,141,38"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="175,28,142,28,142,23,175,23"/>
-</map>

@@ -1759,7 +1759,7 @@ bus. Every pin number on this page comes from the board's functional pin map; th
 <details class="hf-figure-desc">
 <summary>Figure description and sources</summary>
 <p>The ESP32-C6 on the left runs all the software. Each arrow to the right is one bus or signal, labelled with the GPIOs it uses: SPI2 to the TMC9660 motor controller and the AS5047U encoder (plus two external chip selects), a UART that is the TMC9660's default host link, I2C to the PCAL95555 I/O expander and the BNO08x IMU, TWAI to the CAN transceiver, and one data line to the WS2812 status LED. The PCAL95555 drives the TMC9660 control lines (driver enable, reset, wake, SPI mux) and the IMU's boot and reset lines, and reads their fault and interrupt outputs. The layout is drawn by hand; every GPIO number, expander bit, chip select, SPI mode and I2C address is read from the functional pin map and the comms manager, so a pin change rebuilds this figure.</p>
-<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp</code></a> <code>HF_FUNCTIONAL_GPIO_PIN_LIST</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/lib/managers/CommChannelsManager.h"><code>lib/managers/CommChannelsManager.h</code></a> <code>SpiDeviceId</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/lib/managers/CommChannelsManager.cpp"><code>lib/managers/CommChannelsManager.cpp</code></a> <code>add_builtin_device</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/docs/diagrams/figures/board-overview.py"><code>docs/diagrams/figures/board-overview.py</code></a>.</p>
+<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"><code>lib/core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp</code></a> <code>HF_FUNCTIONAL_GPIO_PIN_LIST</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/lib/managers/CommChannelsManager.h"><code>lib/managers/CommChannelsManager.h</code></a> <code>SpiDeviceId</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/lib/managers/CommChannelsManager.cpp"><code>lib/managers/CommChannelsManager.cpp</code></a> <code>add_builtin_device</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/docs/diagrams/figures/board-overview.py"><code>docs/diagrams/figures/board-overview.py</code></a>.</p>
 </details>
 <h2 id="the-chips">The chips<a class="headerlink" href="#the-chips" title="Permanent link">&para;</a></h2>
 <table>
@@ -1836,9 +1836,9 @@ bus. Every pin number on this page comes from the board's functional pin map; th
 </ul>
 <h2 id="bench-documents">Bench documents<a class="headerlink" href="#bench-documents" title="Permanent link">&para;</a></h2>
 <p>The bring-up notes written on the bench live next to the examples, not on this site:
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a>,
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up</a> and the
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/e9188366564d8737ca17ecaf2d4f6feb7d909607/examples/esp32/docs/README.md">example docs index</a>.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a>,
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up</a> and the
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/1faa73c54ea9714d3cb05644f8719e8a08f96714/examples/esp32/docs/README.md">example docs index</a>.</p>
 
 
 

@@ -1,5 +1,0 @@
-<map id="MotorController::applyOnboardTmc9660HostSpiGateModeLocked" name="MotorController::applyOnboardTmc9660HostSpiGateModeLocked">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,249,45"/>
-<area shape="rect" id="Node000002" href="$class_gpio_manager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="297,13,492,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,23,283,23,283,28,249,28"/>
-</map>

@@ -1,5 +1,0 @@
-<map id="ImuManager::GetInstance" name="ImuManager::GetInstance">
-<area shape="rect" id="Node000001" title="Get the singleton instance of ImuManager." alt="" coords="180,5,371,31"/>
-<area shape="rect" id="Node000002" href="$_imu_manager_8h.html#adb80971d94bcc5f0f352f8377d7ec2bc" title="Convenience accessor — equivalent to ImuManager::GetInstance()." alt="" coords="5,5,132,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,21,132,21,132,15,166,15"/>
-</map>
