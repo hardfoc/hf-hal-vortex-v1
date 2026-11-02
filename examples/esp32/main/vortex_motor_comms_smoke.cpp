@@ -60,5 +60,22 @@ extern "C" void app_main(void) {
     motors.visitDriver(
         [](auto& d) { vortex_motor_bench::log_motor_comms(TAG, d); }, MotorController::ONBOARD_TMC9660_INDEX);
 
+    // Drive-observability hooks: one pipelined batch each.
+    MotorTelemetrySnapshot snap{};
+    const MotorError te = motors.ReadTelemetry(MotorTelemetrySet::Full, snap);
+    ESP_LOGI(TAG, "ReadTelemetry(Full): %s, %u accesses, %u failed, %lu us; pos=%ld vel=%ld Vbus=%.1f V chip=%.1f C",
+             MotorErrorToString(te), static_cast<unsigned>(snap.accesses), static_cast<unsigned>(snap.failed),
+             static_cast<unsigned long>(snap.batch_duration_us), static_cast<long>(snap.ActualPosition()),
+             static_cast<long>(snap.ActualVelocity()), static_cast<double>(snap.SupplyVoltageV()),
+             static_cast<double>(snap.ChipTemperatureC()));
+    MotorDriveDiagnostics diag{};
+    const MotorError de = motors.ReadDriveDiagnostics(diag);
+    ESP_LOGI(TAG, "ReadDriveDiagnostics: %s, severity=%u status=0x%08lX errors=0x%08lX gdrv=0x%08lX adc=0x%04lX "
+                  "reset_seen=%d regulation_stopped=%d",
+             MotorErrorToString(de), static_cast<unsigned>(diag.severity),
+             static_cast<unsigned long>(diag.general_status), static_cast<unsigned long>(diag.general_errors),
+             static_cast<unsigned long>(diag.gate_driver_errors), static_cast<unsigned long>(diag.adc_status),
+             diag.chip_reset_detected ? 1 : 0, diag.regulation_stopped ? 1 : 0);
+
     ESP_LOGI(TAG, "Motor comms smoke done");
 }
