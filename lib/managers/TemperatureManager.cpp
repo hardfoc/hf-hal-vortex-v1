@@ -205,9 +205,6 @@ bool TemperatureManager::InitializeNtcThermistor() noexcept {
         ntc_handler_.reset();
         return false;
     }
-    if (!vortex::config::ApplyBoardNtcThresholds(*ntc_handler_)) {
-        Logger::GetInstance().Warn(TAG, "NTC threshold window not accepted");
-    }
 
     auto& entry = entries_[registered_count_++];
     entry.name = "NTC_THERMISTOR";
