@@ -14,6 +14,7 @@
 #include "AdcManager.h"
 #include "MotorController.h"
 #include "handlers/tmc9660/Tmc9660Handler.h"
+#include "config/VortexNtcConfig.h"
 #include "handlers/logger/Logger.h"
 #include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/memory_utils.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
@@ -164,17 +165,15 @@ bool TemperatureManager::InitializeNtcThermistor() noexcept {
         return false;
     }
 
-    BaseAdc* adc_driver = adc.Get("ADC_TMC9660_AIN3");
+    // Bind once by functional channel (no name lookup). The returned driver is the shared
+    // Tmc9660AdcWrapper, so the NTC handler must carry the AIN3 channel id itself.
+    BaseAdc* adc_driver = adc.Get(vortex::config::kBoardNtcAdcChannel);
     if (!adc_driver) {
         Logger::GetInstance().Warn(TAG, "TMC9660 AIN3 ADC channel not available — skipping NTC");
         return false;
     }
 
-    // NTC handler config: 10k NTC, 10k pullup, 3.3V, B=3950
-    ntc_temp_handler_config_t ntc_cfg = NTC_TEMP_HANDLER_CONFIG_DEFAULT();
-    ntc_cfg.enable_threshold_monitoring = true;
-    ntc_cfg.low_threshold_celsius = 0.0f;
-    ntc_cfg.high_threshold_celsius = 85.0f;
+    const ntc_temp_handler_config_t ntc_cfg = vortex::config::MakeBoardNtcConfig();
 
     ntc_handler_ = hf::utils::make_unique_nothrow<NtcTemperatureHandler>(adc_driver, ntc_cfg);
     if (!ntc_handler_) {
@@ -186,6 +185,9 @@ bool TemperatureManager::InitializeNtcThermistor() noexcept {
         Logger::GetInstance().Error(TAG, "NTC handler init failed");
         ntc_handler_.reset();
         return false;
+    }
+    if (!vortex::config::ApplyBoardNtcThresholds(*ntc_handler_)) {
+        Logger::GetInstance().Warn(TAG, "NTC threshold window not accepted");
     }
 
     auto& entry = entries_[registered_count_++];
