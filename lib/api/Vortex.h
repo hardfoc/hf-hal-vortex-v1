@@ -114,10 +114,8 @@ class TemperatureManager;
 #include "handlers/logger/Logger.h"
 #include "RtosMutex.h"
 #include "VortexBootReport.h"
+#include "VortexDiagnostics.h"
 #include "VortexVersion.h"
-
-/** @brief Number of subsystem managers on `Vortex` (including NVS). */
-inline constexpr size_t kVortexManagerCount = 9;
 
 /**
  * @brief Host physical layer used for the onboard TMC9660 during `Vortex::InitializeMotors()`.
@@ -265,11 +263,27 @@ public:
     //**************************************************************************//
 
     /**
-     * @brief Ensure all Vortex systems are properly initialized
-     * @return true if all systems initialized successfully, false otherwise
-     * @note This method handles the complete initialization sequence in proper order
+     * @brief Bring the managers up in dependency order (idempotent).
+     * @details Fail-closed: if a required manager (NVS, comms, GPIO, LEDs) fails, every manager that
+     *          did come up is shut down again in reverse order, GetLastError() says why, and the call
+     *          returns false; nothing is left half-initialised. Best-effort managers (motors, ADC, IMU,
+     *          encoders, temperature) that fail become warnings (GetSystemWarnings()). If the motor
+     *          controller does not come up, the TMC9660 driver-enable line is driven inactive.
+     * @return true when every required manager is up.
      */
     bool EnsureInitialized() noexcept;
+
+    /** @brief Why the last EnsureInitialized() failed (ManagerError::None after a success). */
+    [[nodiscard]] ManagerError GetLastError() const noexcept { return last_error_.load(); }
+
+    /**
+     * @brief Aggregated health of every manager, the buses and the device counts.
+     * @details Reads counters the managers already hold: no bus transfer, no allocation. Works before
+     *          and after initialisation (a manager that is down reports NotInitialized).
+     * @param out Filled completely.
+     * @return The value of IsInitialized().
+     */
+    bool CollectDiagnostics(VortexBoardDiagnostics& out) const noexcept;
 
     /**
      * @brief Check if all Vortex systems are initialized
@@ -411,6 +425,12 @@ private:
      */
     bool InitializeAllComponents() noexcept;
 
+    /** @brief Shut down every manager that is up, in reverse init order. Caller holds lifecycle_mutex_. */
+    void ShutdownComponentsLocked() noexcept;
+
+    /** @brief Record why init failed and shut everything down again. Caller holds lifecycle_mutex_. */
+    void FailClosed(ManagerError why) noexcept;
+
     bool InitializeNvs() noexcept;
 
     /**
@@ -495,6 +515,7 @@ private:
     mutable VortexSystemDiagnostics diagnostics_;
 
     VortexBootReport report_{};          ///< Failed components and warnings of the last init attempt
+    std::atomic<ManagerError> last_error_{ManagerError::None};  ///< Why the last init attempt failed
 
     /// Serialises EnsureInitialized(), Shutdown() and the diagnostics readers (recursive).
     mutable RtosMutex lifecycle_mutex_;
