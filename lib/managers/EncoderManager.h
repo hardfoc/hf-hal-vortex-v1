@@ -209,12 +209,28 @@ public:
     As5047uHandler* GetAs5047uHandler(uint8_t deviceIndex = ENCODER_SLOT_0) noexcept;
 
     /**
-     * @brief Get access to the underlying AS5047U driver by device index.
+     * @brief Run @p fn on the AS5047U driver of one initialised slot, under both locks.
+     * @details Holds the manager lock (the slot cannot be deleted) and the handler lock (no other task
+     *          talks to this AS5047U) for the whole call. This replaces the raw driver pointer the manager
+     *          used to hand out. Keep @p fn short: it blocks every other encoder call.
      * @param deviceIndex Device slot (0–3)
-     * @return Pointer to AS5047U driver, nullptr if invalid/not ready
-     * @note Caller must not delete the returned pointer; lifetime is owned by the handler.
+     * @param fn Callable taking `as5047u::AS5047U<As5047uSpiAdapter>&`.
+     * @return true if @p fn ran; false if the slot is empty or not initialised.
      */
-    as5047u::AS5047U<As5047uSpiAdapter>* GetAs5047uDriver(uint8_t deviceIndex = ENCODER_SLOT_0) noexcept;
+    template <typename Fn>
+    bool VisitDriver(uint8_t deviceIndex, Fn&& fn) noexcept {
+        MutexLockGuard lock(manager_mutex_);
+        As5047uHandler* handler = ReadyHandlerLocked(deviceIndex);
+        if (handler == nullptr) {
+            return false;
+        }
+        bool ran = false;
+        handler->visitDriver([&](as5047u::AS5047U<As5047uSpiAdapter>& driver) {
+            ran = true;
+            fn(driver);
+        });
+        return ran;
+    }
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//

@@ -135,11 +135,6 @@ Bno08xHandler* ImuManager::GetBno08xHandler(uint8_t deviceIndex) noexcept {
     return &*bno08x_handlers_[deviceIndex];
 }
 
-IBno08xDriverOps* ImuManager::GetSensor(uint8_t deviceIndex) noexcept {
-    Bno08xHandler* handler = GetBno08xHandler(deviceIndex);
-    return handler ? handler->GetSensor() : nullptr;
-}
-
 //**************************************************************************//
 //**                  DEVICES MANAGEMENT METHODS                           **//
 //**************************************************************************//

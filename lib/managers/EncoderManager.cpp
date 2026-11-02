@@ -113,20 +113,6 @@ As5047uHandler* EncoderManager::GetAs5047uHandler(uint8_t deviceIndex) noexcept 
     return &*as5047u_handlers_[deviceIndex];
 }
 
-as5047u::AS5047U<As5047uSpiAdapter>* EncoderManager::GetAs5047uDriver(uint8_t deviceIndex) noexcept {
-    MutexLockGuard lock(manager_mutex_);
-    
-    if (deviceIndex >= MAX_ENCODER_DEVICES || !device_active_[deviceIndex] || !as5047u_handlers_[deviceIndex]) {
-        return nullptr;
-    }
-    
-    if (!device_initialized_[deviceIndex]) {
-        return nullptr;
-    }
-    
-    return as5047u_handlers_[deviceIndex]->GetSensor();
-}
-
 //**************************************************************************//
 //**                  DEVICES MANAGEMENT METHODS                           **//
 //**************************************************************************//

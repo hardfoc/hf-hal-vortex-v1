@@ -57,27 +57,17 @@ class BaseSpi;
  * @code
  * auto& imu_mgr = ImuManager::GetInstance();
  * if (imu_mgr.EnsureInitialized()) {
- *     // Access onboard BNO08x sensor driver (index 0)
- *     IBno08xDriverOps* sensor = imu_mgr.GetSensor(0);
- *     if (sensor) {
- *         // Configure sensors via driver interface
- *         sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
- *     }
- *     
- *     // Create external BNO08x device (index 1) with runtime I2C device creation
- *     if (imu_mgr.CreateExternalBno08xDevice(1, 0x48, 400000) == ImuError::kSuccess) {
- *         IBno08xDriverOps* ext_sensor = imu_mgr.GetSensor(1);
- *         if (ext_sensor) {
- *             ext_sensor->EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
- *         }
- *     }
- *     
- *     // Create external BNO08x device (index 2) with SPI interface
- *     if (imu_mgr.CreateExternalBno08xDevice(2, SpiDeviceId::EXTERNAL_DEVICE_1) == ImuError::kSuccess) {
- *         IBno08xDriverOps* ext_sensor = imu_mgr.GetSensor(2);
- *         if (ext_sensor) {
- *             ext_sensor->EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
- *         }
+ *     // Configure the onboard BNO08x (index 0); the driver call runs under the
+ *     // manager and handler locks.
+ *     imu_mgr.VisitSensor(0, [](IBno08xDriverOps& sensor) {
+ *         sensor.EnableSensor(BNO085Sensor::RotationVector, 50, 0.0f);
+ *     });
+ *
+ *     // Create an external BNO08x (index 1) at 0x4B with runtime I2C device creation
+ *     if (imu_mgr.CreateExternalBno08xDevice(1, 0x4B, 400000) == ImuError::SUCCESS) {
+ *         imu_mgr.VisitSensor(1, [](IBno08xDriverOps& sensor) {
+ *             sensor.EnableSensor(BNO085Sensor::Accelerometer, 100, 0.0f);
+ *         });
  *     }
  * }
  * @endcode
@@ -238,17 +228,29 @@ public:
     Bno08xHandler* GetBno08xHandler(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcept;
 
     /**
-     * @brief Get direct access to the sensor driver for a device (type-erased BNO085 API).
-     *
-     * Use this to call driver methods directly: Update(), EnableSensor(), DisableSensor(),
-     * SetCallback(), HasNewData(), GetLatest(), etc. The pointer is valid while the
-     * handler for that device exists. Include Bno08xHandler.h for IBno08xDriverOps and
-     * BNO085Sensor types.
-     *
+     * @brief Run @p fn on the BNO08x driver of one initialised device, under both locks.
+     * @details Holds the manager lock (the device cannot be deleted) and the handler lock (no other task
+     *          talks to this BNO08x) for the whole call. Use it for driver calls the manager does not wrap:
+     *          Update(), EnableSensor(), HasNewData(), GetLatest(), ... This replaces the raw
+     *          `GetSensor()` pointer, which bypassed the handler mutex.
      * @param deviceIndex Device index (0=onboard, 1-3=external)
-     * @return Non-owning pointer to the driver interface, or nullptr if invalid/not ready
+     * @param fn Callable taking `IBno08xDriverOps&`.
+     * @return true if @p fn ran; false if the device is absent or not initialised.
      */
-    IBno08xDriverOps* GetSensor(uint8_t deviceIndex = ONBOARD_IMU_INDEX) noexcept;
+    template <typename Fn>
+    bool VisitSensor(uint8_t deviceIndex, Fn&& fn) noexcept {
+        MutexLockGuard lock(manager_mutex_);
+        if (deviceIndex >= MAX_IMU_DEVICES || !device_active_[deviceIndex] ||
+            !device_initialized_[deviceIndex] || !bno08x_handlers_[deviceIndex]) {
+            return false;
+        }
+        bool ran = false;
+        bno08x_handlers_[deviceIndex]->visitDriver([&](IBno08xDriverOps& driver) {
+            ran = true;
+            fn(driver);
+        });
+        return ran;
+    }
 
     //**************************************************************************//
     //**                  DEVICES MANAGEMENT METHODS                           **//
