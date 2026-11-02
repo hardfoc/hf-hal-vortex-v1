@@ -14,6 +14,11 @@
 #      lib/managers/ only: no handlers/, core/, mcu/, base/ or bsp_bind/ include.
 #      ESP-IDF and FreeRTOS headers are fine in apps (they own their tasks).
 #
+#   3. Lock discipline: lib/api/ and lib/managers/ reach a chip driver only
+#      through its handler's visitDriver() (which holds the handler mutex), never
+#      through the raw accessors that bypass it (GetSensor(), driverViaSpi(),
+#      driverViaUart(), GetDriver(), GetStrip(), GetAnimator()).
+#
 # Known violations are listed in tools/lint/hal_boundary_allowlist.txt. The list
 # may only shrink: an entry that no longer violates fails the lint (delete it),
 # and with --base <git-ref> the lint fails if the list has more entries than at
@@ -55,6 +60,11 @@ MCU_PATTERNS=(
   "${INC}[^\">]*hf-ws2812-rmt-driver/"
   "${INC}(ws2812_cpp|ws2812_effects|rmt_wrapper|ws2812_control)\.h"
   "${INC}([^\">]*/)?handlers/ws2812/"
+)
+
+# Rule 3: raw driver accessors that bypass the handler mutex.
+RAW_DRIVER_PATTERNS=(
+  '(->|\.)[[:space:]]*(GetSensor|driverViaSpi|driverViaUart|GetDriver|GetStrip|GetAnimator)[[:space:]]*\('
 )
 
 # Rule 2: HAL internals below the managers, included from an example app.
@@ -115,6 +125,8 @@ scan() {
 load_allowlist
 scan lib/api "MCU header above bsp_bind" "${MCU_PATTERNS[@]}"
 scan lib/managers "MCU header above bsp_bind" "${MCU_PATTERNS[@]}"
+scan lib/api "raw driver access (use visitDriver)" "${RAW_DRIVER_PATTERNS[@]}"
+scan lib/managers "raw driver access (use visitDriver)" "${RAW_DRIVER_PATTERNS[@]}"
 scan examples/esp32/main "app includes a HAL internal" "${APP_PATTERNS[@]}"
 
 # Stale allowlist entries: the file no longer violates (or no longer exists).

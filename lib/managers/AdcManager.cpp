@@ -162,6 +162,7 @@ size_t AdcManager::FindByEnum(HfFunctionalAdcChannel channel) const noexcept {
 }
 
 BaseAdc* AdcManager::Get(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire)) return nullptr;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return nullptr;
@@ -170,6 +171,7 @@ BaseAdc* AdcManager::Get(std::string_view name) noexcept {
 }
 
 BaseAdc* AdcManager::Get(HfFunctionalAdcChannel channel) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire)) return nullptr;
     size_t idx = FindByEnum(channel);
     if (idx == kInvalidIndex) return nullptr;
@@ -178,11 +180,13 @@ BaseAdc* AdcManager::Get(HfFunctionalAdcChannel channel) noexcept {
 }
 
 bool AdcManager::Contains(std::string_view name) const noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire)) return false;
     return FindByName(name) != kInvalidIndex;
 }
 
 size_t AdcManager::Size() const noexcept {
+    MutexLockGuard lock(mutex_);
     return registered_count_;
 }
 
@@ -192,6 +196,7 @@ size_t AdcManager::Size() const noexcept {
 
 hf_adc_err_t AdcManager::ReadVoltage(std::string_view name, float& voltage,
                                      hf_u8_t samples, hf_time_t timeBetweenSamples) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -200,7 +205,6 @@ hf_adc_err_t AdcManager::ReadVoltage(std::string_view name, float& voltage,
         return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
 
     auto& entry = entries_[idx];
-    MutexLockGuard lock(mutex_);
 
     float raw_voltage = 0.0f;
     hf_adc_err_t err = entry.driver->ReadChannelV(
@@ -218,6 +222,7 @@ hf_adc_err_t AdcManager::ReadVoltage(std::string_view name, float& voltage,
 
 hf_adc_err_t AdcManager::ReadVoltage(HfFunctionalAdcChannel channel, float& voltage,
                                      hf_u8_t samples, hf_time_t timeBetweenSamples) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -226,7 +231,6 @@ hf_adc_err_t AdcManager::ReadVoltage(HfFunctionalAdcChannel channel, float& volt
         return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
 
     auto& entry = entries_[idx];
-    MutexLockGuard lock(mutex_);
 
     float raw_voltage = 0.0f;
     hf_adc_err_t err = entry.driver->ReadChannelV(
@@ -244,6 +248,7 @@ hf_adc_err_t AdcManager::ReadVoltage(HfFunctionalAdcChannel channel, float& volt
 
 hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
                                   hf_u8_t numOfSamplesToAvg, hf_time_t timeBetweenSamples) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -252,7 +257,6 @@ hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
         return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
 
     auto& entry = entries_[idx];
-    MutexLockGuard lock(mutex_);
 
     hf_u32_t count = 0;
     hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg, timeBetweenSamples);
@@ -268,6 +272,7 @@ hf_adc_err_t AdcManager::ReadRaw(std::string_view name, uint32_t& raw_value,
 
 hf_adc_err_t AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_value,
                                   hf_u8_t numOfSamplesToAvg, hf_time_t timeBetweenSamples) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire))
         return hf_adc_err_t::ADC_ERR_NOT_INITIALIZED;
 
@@ -276,7 +281,6 @@ hf_adc_err_t AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t& raw_v
         return hf_adc_err_t::ADC_ERR_CHANNEL_NOT_FOUND;
 
     auto& entry = entries_[idx];
-    MutexLockGuard lock(mutex_);
 
     hf_u32_t count = 0;
     hf_adc_err_t err = entry.driver->ReadChannelCount(entry.hw_channel, count, numOfSamplesToAvg, timeBetweenSamples);

@@ -10,7 +10,7 @@ What runs on a pull request, what each check means, and how to run it on your ma
 | Workflow | File | Runs on | Checks |
 | --- | --- | --- | --- |
 | ESP32 Examples Build CI | `esp32-examples-build-ci.yml` | push, pull request | Builds every app in `app_config.yml` (all have `ci_enabled: true`), Debug and Release, with ESP-IDF release/v5.5 |
-| Host Tests CI | `ci-host-tests.yml` | push, every pull request | Builds every HAL source above `bsp_bind/` on Linux with GCC and Clang against the host binding and runs `tests/host`; runs the HAL boundary lint (`tools/lint/lint_hal_boundary.sh`, allowlist may not grow) |
+| Host Tests CI | `ci-host-tests.yml` | push, every pull request | Builds every HAL source above `bsp_bind/` on Linux with GCC and Clang against the host binding and runs `tests/host`; runs the HAL boundary lint (`tools/lint/lint_hal_boundary.sh`: no MCU header above `bsp_bind/`, no raw driver accessor in `lib/`, allowlist may not grow) |
 | C++ Lint CI | `ci-cpp-lint.yml` | push, pull request | clang-format and clang-tidy with `_config/.clang-format` and `_config/.clang-tidy` |
 | C++ Analysis CI | `ci-cpp-analysis.yml` | push, pull request | cppcheck on `lib/managers` and `lib/api` (C++20) |
 | Docs Publish CI | `ci-docs-publish.yml` | push to main, `v*` tags, pull request | `hardfoc-docs check` (figures and generated tables current), strict MkDocs build, Doxygen under `api/`, offline link check of the built site, Lighthouse budget, phone and desktop screenshots (artifact `docs-screenshots`); publishes on main and tags |
@@ -35,6 +35,7 @@ a failure. One file is one executable and one ctest entry.
 | `test_boot_report` | What `Vortex::GetFailedComponents()` and `GetSystemWarnings()` return: no duplicates, bounded, overflow counted |
 | `test_encoder_manager` | `EncoderManager` reads on an AS5047U register model: `ReadDiagnostics()` makes one ERRFL read, `ReadFieldStrength()` returns AGC and magnitude, empty slots touch no SPI |
 | `test_fail_closed` | A required manager that fails (no bus, LED) shuts every manager down again and sets `GetLastError()`; a retry succeeds; `CollectDiagnostics()` after a degraded boot; GPIO pointers are stable and cleared on shutdown; steady-state calls make zero heap allocations |
+| `test_lock_discipline` | `ImuManager::VisitSensor()` refuses an absent IMU; `MotorController::visitDriver()` returns a default and runs nothing without a device; SPI statistics need a ready SPI device |
 | `test_board_bind` | `Vortex::EnsureInitialized()` on the host binding: bus pins, SPI modes, I2C devices, UART, CAN, LED pin and NVS namespaces as the pin map says; LED frames; `Shutdown()` closes what init opened |
 
 ```bash

@@ -170,3 +170,12 @@ HF_TEST(Encoder_EmptyOrUninitialisedSlotIsRefusedWithoutSpi) {
     CHECK(spi.Transactions().empty());
     CHECK(enc.DeleteDevice(kSlot));
 }
+
+HF_TEST(Encoder_VisitDriverRunsOnlyOnAReadySlot) {
+    Fixture f;
+    uint16_t angle = 0;
+    CHECK(f.enc.VisitDriver(kSlot, [&](auto& drv) { angle = drv.GetAngle(); }));
+    CHECK_EQ(angle, 0x1234u);
+    CHECK(!f.enc.VisitDriver(EncoderManager::ENCODER_SLOT_3, [](auto&) {}));
+    CHECK(!f.enc.VisitDriver(EncoderManager::MAX_ENCODER_DEVICES, [](auto&) {}));
+}

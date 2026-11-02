@@ -239,6 +239,7 @@ BaseSpi* CommChannelsManager::GetSpiDevice(SpiDeviceId device_id) noexcept {
 }
 
 BaseSpi* CommChannelsManager::GetSpiDevice(uint8_t device_index) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !spi_bus_valid_) return nullptr;
     if (device_index >= kSpiDeviceCount) return nullptr;
     int idx = spi_device_indices_[device_index];
@@ -251,6 +252,7 @@ BaseSpi* CommChannelsManager::GetSpiDevice(uint8_t device_index) noexcept {
 //==============================================================================
 
 BaseI2c* CommChannelsManager::GetI2cDevice(I2cDeviceId device_id) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) return nullptr;
     uint8_t id = static_cast<uint8_t>(device_id);
     if (id >= kI2cBuiltinCount) return nullptr;
@@ -260,6 +262,7 @@ BaseI2c* CommChannelsManager::GetI2cDevice(I2cDeviceId device_id) noexcept {
 }
 
 BaseI2c* CommChannelsManager::GetI2cDevice(uint8_t bus_index, int device_index) noexcept {
+    MutexLockGuard lock(mutex_);
     if (bus_index != 0) return nullptr; // only Bus 0 supported
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) return nullptr;
     if (device_index < 0) return nullptr;
@@ -271,6 +274,7 @@ BaseI2c* CommChannelsManager::GetI2cDevice(uint8_t bus_index, int device_index) 
 //==============================================================================
 
 int CommChannelsManager::CreateI2cDevice(uint8_t device_address, uint32_t speed_hz) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         Logger::GetInstance().Error(TAG, "Cannot create I2C device: bus not available");
         return -1;
@@ -327,6 +331,7 @@ int CommChannelsManager::CreateI2cDevice(uint8_t device_address, uint32_t speed_
 }
 
 bool CommChannelsManager::HasI2cDeviceAtAddress(uint8_t bus_index, uint8_t device_address) const noexcept {
+    MutexLockGuard lock(mutex_);
     if (bus_index != 0) return false;
 
     // Check built-in devices
@@ -344,6 +349,7 @@ bool CommChannelsManager::HasI2cDeviceAtAddress(uint8_t bus_index, uint8_t devic
 }
 
 bool CommChannelsManager::RemoveI2cDevice(int device_index) noexcept {
+    MutexLockGuard lock(mutex_);
     if (device_index < 0) return false;
 
     // Only allow removal of runtime-created devices
@@ -375,6 +381,7 @@ bool CommChannelsManager::RemoveI2cDevice(int device_index) noexcept {
 //==============================================================================
 
 bool CommChannelsManager::I2cProbeAddress(uint8_t address, uint32_t timeout_ms) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         return false;
     }
@@ -382,6 +389,7 @@ bool CommChannelsManager::I2cProbeAddress(uint8_t address, uint32_t timeout_ms) 
 }
 
 size_t CommChannelsManager::I2cScanBus(uint8_t* out, size_t max_results) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         return 0;
     }
@@ -393,6 +401,7 @@ size_t CommChannelsManager::I2cScanBus(uint8_t* out, size_t max_results) noexcep
 }
 
 bool CommChannelsManager::I2cResetBus() noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !i2c_bus_valid_) {
         return false;
     }
@@ -404,11 +413,13 @@ bool CommChannelsManager::I2cResetBus() noexcept {
 //==============================================================================
 
 BaseUart* CommChannelsManager::GetUartBus() noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !uart_bus_valid_) return nullptr;
     return uart_bus_;
 }
 
 BaseCan* CommChannelsManager::GetCanBus() noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire) || !can_bus_valid_) return nullptr;
     return can_bus_;
 }
