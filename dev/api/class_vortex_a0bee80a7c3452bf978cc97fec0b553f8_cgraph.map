@@ -1,0 +1,21 @@
+<map id="Vortex::InitializeGpio" name="Vortex::InitializeGpio">
+<area shape="rect" id="Node000001" title="Initialize GPIO management (step 3)" alt="" coords="5,61,164,86"/>
+<area shape="rect" id="Node000002" href="$class_vortex_boot_report.html#a8561e1b05dacd63c7e89c9765100a103" title="Record a component that failed to initialise." alt="" coords="221,35,429,61"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,62,207,58,207,63,165,68"/>
+<area shape="rect" id="Node000004" href="$class_gpio_manager.html#a88a01fcf59a2db604d59b5cca4503112" title="Register all GPIO pins and initialise drivers (idempotent)." alt="" coords="212,85,437,110"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,79,199,82,198,87,164,84"/>
+<area shape="rect" id="Node000003" href="$class_vortex_boot_report.html#ae4e34ba98fdc68473668afc554eb2616" title=" " alt="" coords="487,35,657,61"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="429,45,473,45,473,51,429,51"/>
+<area shape="rect" id="Node000005" href="$class_gpio_manager.html#a71081920f92fb76254ccd258ec539c9e" title=" " alt="" coords="485,85,659,110"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="438,95,472,95,472,100,438,100"/>
+<area shape="rect" id="Node000006" href="$class_gpio_manager.html#a9ce1eed8b041919d8bb970b729077993" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="707,48,935,88"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="658,85,693,80,693,86,659,90"/>
+<area shape="rect" id="Node000007" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="989,5,1171,45"/>
+<area shape="poly" id="edge8_Node000005_Node000007" title=" " alt="" coords="630,82,657,71,671,62,680,52,690,42,706,34,774,16,845,7,913,6,975,9,975,14,913,11,845,12,775,21,708,38,693,46,684,55,675,66,660,76,631,87"/>
+<area shape="rect" id="Node000008" href="$namespacevortex_1_1bsp.html#a05fe25c2307a70437b9a95809c8bbfcd" title="Create the MCU GPIO for a functional pin (one slot per pin; a second call returns the same object)." alt="" coords="983,85,1177,110"/>
+<area shape="poly" id="edge9_Node000005_Node000008" title=" " alt="" coords="659,97,707,97,935,97,969,97,969,102,935,103,707,103,659,102"/>
+<area shape="rect" id="Node000009" href="$_gpio_manager_8cpp.html#a21c68b780d73db23df2fb67f98b2aff1" title=" " alt="" coords="751,163,891,189"/>
+<area shape="poly" id="edge10_Node000005_Node000009" title=" " alt="" coords="609,108,707,141,760,157,758,162,706,147,607,113"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="935,47,974,40,975,45,935,52"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="935,78,969,82,969,87,935,84"/>
+</map>

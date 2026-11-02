@@ -1,0 +1,5 @@
+<map id="LedManager::UpdateStatistics" name="LedManager::UpdateStatistics">
+<area shape="rect" id="Node000001" title=" " alt="" coords="209,5,427,31"/>
+<area shape="rect" id="Node000002" href="$class_led_manager.html#a70ae6019c2839bdc8c371a440e10908d" title="Turn the LED off (set colour to black)." alt="" coords="5,5,161,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,21,161,21,161,15,196,15"/>
+</map>

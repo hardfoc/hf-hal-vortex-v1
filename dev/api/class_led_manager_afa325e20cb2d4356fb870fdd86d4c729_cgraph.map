@@ -1,0 +1,17 @@
+<map id="LedManager::EnsureInitialized" name="LedManager::EnsureInitialized">
+<area shape="rect" id="Node000001" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="5,104,224,129"/>
+<area shape="rect" id="Node000002" href="$class_led_manager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="272,104,439,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,114,258,114,258,119,224,119"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#a38f49900a4847b036422fbd5edcbcf21" title=" " alt="" coords="508,5,715,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="373,101,422,70,486,40,511,32,512,37,488,44,425,75,376,106"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#aec49368647c9b09857ea1b775d655e5e" title=" " alt="" coords="487,55,736,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="422,101,486,89,531,80,532,85,487,94,423,107"/>
+<area shape="rect" id="Node000005" href="$class_led_manager.html#a32cf3a054189142932736ab7a1e99a02" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="523,104,699,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="439,114,509,114,509,119,439,119"/>
+<area shape="rect" id="Node000007" href="$namespacevortex_1_1bsp.html#ae278939510e12d6f78ab2f042e53482f" title="Open the addressable status LED chain on data_pin." alt="" coords="511,153,712,179"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="422,127,532,148,531,153,421,132"/>
+<area shape="rect" id="Node000008" href="$class_led_manager.html#a6305fee5cff625bb3332808eb7e63207" title=" " alt="" coords="504,203,719,228"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="377,127,426,158,488,188,517,197,515,202,486,192,423,162,374,132"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1bsp.html#aeabe621406616ba6d8213f6b4fd14fe1" title="Latch colours onto the chain." alt="" coords="784,104,987,129"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="700,114,770,114,770,119,700,119"/>
+</map>

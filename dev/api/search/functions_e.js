@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['rawtopercent_0',['RawToPercent',['../class_led_manager.html#af56f8e3fe390499c55decd544610b352',1,'LedManager']]],
+  ['read_1',['Read',['../class_gpio_manager.html#a17b886bff147e7053cd63b742c68a404',1,'GpioManager']]],
+  ['readallangles_2',['ReadAllAngles',['../class_encoder_manager.html#a5f9f4fbf090969ce59c3c064e982a038',1,'EncoderManager']]],
+  ['readallvelocities_3',['ReadAllVelocities',['../class_encoder_manager.html#a282c571fe5033938e776d7a63ed2f3c9',1,'EncoderManager']]],
+  ['readangle_4',['ReadAngle',['../class_encoder_manager.html#ab3018404938f9072f4a7ff4bd9333269',1,'EncoderManager']]],
+  ['readangledegrees_5',['ReadAngleDegrees',['../class_encoder_manager.html#a26d4ef1b981945f22df48c3f5c83df3b',1,'EncoderManager']]],
+  ['readdiagnostics_6',['ReadDiagnostics',['../class_encoder_manager.html#a55891b42a16447c3db7a2a9d13b04328',1,'EncoderManager']]],
+  ['readfieldstrength_7',['ReadFieldStrength',['../class_encoder_manager.html#ac69753b155055cc2396b6508e5a7b25f',1,'EncoderManager']]],
+  ['readinternaltemperature_8',['ReadInternalTemperature',['../class_temperature_manager.html#afd06672ef4c1bf486f05083f53a6e5b7',1,'TemperatureManager']]],
+  ['readmotortemperature_9',['ReadMotorTemperature',['../class_temperature_manager.html#a34eb3f2209f801b1d5c71a1735e4d44a',1,'TemperatureManager']]],
+  ['readntctemperature_10',['ReadNtcTemperature',['../class_temperature_manager.html#a720f24fac8b6f66a4688ae6dcc324ebd',1,'TemperatureManager']]],
+  ['readraw_11',['readraw',['../class_adc_manager.html#ad76283591466ea8c5f06aebec74d205b',1,'AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t &amp;raw_value, hf_u8_t numOfSamplesToAvg=1, hf_time_t timeBetweenSamples=0) noexcept'],['../class_adc_manager.html#a3b4944bfde89db7792a4e6c8666cc567',1,'AdcManager::ReadRaw(std::string_view name, uint32_t &amp;raw_value, hf_u8_t numOfSamplesToAvg=1, hf_time_t timeBetweenSamples=0) noexcept']]],
+  ['readtemperaturecelsius_12',['ReadTemperatureCelsius',['../class_temperature_manager.html#a3d1b0613fe2adc2b89285dc146eaae81',1,'TemperatureManager']]],
+  ['readtemperaturecelsiusimpl_13',['ReadTemperatureCelsiusImpl',['../class_tmc9660_temperature_wrapper.html#a06d94eb0c7d732883e16c7e7c254bf8b',1,'Tmc9660TemperatureWrapper']]],
+  ['readtemperaturefahrenheit_14',['ReadTemperatureFahrenheit',['../class_temperature_manager.html#a213ee60585b03916b27300cbe5242ad7',1,'TemperatureManager']]],
+  ['readvelocityrpm_15',['ReadVelocityRPM',['../class_encoder_manager.html#a13af0e082a3b2741b06508cd0d8bf506',1,'EncoderManager']]],
+  ['readvoltage_16',['readvoltage',['../class_adc_manager.html#ae81d3ed6e37b60d4b1db08e3a4e6e42f',1,'AdcManager::ReadVoltage(std::string_view name, float &amp;voltage, hf_u8_t samples=1, hf_time_t timeBetweenSamples=0) noexcept'],['../class_adc_manager.html#a5ef308f9b8d1c9792154bff679e122c7',1,'AdcManager::ReadVoltage(HfFunctionalAdcChannel channel, float &amp;voltage, hf_u8_t samples=1, hf_time_t timeBetweenSamples=0) noexcept']]],
+  ['readyhandlerlocked_17',['ReadyHandlerLocked',['../class_encoder_manager.html#a975a6541724af497279348e7fa63d621',1,'EncoderManager']]],
+  ['red_18',['RED',['../namespace_led_colors.html#af4d56375fdebf6240c7690d7f8e8f1fe',1,'LedColors']]],
+  ['registertmc9660bridgepinsifneeded_19',['RegisterTmc9660BridgePinsIfNeeded',['../class_gpio_manager.html#aaa771acc4c28b3d20cf2f5035882b190',1,'GpioManager']]],
+  ['removei2cdevice_20',['RemoveI2cDevice',['../class_comm_channels_manager.html#a37780fe331686ddce6d40b3b8a1a1722',1,'CommChannelsManager']]],
+  ['reset_21',['Reset',['../namespacevortex_1_1bsp_1_1host.html#ad0b1010de755429fd027123607ac654e',1,'vortex::bsp::host']]],
+  ['resettmclspistats_22',['ResetTmclSpiStats',['../class_motor_controller.html#a0267880565ec0e26df1852d10fd812fd',1,'MotorController']]]
+];

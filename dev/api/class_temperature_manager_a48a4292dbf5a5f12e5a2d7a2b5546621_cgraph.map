@@ -1,0 +1,11 @@
+<map id="TemperatureManager::InitializeNtcThermistor" name="TemperatureManager::InitializeNtcThermistor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,63,184,103"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1config.html#a6a99e0f644e44216c90a888a27d4336c" title="Set the board over&#45;temperature window on an initialised NTC handler." alt="" coords="232,5,427,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,60,233,46,234,51,178,65"/>
+<area shape="rect" id="Node000003" href="$class_adc_manager.html#ae3d2137cd97edce8f97092d5b4a6d1d1" title="Return the singleton AdcManager instance." alt="" coords="235,70,424,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,80,221,80,221,85,184,85"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1config.html#a0c99e15a578efa31c01f863e9e398ade" title="NTC handler configuration for the board thermistor." alt="" coords="233,120,425,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="178,100,234,114,233,119,177,105"/>
+<area shape="rect" id="Node000005" href="$namespacevortex_1_1config.html#aa32abea2dbd3abcbb148d668c41970e9" title="Hardware channel id of the board NTC on the shared TMC9660 ADC wrapper, from the pin map." alt="" coords="475,120,653,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="425,137,461,137,461,143,425,143"/>
+</map>

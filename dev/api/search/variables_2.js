@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['calibration_5f_0',['calibration_',['../class_nvs_manager.html#acce9257aae47febdc2b53ca659dfef3e',1,'NvsManager']]],
+  ['can_1',['can',['../structvortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_host_8cpp_03_1_1_state.html#a0ca3a3af558fbf894faa38989c52ea1e',1,'vortex::bsp::anonymous_namespace{VortexBoardBindHost.cpp}::State::can'],['../structvortex_1_1bsp_1_1host_1_1_open_log.html#aa9610a534739d5a0944f01188ab28124',1,'vortex::bsp::host::OpenLog::can'],['../structvortex_1_1bsp_1_1host_1_1_failures.html#afaa539c179699dfcd929692ed6f2e4eb',1,'vortex::bsp::host::Failures::can']]],
+  ['can_5fbus_5f_2',['can_bus_',['../class_comm_channels_manager.html#ae85f2b66f6209878784067df385d65bd',1,'CommChannelsManager']]],
+  ['can_5fbus_5fvalid_3',['can_bus_valid',['../struct_comm_system_diagnostics.html#a37d15e6a78ea791aa41533d05c5bf6dc',1,'CommSystemDiagnostics']]],
+  ['can_5fbus_5fvalid_5f_4',['can_bus_valid_',['../class_comm_channels_manager.html#ab504eada5dae1a445fcbdc4cc1b2401d',1,'CommChannelsManager']]],
+  ['channels_5fby_5fchip_5',['channels_by_chip',['../struct_adc_system_diagnostics.html#a50d00941e93077dafb4b7687fa664fc1',1,'AdcSystemDiagnostics']]],
+  ['clock_5fhz_6',['clock_hz',['../structvortex_1_1bsp_1_1_spi_device_spec.html#ae750391a08f9fbf154d4a496a49045a5',1,'vortex::bsp::SpiDeviceSpec']]],
+  ['comm_5fmanager_5f_7',['comm_manager_',['../class_encoder_manager.html#ae43bb67717b0f2b9265b7f6cb2c67e65',1,'EncoderManager::comm_manager_'],['../class_imu_manager.html#af405b393f95fc7455898024ae820433a',1,'ImuManager::comm_manager_']]],
+  ['comms_8',['comms',['../class_vortex.html#a6ccb45fee4c8b6707fb0fc609a1c205a',1,'Vortex']]],
+  ['comms_5finitialized_9',['comms_initialized',['../struct_vortex_system_diagnostics.html#a7d4f63434b644ddeac411cb686f81833',1,'VortexSystemDiagnostics']]],
+  ['comms_5finitialized_5f_10',['comms_initialized_',['../class_vortex.html#ac70c5290e8941b3618f7037990b7126b',1,'Vortex']]],
+  ['communication_5ferror_5fcount_11',['communication_error_count',['../struct_encoder_system_diagnostics_1_1_device_snapshot.html#a82488e7e6671d940a4a792c0da7fee89',1,'EncoderSystemDiagnostics::DeviceSnapshot']]],
+  ['communication_5ferror_5fcounts_5f_12',['communication_error_counts_',['../class_encoder_manager.html#a848a0a044fec741f4f7a74aa675da3d5',1,'EncoderManager']]],
+  ['communication_5ferrors_13',['communication_errors',['../struct_adc_system_diagnostics.html#aa9f604923662e7ffb23d45077e4b811e',1,'AdcSystemDiagnostics::communication_errors'],['../struct_temp_system_diagnostics.html#aecee2a17b1602a65eddbe6e050add2c7',1,'TempSystemDiagnostics::communication_errors']]],
+  ['config_5f_14',['config_',['../class_nvs_manager.html#a2bda9b6d406b9c124567579eeb15ed1c',1,'NvsManager']]],
+  ['count_15',['count',['../struct_manager_health_snapshot.html#abf0d28195894517c44f6f7897447e740',1,'ManagerHealthSnapshot']]],
+  ['cs_5fpin_16',['cs_pin',['../structvortex_1_1bsp_1_1_spi_device_spec.html#a8f3d002a92fc2f0606e09da694d103a1',1,'vortex::bsp::SpiDeviceSpec']]],
+  ['current_5fanimation_17',['current_animation',['../struct_led_system_diagnostics.html#a4200e061728511f78dc3c8c7acdc7b02',1,'LedSystemDiagnostics']]],
+  ['current_5fanimation_5f_18',['current_animation_',['../class_led_manager.html#a7f517fde3b4761d25c85d044145a98da',1,'LedManager']]],
+  ['current_5fbrightness_19',['current_brightness',['../struct_led_system_diagnostics.html#a4279c93e54a7a11911c6cde4eb884b6a',1,'LedSystemDiagnostics']]],
+  ['current_5fbrightness_5f_20',['current_brightness_',['../class_led_manager.html#aa603ede706949a8a1c2a9a5e53eb083d',1,'LedManager']]],
+  ['current_5fcolor_21',['current_color',['../struct_led_system_diagnostics.html#a39605b8ede35a17ad4dbe6ec3bb11eed',1,'LedSystemDiagnostics']]],
+  ['current_5fcolor_5f_22',['current_color_',['../class_led_manager.html#a1eeaaedd9784dc129a8c04dfe968d5b3',1,'LedManager']]],
+  ['current_5fled_5fgpio_5f_23',['current_led_gpio_',['../class_led_manager.html#af286841ab07358fe99d04514e147abc5',1,'LedManager']]]
+];

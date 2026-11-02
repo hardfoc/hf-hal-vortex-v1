@@ -1,0 +1,5 @@
+<map id="GpioManager::Deinitialize" name="GpioManager::Deinitialize">
+<area shape="rect" id="Node000001" title="Reset GPIO manager to uninitialised state." alt="" coords="189,5,380,31"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,5,141,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,21,141,21,141,15,175,15"/>
+</map>

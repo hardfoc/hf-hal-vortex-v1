@@ -1,0 +1,5 @@
+<map id="Vortex::PerformHealthCheck" name="Vortex::PerformHealthCheck">
+<area shape="rect" id="Node000001" title="Perform system health check." alt="" coords="5,5,212,31"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#afbd4900f5d717314862c87501cb667be" title="Collect per&#45;manager error health into a unified snapshot." alt="" coords="260,5,477,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,15,246,15,246,21,212,21"/>
+</map>

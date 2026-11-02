@@ -1,0 +1,19 @@
+<map id="CommChannelsManager::EnsureInitialized" name="CommChannelsManager::EnsureInitialized">
+<area shape="rect" id="Node000001" title="Initialise all communication buses if not already initialised." alt="" coords="5,146,188,186"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="236,146,419,186"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,163,222,163,222,169,188,169"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1bsp.html#a6dac7d8251cea221c9352c9386bf099d" title="Open the CAN controller." alt="" coords="482,5,645,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="343,144,394,92,428,64,465,40,480,33,483,38,468,44,431,68,398,96,347,148"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#aebf1db0755a48037f22ccf89c6079cdc" title="Add a device." alt="" coords="467,55,659,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="359,144,408,116,466,89,488,81,489,86,468,94,411,120,362,148"/>
+<area shape="rect" id="Node000005" href="$namespacevortex_1_1bsp.html#acb5b4be1b8dd317f4448fd0729ccb8d5" title="The device at index, or nullptr." alt="" coords="480,104,647,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="418,144,488,130,489,135,419,150"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1bsp.html#afba371282227cd3238b34ddbc9016b26" title="Initialise the I2C bus." alt="" coords="485,153,641,179"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="419,163,472,163,472,169,419,169"/>
+<area shape="rect" id="Node000007" href="$namespacevortex_1_1bsp.html#aa0dc60e2e1e2cb4088784d2d7e8e7609" title="Add a chip select." alt="" coords="467,203,660,228"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="419,182,489,197,488,202,418,188"/>
+<area shape="rect" id="Node000008" href="$namespacevortex_1_1bsp.html#ae46df572cb29f6583d722a17d1501ba7" title="Initialise the SPI bus." alt="" coords="485,252,642,277"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="363,184,412,211,468,237,493,246,492,251,466,242,409,216,360,189"/>
+<area shape="rect" id="Node000009" href="$namespacevortex_1_1bsp.html#ae15f68dea0949890a311b38fd98ab006" title="Open the board UART." alt="" coords="481,301,646,327"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="348,184,398,236,432,263,468,286,486,294,483,299,465,291,429,267,395,240,344,188"/>
+</map>

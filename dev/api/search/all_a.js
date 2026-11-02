@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['kboardntcadcchannel_0',['kBoardNtcAdcChannel',['../namespacevortex_1_1config.html#a049f82ef86104bdf169380dd67213eea',1,'vortex::config']]],
+  ['kboardntchighthresholdc_1',['kBoardNtcHighThresholdC',['../namespacevortex_1_1config.html#ab546ca2c6a3bed8c7202431fa592f422',1,'vortex::config']]],
+  ['kboardntclowthresholdc_2',['kBoardNtcLowThresholdC',['../namespacevortex_1_1config.html#a2487fe7236fa23cab05968c838bcf0c8',1,'vortex::config']]],
+  ['kcanbitrate_3',['kCanBitRate',['../_comm_channels_manager_8cpp.html#a50bb08dc7987bbff4711cdd45903a648',1,'CommChannelsManager.cpp']]],
+  ['kcapacity_4',['kCapacity',['../class_vortex_boot_report.html#aaa10f0d6d72e28e2979dceed9a80027e',1,'VortexBootReport']]],
+  ['kgpioslots_5',['kgpioslots',['../namespacevortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_esp32c6_8cpp_03.html#adbd09465b9f0b8d8f6505363ddb94387',1,'vortex::bsp::anonymous_namespace{VortexBoardBindEsp32c6.cpp}::kGpioSlots'],['../namespacevortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_host_8cpp_03.html#a33453bc7406525d558ebd3f2934c5f61',1,'vortex::bsp::anonymous_namespace{VortexBoardBindHost.cpp}::kGpioSlots']]],
+  ['khalmanifest_6',['kHalManifest',['../namespacevortex__version_1_1anonymous__namespace_02_vortex_version_manifest_8cpp_03.html#ade0db5257dd657972f7a50409106ccaf',1,'vortex_version::anonymous_namespace{VortexVersionManifest.cpp}']]],
+  ['khalmanifestcount_7',['kHalManifestCount',['../namespacevortex__version_1_1anonymous__namespace_02_vortex_version_manifest_8cpp_03.html#aadabc4d1974f887f36de5b923ae52ca0',1,'vortex_version::anonymous_namespace{VortexVersionManifest.cpp}']]],
+  ['ki2cbuiltincount_8',['kI2cBuiltinCount',['../class_comm_channels_manager.html#a3f3bbcf015216b786665c4758c380d4a',1,'CommChannelsManager']]],
+  ['kinvalidindex_9',['kinvalidindex',['../class_temperature_manager.html#af7d76be04a22eedcaa8205b9851f576e',1,'TemperatureManager::kInvalidIndex'],['../class_gpio_manager.html#aa046cd65e6032c81814513fd4af321ab',1,'GpioManager::kInvalidIndex'],['../class_adc_manager.html#a03e0ed1f7c3bd4cc854eda847ec7cd6a',1,'AdcManager::kInvalidIndex']]],
+  ['kmaxchannels_10',['kMaxChannels',['../class_adc_manager.html#ad70ff3a5cb62cf43ac60ea7a3843f80e',1,'AdcManager']]],
+  ['kmaxdevices_11',['kmaxdevices',['../struct_motor_system_diagnostics.html#a2b3ea9ab442c034e2ef063af9dc1f5ff',1,'MotorSystemDiagnostics::kMaxDevices'],['../struct_imu_system_diagnostics.html#aae24d6efabbe2aecd736b4c62af314dc',1,'ImuSystemDiagnostics::kMaxDevices'],['../struct_encoder_system_diagnostics.html#a715ed3cb69df76741cc85858e16106c7',1,'EncoderSystemDiagnostics::kMaxDevices']]],
+  ['kmaxdiagentries_12',['kMaxDiagEntries',['../struct_vortex_system_diagnostics.html#aa2c95bcd3a23637432c1cac773467778',1,'VortexSystemDiagnostics']]],
+  ['kmaxentries_13',['kMaxEntries',['../class_gpio_manager.html#a1a7e57c10cb7097d733623377629f3ec',1,'GpioManager']]],
+  ['kmaxi2cdevices_14',['kMaxI2cDevices',['../namespacevortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_host_8cpp_03.html#a4caa84a9f96edfeffe4cfe0b5630356e',1,'vortex::bsp::anonymous_namespace{VortexBoardBindHost.cpp}']]],
+  ['kmaxi2cruntimedevices_15',['kMaxI2cRuntimeDevices',['../class_comm_channels_manager.html#a1e5b135a394b17ba37becaa1136fe28c',1,'CommChannelsManager']]],
+  ['kmaxmanagers_16',['kMaxManagers',['../struct_manager_health_snapshot.html#a34700d6ead794ba35f8e5950a6be1e3e',1,'ManagerHealthSnapshot']]],
+  ['kmaxsensors_17',['kMaxSensors',['../class_temperature_manager.html#a2923d727e3af80f668645fc42e3ae1b7',1,'TemperatureManager']]],
+  ['kmaxspidevices_18',['kMaxSpiDevices',['../namespacevortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_host_8cpp_03.html#ad1cac7e8abdb08d6c73f786c0831448b',1,'vortex::bsp::anonymous_namespace{VortexBoardBindHost.cpp}']]],
+  ['knumleds_19',['kNumLeds',['../class_led_manager.html#a291362c5d44672cdbb8bd5a97692ea0a',1,'LedManager']]],
+  ['kspicspins_20',['kSpiCsPins',['../_comm_channels_manager_8cpp.html#acd0699892a46088aa25509add7f66580',1,'CommChannelsManager.cpp']]],
+  ['kspidevicecount_21',['kSpiDeviceCount',['../class_comm_channels_manager.html#a76ba3ecc5f28bd22addc5c07b5310e0a',1,'CommChannelsManager']]],
+  ['kvortexmanagercount_22',['kVortexManagerCount',['../_vortex_8h.html#ae29e0084dab1d9eb00526df51127edf1',1,'Vortex.h']]]
+];

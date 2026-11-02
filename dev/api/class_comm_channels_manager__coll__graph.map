@@ -1,0 +1,15 @@
+<map id="CommChannelsManager" name="CommChannelsManager">
+<area shape="rect" id="Node000001" title="Singleton managing all board communication channels for Vortex V1." alt="" coords="685,149,868,174"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="304,5,501,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="513,46,587,67,662,94,715,120,758,146,755,151,712,125,660,98,586,72,512,51"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="306,69,499,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="514,108,710,146,709,151,513,113"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="301,134,504,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="518,159,685,159,685,164,518,164"/>
+<area shape="rect" id="Node000005" href="$struct_comm_channels_manager_1_1_runtime_i2c_slot.html" title=" " alt="" coords="5,141,188,181"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="202,159,301,159,301,164,202,164"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="326,213,479,238"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="492,208,661,179,703,171,703,177,662,184,493,213"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="303,262,502,287"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="515,258,588,243,660,222,713,197,755,172,758,176,715,202,662,226,589,248,516,263"/>
+</map>

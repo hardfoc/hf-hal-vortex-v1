@@ -1,0 +1,11 @@
+<map id="vortex::bsp::StatusLedClose" name="vortex::bsp::StatusLedClose">
+<area shape="rect" id="Node000001" title="Turn the chain off and release it (idempotent)." alt="" coords="644,42,847,67"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp_1_1host.html#ad0b1010de755429fd027123607ac654e" title="Close every object, forget the log and the failures, and remove every simulated I2C chip." alt="" coords="439,5,578,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="630,43,578,37,579,31,631,38"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#a2dc2c5f9181410493ab66b14e6c40788" title="Turn off the LED and release driver resources." alt="" coords="421,70,596,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="631,71,596,75,596,70,630,66"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#a4c571368a2d02ce4dc616b6881878d4c" title="Alias for Shutdown()." alt="" coords="189,70,373,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="407,85,374,85,374,80,407,80"/>
+<area shape="rect" id="Node000005" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,70,141,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="175,85,142,85,142,80,175,80"/>
+</map>

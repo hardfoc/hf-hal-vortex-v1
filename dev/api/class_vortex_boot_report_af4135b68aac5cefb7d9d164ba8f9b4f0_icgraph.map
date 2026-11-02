@@ -1,0 +1,9 @@
+<map id="VortexBootReport::Clear" name="VortexBootReport::Clear">
+<area shape="rect" id="Node000001" title="Forget every entry (start of a new initialisation attempt)." alt="" coords="508,31,687,56"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#a01a9fd7a3f9c03e9c5e900aa71f052ee" title="Initialize all component handlers in proper order." alt="" coords="233,5,460,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="494,36,460,32,460,27,495,30"/>
+<area shape="rect" id="Node000004" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="279,55,415,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="495,56,415,64,415,58,494,51"/>
+<area shape="rect" id="Node000003" href="$class_vortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Ensure all Vortex systems are properly initialized." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="219,21,185,21,185,15,219,15"/>
+</map>

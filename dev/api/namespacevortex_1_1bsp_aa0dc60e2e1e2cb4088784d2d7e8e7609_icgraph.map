@@ -1,0 +1,27 @@
+<map id="vortex::bsp::SpiAddDevice" name="vortex::bsp::SpiAddDevice">
+<area shape="rect" id="Node000001" title="Add a chip select." alt="" coords="1741,55,1935,80"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="1511,47,1693,87"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1728,70,1694,70,1694,65,1728,65"/>
+<area shape="rect" id="Node000003" href="$class_comm_channels_manager.html#af67cc44d654cf6c433e4d7ef4d3927d8" title="Initialise all communication buses if not already initialised." alt="" coords="1280,47,1463,87"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1497,70,1463,70,1463,65,1497,65"/>
+<area shape="rect" id="Node000004" href="$class_encoder_manager.html#a17703c5ee6e6b3ee1512dba7e856874b" title="Initialize the encoder manager system (no devices auto&#45;created)." alt="" coords="1037,5,1232,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1266,48,1196,33,1197,28,1267,43"/>
+<area shape="rect" id="Node000009" href="$class_imu_manager.html#a3cd907c4f640e418916930e1c6b0777f" title="Initialize the IMU manager system." alt="" coords="1051,55,1219,80"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="1266,70,1219,70,1219,65,1266,65"/>
+<area shape="rect" id="Node000012" href="$class_vortex.html#a02af0d0d5718570ba6e916e6875677a0" title="Initialize communication channels (step 2)" alt="" coords="777,105,955,131"/>
+<area shape="poly" id="edge12_Node000003_Node000012" title=" " alt="" coords="1267,90,1232,95,1087,109,956,117,955,112,1086,104,1232,90,1266,85"/>
+<area shape="rect" id="Node000005" href="$class_encoder_manager.html#aa4e1573f518410b96e8fda9e42fa238c" title="Ensure the encoder manager system is initialized." alt="" coords="743,5,989,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1024,21,990,21,990,15,1024,15"/>
+<area shape="rect" id="Node000006" href="$class_vortex.html#ad5c50fdca14e9b2768bc49a8a509cf25" title="Initialize encoder management (step 8)" alt="" coords="508,5,695,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="729,21,695,21,695,15,729,15"/>
+<area shape="rect" id="Node000007" href="$class_vortex.html#a01a9fd7a3f9c03e9c5e900aa71f052ee" title="Initialize all component handlers in proper order." alt="" coords="233,55,460,80"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="522,36,414,57,413,52,521,31"/>
+<area shape="rect" id="Node000008" href="$class_vortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Ensure all Vortex systems are properly initialized." alt="" coords="5,55,185,80"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="219,70,185,70,185,65,219,65"/>
+<area shape="rect" id="Node000010" href="$class_imu_manager.html#a1e8ab61f8992c5dc6427a24d4c6902f9" title="Ensure the IMU manager system is initialized." alt="" coords="756,55,976,80"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="1037,70,976,70,976,65,1037,65"/>
+<area shape="rect" id="Node000011" href="$class_vortex.html#a185e42ede3c9fec7dbe84b322806b74b" title="Initialize IMU management (step 7)" alt="" coords="525,55,678,80"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="742,70,678,70,678,65,742,65"/>
+<area shape="poly" id="edge11_Node000011_Node000007" title=" " alt="" coords="511,70,460,70,460,65,511,65"/>
+<area shape="poly" id="edge13_Node000012_Node000007" title=" " alt="" coords="763,116,641,108,508,95,419,83,420,77,508,90,641,102,763,110"/>
+</map>

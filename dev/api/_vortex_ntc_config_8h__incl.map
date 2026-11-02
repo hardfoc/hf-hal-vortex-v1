@@ -1,0 +1,11 @@
+<map id="VortexNtcConfig.h" name="VortexNtcConfig.h">
+<area shape="rect" id="Node000001" title="Board NTC thermistor wiring: which TMC9660 ADC input it is on and how the handler is set up." alt="" coords="139,5,278,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,101,76,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,33,90,81,68,95,65,91,87,76,182,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="101,101,167,126"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="202,32,154,92,150,88,197,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="191,79,375,148"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,29,250,66,246,70,216,32"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="399,93,610,133"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="246,28,433,87,431,92,244,33"/>
+</map>
