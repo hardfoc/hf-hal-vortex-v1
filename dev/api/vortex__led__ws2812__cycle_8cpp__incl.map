@@ -1,0 +1,42 @@
+<map id="vortex_led_ws2812_cycle.cpp" name="vortex_led_ws2812_cycle.cpp">
+<area shape="rect" id="Node000001" title="Continuous WS2812 exercise: colours, brightness, rainbow, breath, blink (infinite loop)." alt="" coords="859,5,1075,31"/>
+<area shape="rect" id="Node000002" href="$Vortex_8h.html" title="Unified API singleton for the HardFOC Vortex platform." alt="" coords="442,86,542,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="891,33,591,81,556,88,555,82,590,76,890,28"/>
+<area shape="rect" id="Node000010" href="$vortex__board__pins_8hpp.html" title="ESP32&#45;C6 GPIO numbers for Vortex V1 — must match hf_functional_pin_config_vortex_v1...." alt="" coords="603,79,773,119"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="927,33,769,78,767,72,925,28"/>
+<area shape="rect" id="Node000011" href="$LedManager_8h.html" title="LED management for the HardFOC Vortex V1 platform (single WS2812)." alt="" coords="797,86,979,111"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="957,33,911,78,908,74,953,29"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="1003,86,1087,111"/>
+<area shape="poly" id="edge20_Node000001_Node000016" title=" " alt="" coords="980,29,1026,74,1022,78,976,33"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="1111,86,1262,111"/>
+<area shape="poly" id="edge21_Node000001_Node000017" title=" " alt="" coords="1000,28,1142,79,1141,84,998,33"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="1287,86,1404,111"/>
+<area shape="poly" id="edge22_Node000001_Node000018" title=" " alt="" coords="1034,28,1275,76,1291,80,1290,85,1274,81,1033,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="245,189,301,214"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="451,114,385,136,315,169,296,182,293,178,312,164,383,131,449,109"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="533,189,600,214"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="503,110,552,176,548,179,498,113"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="725,189,792,214"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="543,107,625,129,671,145,715,164,736,178,733,182,712,169,669,150,623,134,542,113"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="5,189,72,214"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="442,103,370,108,279,118,181,138,132,152,85,169,63,182,60,178,83,164,130,147,179,133,278,113,369,102,441,98"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="624,189,701,214"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="515,109,613,164,636,179,633,183,611,169,513,114"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="326,189,509,214"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="486,113,436,179,432,176,481,110"/>
+<area shape="rect" id="Node000009" href="$VortexVersion_8h.html" title="Version information for the Vortex HAL and API." alt="" coords="97,189,221,214"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="442,113,345,136,234,169,195,185,193,180,232,164,344,131,441,108"/>
+<area shape="poly" id="edge10_Node000010_Node000005" title=" " alt="" coords="703,117,745,176,740,179,699,120"/>
+<area shape="poly" id="edge18_Node000011_Node000004" title=" " alt="" coords="830,114,709,140,653,155,613,169,591,183,588,178,611,164,651,150,708,135,828,109"/>
+<area shape="poly" id="edge17_Node000011_Node000005" title=" " alt="" coords="875,114,786,182,782,178,872,109"/>
+<area shape="poly" id="edge19_Node000011_Node000007" title=" " alt="" coords="852,114,787,137,715,169,691,183,688,179,712,164,785,132,850,109"/>
+<area shape="poly" id="edge14_Node000011_Node000008" title=" " alt="" coords="825,114,522,169,463,187,461,182,521,164,824,109"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="1397,174,1597,229"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="948,109,992,116,1103,130,1190,136,1276,145,1386,164,1403,168,1401,173,1385,169,1275,150,1189,142,1102,135,992,121,947,114"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="816,174,1037,229"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="895,111,914,160,909,162,890,112"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="1061,189,1165,214"/>
+<area shape="poly" id="edge15_Node000011_Node000014" title=" " alt="" coords="919,109,1050,164,1082,180,1079,185,1048,169,917,114"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="1189,167,1373,236"/>
+<area shape="poly" id="edge16_Node000011_Node000015" title=" " alt="" coords="944,109,1048,132,1177,164,1175,169,1047,137,943,114"/>
+</map>

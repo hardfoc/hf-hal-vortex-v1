@@ -1,0 +1,9 @@
+<map id="Vortex::GetInstance" name="Vortex::GetInstance">
+<area shape="rect" id="Node000001" title="Get the singleton instance of Vortex API." alt="" coords="353,31,504,56"/>
+<area shape="rect" id="Node000002" href="$Vortex_8h.html#a59b2c19baa5ddfac895df69e2791f610" title="Convenience accessor — equivalent to Vortex::GetInstance()." alt="" coords="179,5,266,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="339,35,266,26,266,21,340,30"/>
+<area shape="rect" id="Node000003" href="$vortex__api__test_8cpp.html#a1cf5761a09d135571a5b64c07c4fd94f" title=" " alt="" coords="140,55,305,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="340,56,306,60,305,55,339,51"/>
+<area shape="rect" id="Node000004" href="$vortex__api__test_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,55,92,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,70,92,70,92,65,126,65"/>
+</map>

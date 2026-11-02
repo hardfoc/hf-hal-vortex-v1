@@ -1,0 +1,11 @@
+<map id="colour_wheel_sweep" name="colour_wheel_sweep">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,55,163,80"/>
+<area shape="rect" id="Node000002" href="$classLedManager.html#a6af5cc51dbd544ee3e3c5f7c6ccb1368" title="Map a 0–255 wheel position to a rainbow RGB colour." alt="" coords="211,5,396,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,52,232,31,233,36,142,57"/>
+<area shape="rect" id="Node000003" href="$vortex__led__ws2812__cycle_8cpp.html#aa4e3eb8c4cffa20094d0005f70791792" title=" " alt="" coords="261,55,346,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="163,65,247,65,247,70,163,70"/>
+<area shape="rect" id="Node000004" href="$structLedColor.html#a6e26ad9fc73de952329f98eb17349abd" title="Unpack from a 24&#45;bit 0xRRGGBB integer." alt="" coords="231,104,376,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="142,77,233,98,232,104,141,83"/>
+<area shape="rect" id="Node000005" href="$structLedColor.html#affb23f6393ce5f38d2c922522ff6c317" title="Default&#45;construct black (0, 0, 0)." alt="" coords="444,104,588,129"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="376,114,430,114,430,119,376,119"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="delay_ms" name="delay_ms">
+<area shape="rect" id="Node000001" title=" " alt="" coords="343,5,428,31"/>
+<area shape="rect" id="Node000002" href="$vortex__led__ws2812__smoke_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,5,92,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="329,21,92,21,92,15,329,15"/>
+<area shape="rect" id="Node000003" href="$vortex__led__ws2812__smoke_8cpp.html#abf38eb1f81a7764f4227ec69b5261061" title=" " alt="" coords="140,31,295,56"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="329,29,296,34,295,29,329,24"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="126,32,92,27,93,22,127,27"/>
+</map>

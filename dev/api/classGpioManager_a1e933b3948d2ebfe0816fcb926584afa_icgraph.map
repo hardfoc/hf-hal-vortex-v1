@@ -1,0 +1,13 @@
+<map id="GpioManager::IsInitialized" name="GpioManager::IsInitialized">
+<area shape="rect" id="Node000001" title="Check whether the manager is initialised." alt="" coords="1193,5,1385,31"/>
+<area shape="rect" id="Node000002" href="$classImuManager.html#a3cd907c4f640e418916930e1c6b0777f" title="Initialize the IMU manager system." alt="" coords="977,5,1145,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1180,21,1146,21,1146,15,1180,15"/>
+<area shape="rect" id="Node000003" href="$classImuManager.html#a1e8ab61f8992c5dc6427a24d4c6902f9" title="Ensure the IMU manager system is initialized." alt="" coords="709,5,929,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="964,21,930,21,930,15,964,15"/>
+<area shape="rect" id="Node000004" href="$classVortex.html#a185e42ede3c9fec7dbe84b322806b74b" title="Initialize IMU management (step 7)" alt="" coords="508,5,661,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="696,21,662,21,662,15,696,15"/>
+<area shape="rect" id="Node000005" href="$classVortex.html#a01a9fd7a3f9c03e9c5e900aa71f052ee" title="Initialize all component handlers in proper order." alt="" coords="233,5,460,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="494,21,460,21,460,15,494,15"/>
+<area shape="rect" id="Node000006" href="$classVortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Ensure all Vortex systems are properly initialized." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="219,21,185,21,185,15,219,15"/>
+</map>

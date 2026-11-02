@@ -1,0 +1,48 @@
+<map id="gpio_stress_test.cpp" name="gpio_stress_test.cpp">
+<area shape="rect" id="Node000001" title="GPIO manager focused stress test for ESP32." alt="" coords="865,5,1020,31"/>
+<area shape="rect" id="Node000002" href="$Vortex_8h.html" title="Unified API singleton for the HardFOC Vortex platform." alt="" coords="893,79,993,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="945,31,945,65,940,65,940,31"/>
+<area shape="rect" id="Node000010" href="$GpioManager_8h.html" title="GPIO management for the HardFOC Vortex V1 platform." alt="" coords="552,79,741,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="896,33,708,78,707,73,894,28"/>
+<area shape="rect" id="Node000015" href="$TestFramework_8h.html" title="Shared testing framework for ESP32 comprehensive test suites." alt="" coords="1613,79,1747,104"/>
+<area shape="poly" id="edge18_Node000001_Node000015" title=" " alt="" coords="1020,24,1600,80,1600,85,1020,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="619,174,675,199"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="893,100,795,117,740,133,688,154,669,167,666,163,685,150,738,128,794,112,892,95"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="699,174,765,199"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="902,107,842,126,779,154,758,168,755,163,776,150,840,121,900,101"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="789,174,856,199"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="930,106,850,168,847,163,926,102"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="1029,174,1096,199"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="959,102,1039,163,1035,168,956,106"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="1328,174,1405,199"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="993,92,1059,96,1141,106,1229,123,1316,150,1343,164,1340,169,1314,154,1228,128,1140,111,1059,102,993,97"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="1121,174,1303,199"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="977,102,1167,167,1165,172,975,107"/>
+<area shape="rect" id="Node000009" href="$VortexVersion_8h.html" title="Version information for the Vortex HAL and API." alt="" coords="881,174,1005,199"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="945,104,945,160,940,160,940,104"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="649,104,649,160,644,160,644,104"/>
+<area shape="poly" id="edge11_Node000010_Node000004" title=" " alt="" coords="659,102,714,162,710,166,655,106"/>
+<area shape="poly" id="edge12_Node000010_Node000005" title=" " alt="" coords="678,102,726,122,779,150,799,163,796,168,776,154,724,127,676,107"/>
+<area shape="poly" id="edge13_Node000010_Node000007" title=" " alt="" coords="742,96,1073,120,1227,135,1316,149,1343,164,1341,168,1314,155,1227,140,1072,125,741,101"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="214,174,311,199"/>
+<area shape="poly" id="edge14_Node000010_Node000011" title=" " alt="" coords="552,105,442,123,382,137,325,154,293,169,291,165,323,150,381,132,441,118,551,99"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="336,174,467,199"/>
+<area shape="poly" id="edge15_Node000010_Node000012" title=" " alt="" coords="613,107,480,154,440,171,438,166,478,150,611,102"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="491,174,595,199"/>
+<area shape="poly" id="edge16_Node000010_Node000013" title=" " alt="" coords="636,106,567,167,564,163,632,102"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="5,152,189,221"/>
+<area shape="poly" id="edge17_Node000010_Node000014" title=" " alt="" coords="552,103,393,121,299,136,203,155,202,149,298,131,392,116,552,98"/>
+<area shape="poly" id="edge19_Node000015_Node000007" title=" " alt="" coords="1614,104,1519,122,1468,136,1418,154,1393,168,1391,164,1416,150,1466,131,1518,117,1613,98"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="1850,174,1934,199"/>
+<area shape="poly" id="edge20_Node000015_Node000016" title=" " alt="" coords="1718,102,1776,122,1840,150,1865,164,1863,169,1837,154,1774,127,1716,107"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="1959,174,2057,199"/>
+<area shape="poly" id="edge21_Node000015_Node000017" title=" " alt="" coords="1747,100,1843,119,1948,150,1979,165,1977,169,1946,154,1842,124,1746,105"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="2081,174,2185,199"/>
+<area shape="poly" id="edge22_Node000015_Node000018" title=" " alt="" coords="1747,94,1897,110,1984,126,2070,149,2104,165,2102,169,2068,155,1983,132,1896,115,1747,99"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="1430,174,1541,199"/>
+<area shape="poly" id="edge23_Node000015_Node000019" title=" " alt="" coords="1656,106,1553,154,1522,170,1519,165,1551,150,1654,102"/>
+<area shape="rect" id="Node000020" title=" " alt="" coords="1565,174,1654,199"/>
+<area shape="poly" id="edge24_Node000015_Node000020" title=" " alt="" coords="1673,106,1629,164,1624,161,1669,102"/>
+<area shape="rect" id="Node000021" title=" " alt="" coords="1678,174,1826,199"/>
+<area shape="poly" id="edge25_Node000015_Node000021" title=" " alt="" coords="1691,102,1737,161,1732,164,1687,106"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="vortex_motor_bench::clear_fault_flags" name="vortex_motor_bench::clear_fault_flags">
+<area shape="rect" id="Node000001" title="Clear latched fault/status flags using documented write&#45;1&#45;to&#45;clear semantics (ADI Rev 0 Parameter Mod..." alt="" coords="353,5,509,45"/>
+<area shape="rect" id="Node000002" href="$vortex__bldc__abn__as5047__dynamics_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,13,92,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="339,22,305,20,223,18,140,20,92,23,92,18,140,15,223,13,305,15,340,16"/>
+<area shape="rect" id="Node000003" href="$namespacevortex__motor__bench.html#ab5deae174ced40ec2b74eef7dc852e22" title="Disable UVW VGS&#45;short protection enables (NR 272–275) and set UVW VGS deglitch to 8 µs (NR 282)...." alt="" coords="140,30,305,85"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="340,42,306,47,305,42,340,37"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="126,42,92,36,93,31,127,37"/>
+</map>

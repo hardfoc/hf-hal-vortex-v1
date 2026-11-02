@@ -1,0 +1,7 @@
+<map id="GpioManager::RegisterTmc9660BridgePinsIfNeeded" name="GpioManager::RegisterTmc9660BridgePinsIfNeeded">
+<area shape="rect" id="Node000001" title="After MotorController::CreateOnboardDevice(), register TMC9660 GPIO17/18 in the table." alt="" coords="5,23,236,63"/>
+<area shape="rect" id="Node000002" href="$classMotorController.html#a2800ce6994196eaf98678cf543aaa1ca" title="Get the singleton instance." alt="" coords="284,5,495,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,30,270,27,270,32,237,35"/>
+<area shape="rect" id="Node000003" href="$classMotorController.html#a88881cf3614bf87b7bc72100ca57ba3a" title="Get access to Tmc9660Handler by device index." alt="" coords="299,55,480,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,51,286,55,285,61,236,56"/>
+</map>

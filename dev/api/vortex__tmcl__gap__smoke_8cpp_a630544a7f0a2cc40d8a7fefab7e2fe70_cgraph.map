@@ -1,0 +1,9 @@
+<map id="app_main" name="app_main">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,92,70"/>
+<area shape="rect" id="Node000002" href="$namespacevortex__motor__bench__probe.html#a74e9b11b6496483d29eb6a4bdd087f61" title="Read the full 16&#45;bit PCAL95555 input port snapshot and log the electrical level of each TMC9660&#45;contr..." alt="" coords="140,5,363,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,48,126,42,127,48,93,53"/>
+<area shape="rect" id="Node000004" href="$classVortex.html#adee8bbb62757eec664241a992dbfd29e" title="Select onboard TMC9660 transport before the first EnsureInitialized()." alt="" coords="147,69,355,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="93,61,134,68,133,73,92,67"/>
+<area shape="rect" id="Node000003" href="$classGpioManager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="411,13,605,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="363,23,397,23,397,28,363,28"/>
+</map>

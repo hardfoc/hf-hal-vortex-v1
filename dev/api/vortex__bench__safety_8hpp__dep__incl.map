@@ -1,0 +1,50 @@
+<map id="vortex_bench_safety.hpp" name="vortex_bench_safety.hpp">
+<area shape="rect" id="Node000001" title="Single source of truth for Vortex V1 BLDC bench parameters." alt="" coords="674,5,858,31"/>
+<area shape="rect" id="Node000002" href="$vortex__bldc__abn__as5047__dynamics_8cpp.html" title="Closed&#45;loop ABN&#45;FOC velocity test with dual rotor&#45;position feedback paths exposed to the host:" alt="" coords="1451,255,1633,295"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="872,23,1131,41,1448,71,1598,90,1727,112,1823,137,1855,150,1875,165,1884,187,1874,209,1789,229,1634,259,1633,254,1787,224,1871,205,1879,187,1871,168,1853,155,1821,142,1726,117,1597,95,1447,76,1130,46,871,28"/>
+<area shape="rect" id="Node000003" href="$vortex__bldc__dynamics_8cpp.html" title="Closed&#45;loop hall&#45;FOC dynamics test for a robot&#45;dog&#45;class BLDC actuator. Same multi&#45;phase trajectory a..." alt="" coords="579,262,774,287"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="660,23,487,27,291,36,123,54,66,66,47,73,36,81,15,111,8,143,15,174,36,205,62,218,111,230,256,248,427,261,579,268,579,273,427,266,256,254,110,235,60,223,32,209,10,176,3,143,10,109,32,77,45,68,64,61,122,48,290,31,487,21,660,17"/>
+<area shape="rect" id="Node000004" href="$vortex__bldc__open__loop_8cpp.html" title="Open&#45;loop BLDC spin on the onboard SPI TMCL path (PCAL mux enables SPI_COMM_EN — see Vortex::SetOnboa..." alt="" coords="799,262,997,287"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="660,24,499,28,319,38,166,55,114,67,87,81,66,112,58,143,65,174,87,205,102,214,128,222,206,234,310,242,426,246,651,249,786,252,837,259,836,265,786,257,651,254,426,251,310,247,206,240,126,227,99,219,83,209,61,176,53,143,61,109,83,77,112,62,165,50,318,33,499,23,660,18"/>
+<area shape="rect" id="Node000005" href="$vortex__bldc__open__loop__uart_8cpp.html" title="Confirmed&#45;working open&#45;loop current&#45;mode BLDC bring&#45;up over the TMC9660 UART transport...." alt="" coords="1021,255,1193,295"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="661,21,463,27,355,37,254,53,171,77,140,92,117,109,103,129,100,151,109,176,131,205,150,216,182,226,281,240,411,247,558,250,840,250,1009,252,1021,254,1021,259,1009,257,840,255,558,256,411,253,281,245,181,231,148,221,127,209,104,178,95,151,98,127,113,105,137,87,169,72,253,48,354,32,463,22,660,16"/>
+<area shape="rect" id="Node000006" href="$vortex__bldc__position__foc__as5047_8cpp.html" title="Position loop on ABN&#45;style feedback — AS5047U angle via EncoderManager; TMC uses ABN CPR." alt="" coords="141,167,298,207"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="710,37,551,81,276,169,274,164,549,76,709,32"/>
+<area shape="rect" id="Node000007" href="$vortex__bldc__probe_8cpp.html" title="Comprehensive read/write probe for the Vortex V1 + TMC9660 BLDC stack." alt="" coords="1657,262,1827,287"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="872,20,1275,40,1484,56,1636,76,1717,86,1784,92,1814,99,1843,112,1871,133,1898,165,1905,183,1903,200,1893,215,1877,228,1835,249,1789,264,1788,259,1833,244,1874,223,1889,211,1898,198,1900,184,1893,168,1867,137,1840,117,1813,104,1783,97,1716,91,1635,81,1483,62,1274,46,872,26"/>
+<area shape="rect" id="Node000008" href="$vortex__bldc__telemetry__sweep_8cpp.html" title="No&#45;motion telemetry / configuration smoke test for the TMC9660 power stage." alt="" coords="323,167,492,207"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="730,39,449,169,447,164,728,34"/>
+<area shape="rect" id="Node000009" href="$vortex__bldc__torque__foc__hall_8cpp.html" title="Hall&#45;FOC torque&#45;mode bench — direct Iq command (no velocity loop)." alt="" coords="517,167,663,207"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="746,42,612,168,608,165,742,38"/>
+<area shape="rect" id="Node000010" href="$vortex__bldc__velocity__foc__abn_8cpp.html" title="ABN&#45;FOC velocity loop bench — full bring&#45;up + velocity profile." alt="" coords="687,167,845,207"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="769,44,769,166,763,166,763,44"/>
+<area shape="rect" id="Node000011" href="$vortex__bldc__velocity__foc__hall_8cpp.html" title="Hall&#45;FOC velocity loop bench — full bring&#45;up + velocity profile." alt="" coords="1493,167,1650,207"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="867,30,1000,50,1145,76,1342,121,1505,164,1504,169,1341,126,1144,81,999,55,866,35"/>
+<area shape="rect" id="Node000012" href="$vortex__motor__bench__common_8hpp.html" title="Shared TMC9660 BLDC bring&#45;up helpers for Vortex parameter&#45;mode bench apps." alt="" coords="915,79,1071,119"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="813,33,939,76,937,81,811,38"/>
+<area shape="rect" id="Node000013" href="$vortex__motor__bench__probe_8hpp.html" title="Read&#45;only probes for the Vortex BLDC bench: PCAL95555 control&#45;line snapshot, TMC9660 parameter dump,..." alt="" coords="1211,167,1367,207"/>
+<area shape="poly" id="edge31_Node000001_Node000013" title=" " alt="" coords="872,29,975,47,1083,76,1133,96,1182,120,1261,164,1258,169,1180,125,1131,101,1081,81,974,52,871,34"/>
+<area shape="rect" id="Node000016" href="$vortex__tmcl__param__scan__post__config_8cpp.html" title="Post&#45;config TMCL read probe — same sweep as vortex_tmcl_param_scan but runs AFTER configure_complete_..." alt="" coords="1674,167,1861,207"/>
+<area shape="poly" id="edge32_Node000001_Node000016" title=" " alt="" coords="872,27,1048,48,1247,76,1487,121,1687,164,1686,169,1486,126,1246,81,1047,53,872,33"/>
+<area shape="poly" id="edge12_Node000012_Node000002" title=" " alt="" coords="1085,102,1151,109,1226,121,1304,139,1379,164,1410,182,1438,204,1513,252,1511,257,1435,209,1407,187,1377,169,1302,144,1225,126,1150,115,1084,108"/>
+<area shape="poly" id="edge13_Node000012_Node000003" title=" " alt="" coords="965,130,916,170,858,209,786,242,719,264,718,259,784,237,855,204,913,166,961,126"/>
+<area shape="poly" id="edge14_Node000012_Node000004" title=" " alt="" coords="978,132,907,263,902,260,973,130"/>
+<area shape="poly" id="edge15_Node000012_Node000005" title=" " alt="" coords="1085,117,1121,136,1150,165,1157,189,1152,214,1141,237,1127,256,1122,253,1136,234,1147,212,1151,189,1145,168,1118,140,1082,122"/>
+<area shape="poly" id="edge16_Node000012_Node000006" title=" " alt="" coords="901,109,635,130,473,148,311,169,299,171,298,166,310,164,472,142,635,125,901,103"/>
+<area shape="poly" id="edge17_Node000012_Node000007" title=" " alt="" coords="1085,99,1160,104,1248,116,1339,135,1427,164,1444,174,1455,184,1466,195,1482,204,1520,218,1574,233,1688,259,1687,265,1573,238,1518,223,1480,209,1463,199,1452,188,1441,178,1425,169,1338,140,1247,121,1160,110,1084,104"/>
+<area shape="poly" id="edge18_Node000012_Node000008" title=" " alt="" coords="901,114,718,138,505,169,493,171,492,166,504,164,717,132,901,108"/>
+<area shape="poly" id="edge19_Node000012_Node000009" title=" " alt="" coords="902,122,676,169,664,172,663,167,675,164,901,116"/>
+<area shape="poly" id="edge20_Node000012_Node000010" title=" " alt="" coords="931,126,817,169,815,164,929,121"/>
+<area shape="poly" id="edge21_Node000012_Node000011" title=" " alt="" coords="1085,109,1265,133,1475,164,1493,167,1492,172,1474,169,1264,138,1084,114"/>
+<area shape="poly" id="edge22_Node000012_Node000013" title=" " alt="" coords="1072,120,1225,164,1223,169,1070,125"/>
+<area shape="rect" id="Node000015" href="$vortex__motor__comms__smoke_8cpp.html" title="TMC9660 comms smoke: PCAL95555 control&#45;line readback, bootloader bring&#45;up, telemetry (no motion)." alt="" coords="970,167,1135,207"/>
+<area shape="poly" id="edge29_Node000012_Node000015" title=" " alt="" coords="1016,128,1042,165,1037,168,1012,131"/>
+<area shape="poly" id="edge30_Node000012_Node000016" title=" " alt="" coords="1085,104,1345,127,1662,164,1674,166,1674,171,1662,169,1344,133,1084,110"/>
+<area shape="poly" id="edge23_Node000013_Node000002" title=" " alt="" coords="1358,209,1487,252,1486,257,1356,214"/>
+<area shape="poly" id="edge24_Node000013_Node000003" title=" " alt="" coords="1198,203,786,257,741,265,740,259,786,252,1197,197"/>
+<area shape="poly" id="edge25_Node000013_Node000004" title=" " alt="" coords="1198,211,951,264,950,259,1197,205"/>
+<area shape="poly" id="edge26_Node000013_Node000005" title=" " alt="" coords="1238,215,1148,257,1146,252,1236,210"/>
+<area shape="poly" id="edge27_Node000013_Node000007" title=" " alt="" coords="1380,202,1647,252,1684,259,1683,265,1646,257,1380,207"/>
+<area shape="rect" id="Node000014" href="$vortex__tmcl__gap__smoke_8cpp.html" title="Minimal TMCL&#45;over&#45;UART check: init onboard TMC9660 on UART, one GAP read (type 0, motor 0)." alt="" coords="1218,262,1426,287"/>
+<area shape="poly" id="edge28_Node000013_Node000014" title=" " alt="" coords="1304,219,1320,261,1315,263,1299,221"/>
+</map>

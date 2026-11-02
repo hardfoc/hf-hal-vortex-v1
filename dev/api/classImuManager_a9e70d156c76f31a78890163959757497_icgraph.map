@@ -1,0 +1,7 @@
+<map id="ImuManager::GetInterruptCount" name="ImuManager::GetInterruptCount">
+<area shape="rect" id="Node000001" title="Get interrupt statistics for monitoring for specific device." alt="" coords="532,5,723,45"/>
+<area shape="rect" id="Node000002" href="$classImuManager.html#ad68d285c7aa6d1bf4fe96c6f81aedf83" title="Dump comprehensive system statistics to log as INFO level. Logs all device statistics,..." alt="" coords="273,13,484,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="518,28,484,28,484,23,518,23"/>
+<area shape="rect" id="Node000003" href="$classVortex.html#a9fb28193f53346c0dc37694426a0759a" title="Dump comprehensive system statistics." alt="" coords="5,13,225,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="260,28,225,28,225,23,260,23"/>
+</map>

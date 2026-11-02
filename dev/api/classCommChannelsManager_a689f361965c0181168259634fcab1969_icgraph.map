@@ -1,0 +1,5 @@
+<map id="CommChannelsManager::GetCanBus" name="CommChannelsManager::GetCanBus">
+<area shape="rect" id="Node000001" title="Get the TWAI/CAN bus." alt="" coords="236,5,419,45"/>
+<area shape="rect" id="Node000002" href="$classCommChannelsManager.html#a2831f02da7c9ba1e8b39782c5970ed1f" title="TWAI bus used for CANopen / hf&#45;utils&#45;canopen framing (HfUtilsCanOpenTransport)." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,28,188,28,188,23,223,23"/>
+</map>

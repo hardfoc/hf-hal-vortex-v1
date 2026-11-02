@@ -1,0 +1,50 @@
+<map id="app_main" name="app_main">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,769,92,794"/>
+<area shape="rect" id="Node000002" href="$namespacevortex__motor__bench.html#a700712be75474d5ea0cb00f0ab1c2920" title="Clear latched fault/status flags using documented write&#45;1&#45;to&#45;clear semantics (ADI Rev 0 Parameter Mod..." alt="" coords="411,5,567,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="54,767,167,543,249,370,329,188,341,150,345,117,354,87,378,55,397,42,400,46,382,59,359,89,351,118,346,151,335,190,254,372,172,546,59,770"/>
+<area shape="rect" id="Node000003" href="$namespacevortex__motor__bench.html#a0dbe7364944af1e5cae11f384abb49de" title="Configure the gate driver, current sensing, motor parameters, FOC PI gains, protections,..." alt="" coords="140,629,332,669"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="66,766,194,675,197,679,70,771"/>
+<area shape="rect" id="Node000017" href="$namespacevortex__motor__bench.html#a8153371952c83034e570c4a262e3b096" title=" " alt="" coords="411,1029,567,1069"/>
+<area shape="poly" id="edge22_Node000001_Node000017" title=" " alt="" coords="92,770,146,764,210,764,244,769,276,778,306,792,334,811,354,836,363,861,364,887,361,913,358,939,358,965,365,991,382,1015,400,1030,397,1034,378,1019,360,993,353,966,352,939,355,913,358,887,357,862,349,838,330,815,304,797,274,783,243,775,210,770,146,769,93,775"/>
+<area shape="rect" id="Node000018" href="$namespacevortex__motor__bench.html#ae53bb08465d1e57a49bddb7a353a6e8e" title=" " alt="" coords="411,1093,567,1133"/>
+<area shape="poly" id="edge23_Node000001_Node000018" title=" " alt="" coords="84,792,141,811,170,817,197,819,245,818,267,820,289,825,311,836,334,856,354,884,363,912,363,941,360,969,356,997,356,1025,363,1052,382,1080,401,1094,397,1098,378,1083,359,1054,351,1025,351,997,354,968,358,940,357,913,349,886,330,859,308,841,287,830,266,825,244,824,197,824,169,822,139,816,82,797"/>
+<area shape="rect" id="Node000020" href="$namespacevortex__motor__bench.html#aae8eca14b3cab38e4c3b38e66b54e936" title=" " alt="" coords="158,869,314,909"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="66,792,99,820,141,848,167,861,164,866,139,853,96,824,63,796"/>
+<area shape="rect" id="Node000021" href="$namespacevortex__motor__bench.html#ab5deae174ced40ec2b74eef7dc852e22" title="Disable UVW VGS&#45;short protection enables (NR 272–275) and set UVW VGS deglitch to 8 µs (NR 282)...." alt="" coords="153,123,319,178"/>
+<area shape="poly" id="edge20_Node000001_Node000021" title=" " alt="" coords="48,768,56,699,72,588,98,456,116,388,138,322,170,250,206,188,211,191,175,252,142,324,121,389,103,457,77,589,61,700,54,769"/>
+<area shape="rect" id="Node000022" href="$namespacevortex__motor__bench.html#ae54a1795fd27eeed12cdf479c8242f86" title=" " alt="" coords="158,1083,314,1123"/>
+<area shape="poly" id="edge24_Node000001_Node000022" title=" " alt="" coords="60,793,219,1069,214,1072,55,796"/>
+<area shape="rect" id="Node000004" href="$namespacevortex__motor__bench.html#af60c1221a40339c460376d870229c14c" title=" " alt="" coords="411,886,567,941"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="259,668,296,709,334,761,348,793,355,821,362,846,382,871,401,885,397,890,378,875,358,848,349,822,343,795,330,764,292,713,255,671"/>
+<area shape="rect" id="Node000005" href="$namespacevortex__motor__bench.html#a79227a7fc4ee9a1d213095ff1f48dfc7" title=" " alt="" coords="392,965,587,1005"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="261,668,299,709,334,761,346,790,350,816,351,863,352,885,355,906,365,928,382,950,387,955,383,959,378,954,360,930,350,908,346,885,346,863,345,816,340,791,330,764,294,712,257,671"/>
+<area shape="rect" id="Node000006" href="$namespacevortex__motor__bench.html#aa8a733c3d3b63c1ca55c96abcde3d79c" title=" " alt="" coords="411,70,567,125"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="242,628,282,515,329,359,336,325,339,295,338,241,340,215,346,190,358,164,378,136,398,119,401,123,382,139,362,166,351,192,345,216,344,241,344,295,342,326,335,361,287,516,247,630"/>
+<area shape="rect" id="Node000007" href="$namespacevortex__motor__bench.html#af8db7ccb292492a438016e0ab661708c" title="Configure the TMC9660 power&#45;stage / gate&#45;driver protection block." alt="" coords="404,149,575,189"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="242,628,329,359,339,312,342,273,351,237,362,219,378,199,390,190,394,194,382,203,366,222,356,239,347,274,344,313,335,361,247,630"/>
+<area shape="rect" id="Node000008" href="$namespacevortex__motor__bench.html#a98da12de4dd2a8d703a4c67b379f7c45" title=" " alt="" coords="409,214,569,269"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="240,628,262,552,296,448,337,347,357,307,378,279,395,266,398,270,382,283,362,310,341,349,301,450,267,553,245,630"/>
+<area shape="rect" id="Node000009" href="$namespacevortex__motor__bench.html#a717f2073a56bfbf2327d73cd10f1642d" title=" " alt="" coords="411,293,567,333"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="238,629,252,572,278,496,296,454,319,414,346,376,378,343,397,331,400,335,382,347,350,380,323,417,301,457,283,497,257,574,243,630"/>
+<area shape="rect" id="Node000010" href="$namespacevortex__motor__bench.html#ab24f4931ef65fe33c143630518e4d411" title=" " alt="" coords="391,357,588,397"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="241,628,258,583,286,523,326,461,351,432,378,407,386,402,389,406,382,411,355,436,331,464,291,526,263,585,246,630"/>
+<area shape="rect" id="Node000011" href="$namespacevortex__motor__bench.html#a7f95829211c31ec55904369c28395e74" title=" " alt="" coords="408,421,571,461"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="246,628,266,594,296,551,334,508,378,471,394,462,396,467,382,476,338,512,301,555,271,597,250,631"/>
+<area shape="rect" id="Node000012" href="$namespacevortex__motor__bench.html#a1c15fd8c7a5c414848ddd3c1b9cdcb75" title=" " alt="" coords="380,485,599,525"/>
+<area shape="poly" id="edge11_Node000003_Node000012" title=" " alt="" coords="256,627,309,581,343,556,379,535,394,528,396,533,381,540,346,561,312,585,260,631"/>
+<area shape="rect" id="Node000013" href="$namespacevortex__motor__bench.html#ab3ae39bca43ad61a8625571a89a4b771" title=" " alt="" coords="401,550,577,605"/>
+<area shape="poly" id="edge12_Node000003_Node000013" title=" " alt="" coords="306,627,387,603,389,609,308,632"/>
+<area shape="rect" id="Node000014" href="$namespacevortex__motor__bench.html#a90482ec3cf6801007d5b920a2aa1d408" title=" " alt="" coords="387,629,592,669"/>
+<area shape="poly" id="edge13_Node000003_Node000014" title=" " alt="" coords="332,647,373,647,373,652,332,652"/>
+<area shape="rect" id="Node000015" href="$namespacevortex__motor__bench.html#a959363c3740b5165928f09bdd3ff5b0f" title=" " alt="" coords="397,693,581,733"/>
+<area shape="poly" id="edge14_Node000003_Node000015" title=" " alt="" coords="317,667,397,687,396,693,315,672"/>
+<area shape="rect" id="Node000016" href="$namespacevortex__motor__bench.html#a0121ec7e3165d05133b09786126330ed" title=" " alt="" coords="411,757,567,797"/>
+<area shape="poly" id="edge15_Node000003_Node000016" title=" " alt="" coords="264,667,316,705,381,743,399,751,397,755,379,748,313,710,261,672"/>
+<area shape="poly" id="edge16_Node000003_Node000017" title=" " alt="" coords="262,668,300,708,319,734,334,762,348,799,352,834,348,897,347,927,349,956,360,985,382,1015,400,1030,397,1034,378,1019,355,987,344,957,341,927,343,897,347,834,342,801,330,764,314,737,296,712,258,671"/>
+<area shape="poly" id="edge17_Node000003_Node000018" title=" " alt="" coords="254,668,295,730,316,770,335,812,345,853,348,890,344,956,343,987,347,1017,359,1047,382,1079,400,1094,397,1098,378,1083,354,1050,342,1018,338,987,339,956,343,890,340,854,329,814,312,773,290,733,250,671"/>
+<area shape="rect" id="Node000019" href="$namespacevortex__motor__bench.html#ad4d6457e821cb3f4e1b7ed6d8961ff1b" title=" " alt="" coords="411,821,567,861"/>
+<area shape="poly" id="edge18_Node000003_Node000019" title=" " alt="" coords="256,668,326,749,382,807,400,817,397,822,378,811,322,753,252,671"/>
+<area shape="poly" id="edge21_Node000021_Node000002" title=" " alt="" coords="272,121,321,87,379,55,397,47,399,52,381,60,324,91,275,125"/>
+<area shape="rect" id="Node000023" href="$namespacevortex__motor__bench.html#adec79d8eb771c3fd12486c67d6786b40" title=" " alt="" coords="411,1157,567,1197"/>
+<area shape="poly" id="edge25_Node000022_Node000023" title=" " alt="" coords="305,1120,381,1143,408,1151,406,1156,379,1148,303,1125"/>
+</map>

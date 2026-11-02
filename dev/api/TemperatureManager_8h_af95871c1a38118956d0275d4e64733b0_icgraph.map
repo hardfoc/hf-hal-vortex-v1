@@ -1,0 +1,7 @@
+<map id="VortexTempSensorTypeToString" name="VortexTempSensorTypeToString">
+<area shape="rect" id="Node000001" title="Convert VortexTempSensorType to a human&#45;readable string." alt="" coords="483,13,708,38"/>
+<area shape="rect" id="Node000002" href="$classTemperatureManager.html#aa2cd5fe3024a7f387106edb5678ba68f" title="Log temperature sensor statistics and health info to the console." alt="" coords="273,5,435,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="469,28,435,28,435,23,469,23"/>
+<area shape="rect" id="Node000003" href="$classVortex.html#a9fb28193f53346c0dc37694426a0759a" title="Dump comprehensive system statistics." alt="" coords="5,13,225,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="259,28,225,28,225,23,259,23"/>
+</map>

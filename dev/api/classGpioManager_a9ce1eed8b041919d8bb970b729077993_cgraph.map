@@ -1,0 +1,5 @@
+<map id="GpioManager::EnsurePcal95555Handler" name="GpioManager::EnsurePcal95555Handler">
+<area shape="rect" id="Node000001" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="5,5,233,45"/>
+<area shape="rect" id="Node000002" href="$classCommChannelsManager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="281,5,464,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,23,268,23,268,28,234,28"/>
+</map>

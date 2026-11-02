@@ -1,0 +1,15 @@
+<map id="EncoderManager.h" name="EncoderManager.h">
+<area shape="rect" id="Node000001" title="Encoder device management for the HardFOC Vortex V1 platform." alt="" coords="403,5,546,31"/>
+<area shape="rect" id="Node000002" href="$EncoderManager_8cpp.html" title=" " alt="" coords="5,86,163,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="404,36,175,81,140,89,139,83,174,76,403,31"/>
+<area shape="rect" id="Node000003" href="$Vortex_8cpp.html" title="Implementation of the unified Vortex API singleton." alt="" coords="187,86,277,111"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="427,37,290,81,268,88,266,83,289,76,425,32"/>
+<area shape="rect" id="Node000004" href="$encoder__imu__test_8cpp.html" title="Encoder &amp; IMU manager focused test for ESP32." alt="" coords="301,86,467,111"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="453,42,399,88,396,84,449,38"/>
+<area shape="rect" id="Node000005" href="$vortex__api__test_8cpp.html" title="Primary hardware integration test for the Vortex HAL on ESP32 (noexcept)" alt="" coords="491,86,642,111"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="500,38,555,84,551,88,497,42"/>
+<area shape="rect" id="Node000006" href="$vortex__bldc__abn__as5047__dynamics_8cpp.html" title="Closed&#45;loop ABN&#45;FOC velocity test with dual rotor&#45;position feedback paths exposed to the host:" alt="" coords="666,79,849,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="529,32,690,76,689,81,528,37"/>
+<area shape="rect" id="Node000007" href="$vortex__bldc__position__foc__as5047_8cpp.html" title="Position loop on ABN&#45;style feedback — AS5047U angle via EncoderManager; TMC uses ABN CPR." alt="" coords="873,79,1031,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="560,28,862,76,873,78,872,83,861,81,559,34"/>
+</map>

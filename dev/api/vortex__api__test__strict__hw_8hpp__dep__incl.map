@@ -1,0 +1,5 @@
+<map id="vortex_api_test_strict_hw.hpp" name="vortex_api_test_strict_hw.hpp">
+<area shape="rect" id="Node000001" title="Build&#45;time gates for strict hardware assertions in vortex_api_test." alt="" coords="5,5,168,45"/>
+<area shape="rect" id="Node000002" href="$vortex__api__test_8cpp.html" title="Primary hardware integration test for the Vortex HAL on ESP32 (noexcept)" alt="" coords="11,93,162,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="89,59,89,93,84,93,84,59"/>
+</map>

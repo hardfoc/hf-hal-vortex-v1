@@ -1,0 +1,9 @@
+<map id="vortex_motor_diagnostics::DiagnosticReport::add" name="vortex_motor_diagnostics::DiagnosticReport::add">
+<area shape="rect" id="Node000001" title=" " alt="" coords="617,5,808,45"/>
+<area shape="rect" id="Node000002" href="$namespacevortex__motor__diagnostics.html#a77feee705a3722de3a25a09569b134bc" title="Compare the snapshot against exp and produce a DiagnosticReport. Pure function (no I/O)." alt="" coords="379,5,569,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="603,28,569,28,569,23,603,23"/>
+<area shape="rect" id="Node000003" href="$namespacevortex__motor__diagnostics.html#aede7145f03c4ddfc3a1b9de34bcb2ed9" title="Take a snapshot via the vendor Diagnostics subsystem, run check against exp, and pretty&#45;print everyth..." alt="" coords="140,5,331,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="365,28,331,28,331,23,365,23"/>
+<area shape="rect" id="Node000004" href="$vortex__bldc__abn__as5047__dynamics_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,13,92,38"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="126,28,92,28,92,23,126,23"/>
+</map>

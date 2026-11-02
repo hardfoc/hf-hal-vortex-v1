@@ -1,0 +1,5 @@
+<map id="MotorSystemDiagnostics" name="MotorSystemDiagnostics">
+<area shape="rect" id="Node000001" title="System&#45;level diagnostics snapshot for motor controller health monitoring." alt="" coords="5,108,191,133"/>
+<area shape="rect" id="Node000002" href="$structMotorSystemDiagnostics_1_1DeviceSnapshot.html" title="Per&#45;device snapshot (indexed 0..MAX_TMC9660_DEVICES&#45;1)" alt="" coords="5,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,59,101,108,95,108,95,59"/>
+</map>

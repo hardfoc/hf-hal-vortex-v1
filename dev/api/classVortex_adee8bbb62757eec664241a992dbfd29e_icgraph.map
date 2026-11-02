@@ -1,0 +1,5 @@
+<map id="Vortex::SetOnboardTmc9660Transport" name="Vortex::SetOnboardTmc9660Transport">
+<area shape="rect" id="Node000001" title="Select onboard TMC9660 transport before the first EnsureInitialized()." alt="" coords="140,5,348,45"/>
+<area shape="rect" id="Node000002" href="$motor__controller__test_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,13,92,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,28,92,28,92,23,126,23"/>
+</map>

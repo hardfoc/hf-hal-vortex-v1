@@ -1,0 +1,5 @@
+<map id="MotorController::setMotorMechanics" name="MotorController::setMotorMechanics">
+<area shape="rect" id="Node000001" title="Set the mechanical mapping (gearbox + direction) for a device." alt="" coords="5,13,196,53"/>
+<area shape="rect" id="Node000002" href="$namespaceanonymous__namespace_02MotorController_8cpp_03.html#af4e0e853b90f60adfd4bfd0308bb1ae3" title=" " alt="" coords="244,5,424,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,30,230,30,230,35,196,35"/>
+</map>

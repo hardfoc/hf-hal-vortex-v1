@@ -1,0 +1,5 @@
+<map id="vortex_motor_bench_probe::dump_pcal95555_lines" name="vortex_motor_bench_probe::dump_pcal95555_lines">
+<area shape="rect" id="Node000001" title="Read the full 16&#45;bit PCAL95555 input port snapshot and log the electrical level of each TMC9660&#45;contr..." alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000002" href="$classGpioManager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="276,13,471,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,23,262,23,262,28,228,28"/>
+</map>

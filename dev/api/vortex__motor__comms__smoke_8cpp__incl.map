@@ -1,0 +1,72 @@
+<map id="vortex_motor_comms_smoke.cpp" name="vortex_motor_comms_smoke.cpp">
+<area shape="rect" id="Node000001" title="TMC9660 comms smoke: PCAL95555 control&#45;line readback, bootloader bring&#45;up, telemetry (no motion)." alt="" coords="1335,5,1501,45"/>
+<area shape="rect" id="Node000002" href="$Vortex_8h.html" title="Unified API singleton for the HardFOC Vortex platform." alt="" coords="1212,196,1312,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1404,47,1283,187,1279,184,1400,44"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="1513,306,1643,331"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1501,34,1629,54,1774,84,1843,104,1904,126,1953,151,1984,180,2044,262,2045,270,2038,273,2010,268,1959,259,1884,253,1783,260,1724,270,1657,287,1614,303,1612,298,1656,281,1723,265,1783,255,1884,248,1960,253,2011,262,2038,267,2040,267,2039,264,1980,183,1949,156,1902,131,1842,109,1773,90,1628,59,1501,39"/>
+<area shape="rect" id="Node000011" href="$GpioManager_8h.html" title="GPIO management for the HardFOC Vortex V1 platform." alt="" coords="998,196,1187,221"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1385,48,1126,192,1124,187,1383,43"/>
+<area shape="rect" id="Node000015" href="$MotorController_8h.html" title="Singleton class for managing multiple TMC9660 motor controllers and their interfaces." alt="" coords="720,101,924,126"/>
+<area shape="poly" id="edge19_Node000001_Node000015" title=" " alt="" coords="1336,41,915,101,914,96,1335,36"/>
+<area shape="rect" id="Node000023" href="$vortex__motor__bench__common_8hpp.html" title="Shared TMC9660 BLDC bring&#45;up helpers for Vortex parameter&#45;mode bench apps." alt="" coords="1471,93,1627,133"/>
+<area shape="poly" id="edge36_Node000001_Node000023" title=" " alt="" coords="1448,43,1510,84,1507,88,1446,48"/>
+<area shape="rect" id="Node000026" title=" " alt="" coords="1885,196,1969,221"/>
+<area shape="poly" id="edge43_Node000001_Node000026" title=" " alt="" coords="1485,43,1640,91,1758,132,1874,179,1893,187,1891,192,1872,184,1756,137,1639,96,1483,48"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="921,306,977,331"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1238,224,1200,239,1140,252,1092,258,1046,265,990,286,971,299,968,295,987,282,1044,260,1092,252,1139,247,1199,233,1236,219"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="729,306,795,331"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="1240,224,1200,239,1141,251,1090,256,1001,255,958,255,914,258,865,268,808,286,786,300,783,295,806,282,863,263,913,253,958,249,1001,250,1089,251,1140,246,1199,233,1238,219"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="1331,306,1398,331"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="1275,220,1346,294,1342,298,1271,223"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="1422,306,1489,331"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="1290,219,1346,246,1411,282,1432,296,1429,300,1409,286,1344,251,1287,224"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="819,306,897,331"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="1239,224,1200,239,1156,249,1118,255,1053,258,988,264,952,272,910,286,884,300,882,296,908,282,950,267,987,259,1052,253,1118,249,1155,244,1199,233,1237,219"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="1668,306,1851,331"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="1309,219,1376,233,1516,255,1578,265,1656,281,1716,299,1714,304,1655,287,1577,270,1515,261,1375,239,1308,224"/>
+<area shape="rect" id="Node000009" href="$VortexVersion_8h.html" title="Version information for the Vortex HAL and API." alt="" coords="1875,306,1999,331"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="1306,219,1376,233,1450,243,1513,248,1621,249,1729,255,1791,265,1864,281,1905,297,1903,302,1863,287,1790,270,1728,260,1621,255,1513,253,1449,248,1375,239,1305,224"/>
+<area shape="poly" id="edge11_Node000011_Node000003" title=" " alt="" coords="1077,224,990,286,974,299,970,295,987,282,1074,219"/>
+<area shape="poly" id="edge12_Node000011_Node000004" title=" " alt="" coords="1018,224,917,247,861,265,809,286,787,300,784,295,806,282,860,260,915,242,1017,219"/>
+<area shape="poly" id="edge13_Node000011_Node000005" title=" " alt="" coords="1142,219,1226,244,1319,282,1342,296,1339,300,1317,286,1225,249,1141,224"/>
+<area shape="poly" id="edge14_Node000011_Node000007" title=" " alt="" coords="1059,224,989,250,910,286,886,301,883,296,907,282,987,245,1058,219"/>
+<area shape="poly" id="edge16_Node000011_Node000010" title=" " alt="" coords="1137,219,1200,233,1285,247,1351,253,1418,262,1501,281,1544,298,1542,303,1500,287,1417,267,1351,259,1284,252,1199,239,1135,224"/>
+<area shape="rect" id="Node000012" title=" " alt="" coords="1209,306,1307,331"/>
+<area shape="poly" id="edge15_Node000011_Node000012" title=" " alt="" coords="1112,219,1230,296,1227,301,1109,224"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="301,306,405,331"/>
+<area shape="poly" id="edge17_Node000011_Node000013" title=" " alt="" coords="998,222,650,258,417,287,383,301,381,297,416,281,650,253,997,217"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="1001,284,1185,353"/>
+<area shape="poly" id="edge18_Node000011_Node000014" title=" " alt="" coords="1095,221,1095,270,1090,270,1090,221"/>
+<area shape="poly" id="edge33_Node000015_Node000003" title=" " alt="" coords="842,124,873,147,903,180,919,208,932,238,947,292,942,293,927,240,914,211,899,183,869,151,839,128"/>
+<area shape="poly" id="edge34_Node000015_Node000004" title=" " alt="" coords="829,126,841,175,843,206,836,237,816,272,790,299,786,295,812,268,832,235,837,206,836,175,824,127"/>
+<area shape="poly" id="edge32_Node000015_Node000007" title=" " alt="" coords="838,124,861,148,880,180,886,210,885,241,871,294,866,292,880,240,881,211,876,182,857,151,834,128"/>
+<area shape="poly" id="edge31_Node000015_Node000013" title=" " alt="" coords="720,123,595,132,461,145,349,162,311,172,292,183,284,196,282,210,290,240,309,270,332,295,328,298,305,273,285,242,277,210,279,194,288,179,309,168,348,157,460,140,594,127,719,118"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="521,189,723,229"/>
+<area shape="poly" id="edge20_Node000015_Node000016" title=" " alt="" coords="799,128,676,185,674,180,796,124"/>
+<area shape="rect" id="Node000017" href="$CommChannelsManager_8h.html" title="Communication channels manager for the HardFOC Vortex V1 platform." alt="" coords="303,196,496,221"/>
+<area shape="poly" id="edge21_Node000015_Node000017" title=" " alt="" coords="767,129,509,184,460,195,459,190,508,179,766,123"/>
+<area shape="rect" id="Node000022" title=" " alt="" coords="747,196,822,221"/>
+<area shape="poly" id="edge35_Node000015_Node000022" title=" " alt="" coords="820,127,797,184,792,182,815,125"/>
+<area shape="poly" id="edge22_Node000017_Node000003" title=" " alt="" coords="443,219,509,233,570,242,622,244,713,243,756,243,802,248,852,260,910,282,929,294,927,299,907,286,851,265,801,254,756,249,713,248,622,249,569,247,508,239,442,224"/>
+<area shape="poly" id="edge23_Node000017_Node000004" title=" " alt="" coords="448,219,509,233,568,245,615,251,660,261,716,282,740,295,737,300,714,286,659,266,614,256,567,250,508,239,447,224"/>
+<area shape="poly" id="edge24_Node000017_Node000005" title=" " alt="" coords="441,219,509,233,588,240,686,243,917,245,1034,247,1145,252,1242,263,1319,282,1343,295,1341,300,1317,286,1241,268,1145,258,1034,252,916,250,686,249,587,246,508,239,439,224"/>
+<area shape="poly" id="edge25_Node000017_Node000007" title=" " alt="" coords="444,219,509,233,594,245,661,249,727,257,808,282,834,296,832,300,806,286,726,262,660,254,593,250,508,239,443,224"/>
+<area shape="poly" id="edge30_Node000017_Node000013" title=" " alt="" coords="397,223,366,294,361,292,392,220"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="583,306,704,331"/>
+<area shape="poly" id="edge26_Node000017_Node000018" title=" " alt="" coords="427,219,571,282,607,298,605,303,569,286,425,224"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="157,306,277,331"/>
+<area shape="poly" id="edge27_Node000017_Node000019" title=" " alt="" coords="381,224,249,301,247,297,378,219"/>
+<area shape="rect" id="Node000020" title=" " alt="" coords="429,306,559,331"/>
+<area shape="poly" id="edge28_Node000017_Node000020" title=" " alt="" coords="411,220,476,293,472,297,407,223"/>
+<area shape="rect" id="Node000021" title=" " alt="" coords="5,306,132,331"/>
+<area shape="poly" id="edge29_Node000017_Node000021" title=" " alt="" coords="354,224,258,250,146,287,106,303,104,298,144,281,256,245,353,219"/>
+<area shape="poly" id="edge42_Node000023_Node000005" title=" " alt="" coords="1471,128,1419,148,1396,163,1378,183,1365,209,1359,238,1362,292,1357,292,1354,238,1359,207,1373,180,1393,159,1417,143,1469,123"/>
+<area shape="rect" id="Node000024" href="$vortex__bench__safety_8hpp.html" title="Single source of truth for Vortex V1 BLDC bench parameters." alt="" coords="1677,196,1861,221"/>
+<area shape="poly" id="edge37_Node000023_Node000024" title=" " alt="" coords="1594,131,1730,188,1728,193,1592,136"/>
+<area shape="rect" id="Node000025" title=" " alt="" coords="1388,181,1565,236"/>
+<area shape="poly" id="edge39_Node000023_Node000025" title=" " alt="" coords="1536,135,1507,172,1503,169,1532,132"/>
+<area shape="poly" id="edge40_Node000023_Node000026" title=" " alt="" coords="1628,123,1745,144,1810,160,1874,179,1895,188,1893,193,1872,184,1809,165,1744,150,1627,128"/>
+<area shape="rect" id="Node000027" title=" " alt="" coords="1589,196,1652,221"/>
+<area shape="poly" id="edge41_Node000023_Node000027" title=" " alt="" coords="1565,132,1605,183,1601,186,1561,135"/>
+<area shape="poly" id="edge38_Node000024_Node000005" title=" " alt="" coords="1726,224,1665,239,1593,250,1535,255,1479,263,1411,286,1389,300,1386,295,1409,282,1478,258,1534,249,1592,245,1664,233,1725,219"/>
+</map>

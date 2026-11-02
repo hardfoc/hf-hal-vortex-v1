@@ -1,0 +1,36 @@
+<map id="Vortex::InitializeMotors" name="Vortex::InitializeMotors">
+<area shape="rect" id="Node000001" title="Initialize motor controllers (step 5 — after GPIO + LEDs)" alt="" coords="5,305,179,330"/>
+<area shape="rect" id="Node000002" href="$classMotorController.html#afe36094ea42c94597e08573ef1966d27" title="Drive the onboard TMC9660 host SPI mux (PCAL_TMC_SPI_COMM_EN) on Vortex." alt="" coords="235,5,459,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="94,303,106,256,131,189,170,117,195,84,225,55,232,50,235,55,228,59,199,88,174,120,136,191,111,258,99,305"/>
+<area shape="rect" id="Node000003" href="$classMotorController.html#a64dee66639b575d299dd6d361ec0745f" title="Create the onboard TMC9660 device using an SPI interface." alt="" coords="231,69,462,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="96,303,112,267,139,217,177,164,200,140,225,119,234,113,237,118,228,123,204,144,181,168,144,220,117,269,101,306"/>
+<area shape="rect" id="Node000004" href="$classMotorController.html#aa911d938241c59a18cf48fe4ee2b230f" title="Initialise all registered motor controllers if not already done." alt="" coords="227,134,467,159"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="99,303,146,238,182,200,225,168,239,162,241,166,228,173,186,204,150,241,103,306"/>
+<area shape="rect" id="Node000009" href="$classGpioManager.html#a6448b8e73cd569e1a2b37d66f8f368d9" title="Get the BaseGpio driver for a named pin. Returns nullptr if not found." alt="" coords="277,183,417,209"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="105,302,156,261,189,238,226,219,263,206,264,211,228,224,192,243,159,265,109,307"/>
+<area shape="rect" id="Node000010" href="$classMotorController.html#a803bc74e1c421b5b249a5d791785223f" title="Get the number of active TMC9660 devices." alt="" coords="247,233,447,273"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="143,302,252,274,254,279,144,307"/>
+<area shape="rect" id="Node000011" href="$classVortex.html#aff5212af83e632d076367bc3af677148" title="Effective transport for InitializeMotors() (default: Uart)." alt="" coords="241,297,452,337"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="179,315,227,315,227,320,179,320"/>
+<area shape="rect" id="Node000012" href="$classCommChannelsManager.html#aa0371889de5d7bdd19d432cf5c38d047" title="Get an SPI device handle by enum identifier." alt="" coords="255,361,438,401"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="144,328,254,355,252,360,143,333"/>
+<area shape="rect" id="Node000013" href="$classCommChannelsManager.html#a2afac670a23c96c77a1ebada7eee011f" title="Get the UART bus (TMC9660 TMCL)." alt="" coords="255,425,438,465"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="109,328,159,369,193,391,228,411,245,418,243,423,225,416,190,396,156,373,106,332"/>
+<area shape="rect" id="Node000014" href="$classMotorController.html#a88881cf3614bf87b7bc72100ca57ba3a" title="Get access to Tmc9660Handler by device index." alt="" coords="529,519,711,545"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="102,329,119,360,147,400,184,442,228,475,279,493,352,506,516,523,515,529,351,512,277,498,225,480,180,446,143,404,115,363,97,331"/>
+<area shape="rect" id="Node000015" href="$MotorController_8h.html#a02fdccc8a6e5f78c5a6f1d0adc5a71c4" title="Convert MotorError to a human&#45;readable string." alt="" coords="275,541,418,566"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="100,329,116,367,143,418,180,473,203,498,228,519,263,537,261,542,225,524,199,502,176,476,138,421,111,369,95,331"/>
+<area shape="rect" id="Node000016" href="$classGpioManager.html#aaa771acc4c28b3d20cf2f5035882b190" title="After MotorController::CreateOnboardDevice(), register TMC9660 GPIO17/18 in the table." alt="" coords="231,591,462,631"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="99,330,111,377,136,444,153,480,174,515,199,548,228,577,235,581,232,586,225,581,195,552,170,518,148,483,131,446,106,379,94,331"/>
+<area shape="rect" id="Node000005" href="$classMotorController.html#a8038d2348a025fe7840ba50d3148fb11" title="Initialize all registered motor controller devices." alt="" coords="526,134,714,159"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="467,144,512,144,512,149,467,149"/>
+<area shape="rect" id="Node000006" href="$classMotorController.html#a710e9324802ffa363b6b9cfd859117a5" title=" " alt="" coords="773,47,1020,102"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="669,131,777,103,779,108,670,137"/>
+<area shape="rect" id="Node000007" href="$classCommChannelsManager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="805,127,988,167"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="714,144,791,144,791,149,714,149"/>
+<area shape="rect" id="Node000008" href="$classMotorController.html#a5ff6e2d9348e1ea9fcfaa0fee1a4f47e" title="Store a new error code and update per&#45;device counter." alt="" coords="793,191,1000,231"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="677,157,796,185,795,190,676,162"/>
+<area shape="poly" id="edge17_Node000016_Node000014" title=" " alt="" coords="423,588,466,576,565,546,566,551,467,581,425,593"/>
+<area shape="rect" id="Node000017" href="$classMotorController.html#a2800ce6994196eaf98678cf543aaa1ca" title="Get the singleton instance." alt="" coords="515,598,725,623"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="462,608,501,608,501,613,462,613"/>
+</map>

@@ -1,0 +1,51 @@
+<map id="Vortex::Shutdown" name="Vortex::Shutdown">
+<area shape="rect" id="Node000001" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,219,141,244"/>
+<area shape="rect" id="Node000002" href="$classAdcManager.html#aaa9068d2b9252942dda6e9b933ad351b" title="Release all ADC resources and reset to uninitialised state." alt="" coords="203,5,389,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="76,218,89,182,112,134,145,84,165,61,188,41,199,34,202,39,191,45,169,65,149,87,117,137,94,184,81,219"/>
+<area shape="rect" id="Node000003" href="$classCommChannelsManager.html#a8f73e8183217a6d09ec4e581f8010ed9" title="Release all bus resources and reset to uninitialized state." alt="" coords="205,55,387,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="81,217,123,163,153,132,188,105,199,99,202,103,191,110,157,136,127,166,85,220"/>
+<area shape="rect" id="Node000004" href="$classEncoderManager.html#a6109628d75369053b6ebf8ecb2ba5789" title="Deinitialize all encoders and release resources." alt="" coords="189,120,403,145"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="89,216,132,185,188,154,209,147,211,152,190,159,135,190,92,221"/>
+<area shape="rect" id="Node000005" href="$classGpioManager.html#a5ee2f2ebc0252f5c8f894089486d4ba7" title="Reset GPIO manager to uninitialised state." alt="" coords="201,169,391,195"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="131,216,224,195,225,200,132,221"/>
+<area shape="rect" id="Node000006" href="$classImuManager.html#af14969cef25b005a45843b042099a136" title="Deinitialize all IMUs and release resources." alt="" coords="203,219,389,244"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="142,229,189,229,189,234,142,234"/>
+<area shape="rect" id="Node000009" href="$classLedManager.html#a4c571368a2d02ce4dc616b6881878d4c" title="Alias for Shutdown()." alt="" coords="204,268,388,293"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="132,241,225,262,224,268,131,247"/>
+<area shape="rect" id="Node000020" href="$classMotorController.html#a86b069c6ccf6511a76fa862790cd35d8" title="Shut down all motor controller devices and release resources." alt="" coords="193,317,399,343"/>
+<area shape="poly" id="edge21_Node000001_Node000020" title=" " alt="" coords="92,242,135,273,190,304,211,311,209,316,188,308,132,278,89,246"/>
+<area shape="rect" id="Node000023" href="$classNvsManager.html#a5e62dab2f871a598c894bd813ea1fc11" title="Close namespaces (call after other subsystems if they may persist on shutdown)." alt="" coords="203,367,389,392"/>
+<area shape="poly" id="edge24_Node000001_Node000023" title=" " alt="" coords="85,243,126,297,156,327,191,353,203,359,201,364,188,358,152,332,122,300,81,246"/>
+<area shape="rect" id="Node000024" href="$classTemperatureManager.html#ab0fb6f812a61aada976012374be62e6e" title="Release all temperature sensor resources and reset to uninitialised state." alt="" coords="215,417,377,457"/>
+<area shape="poly" id="edge25_Node000001_Node000024" title=" " alt="" coords="82,243,96,276,119,319,151,364,191,403,204,411,202,416,188,407,147,367,115,322,92,278,77,246"/>
+<area shape="rect" id="Node000007" href="$classImuManager.html#a9e06f8873040d540ef308b0601c8a2f1" title="Disable BNO08x GPIO interrupt for specific device." alt="" coords="464,157,681,183"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="354,216,402,205,450,193,495,183,496,188,451,198,403,210,355,221"/>
+<area shape="rect" id="Node000008" href="$classCommChannelsManager.html#a37780fe331686ddce6d40b3b8a1a1722" title="Remove a runtime&#45;created I2C device." alt="" coords="481,207,664,247"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="389,227,467,226,467,232,389,233"/>
+<area shape="rect" id="Node000010" href="$classLedManager.html#a2dc2c5f9181410493ab66b14e6c40788" title="Turn off the LED and release driver resources." alt="" coords="485,272,660,297"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="388,279,471,281,471,286,388,285"/>
+<area shape="rect" id="Node000011" href="$classLedManager.html#a121a6a5f0c2da5ebc117f9f7d054a12c" title="Stop the current animation and turn the LED off." alt="" coords="991,187,1198,212"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="651,269,1002,212,1003,217,652,275"/>
+<area shape="rect" id="Node000013" href="$classLedManager.html#a70ae6019c2839bdc8c371a440e10908d" title="Turn the LED off (set colour to black)." alt="" coords="762,276,918,301"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="660,283,748,285,748,290,660,289"/>
+<area shape="rect" id="Node000012" href="$namespaceLedColors.html#ac73d9c4d71b45c9f83cf04a51e6dbb3c" title="Off / black." alt="" coords="1266,212,1405,237"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="1199,208,1252,213,1252,219,1198,213"/>
+<area shape="poly" id="edge18_Node000013_Node000011" title=" " alt="" coords="870,273,984,229,1033,213,1035,218,986,234,872,278"/>
+<area shape="poly" id="edge13_Node000013_Node000012" title=" " alt="" coords="918,276,1252,233,1253,238,919,281"/>
+<area shape="rect" id="Node000014" href="$classLedManager.html#afa325e20cb2d4356fb870fdd86d4c729" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="985,288,1204,313"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="918,290,972,292,971,298,918,295"/>
+<area shape="rect" id="Node000018" href="$classLedManager.html#a6305fee5cff625bb3332808eb7e63207" title=" " alt="" coords="987,337,1202,363"/>
+<area shape="poly" id="edge19_Node000013_Node000018" title=" " alt="" coords="889,299,986,323,1022,332,1020,337,985,329,888,304"/>
+<area shape="rect" id="Node000019" href="$classLedManager.html#aee4b32be72e10edb7a7d69d49f8967b4" title=" " alt="" coords="986,387,1203,412"/>
+<area shape="poly" id="edge20_Node000013_Node000019" title=" " alt="" coords="903,299,939,316,955,331,963,346,972,360,987,373,998,379,996,384,984,378,968,363,959,348,950,334,936,320,901,304"/>
+<area shape="rect" id="Node000015" href="$classLedManager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="1252,288,1419,313"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="1204,298,1238,298,1238,303,1204,303"/>
+<area shape="rect" id="Node000016" href="$classLedManager.html#ac6bff1fceb7eab43ee606dd3807d3d47" title=" " alt="" coords="1488,263,1695,288"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="1419,290,1474,284,1475,290,1419,295"/>
+<area shape="rect" id="Node000017" href="$classLedManager.html#aec49368647c9b09857ea1b775d655e5e" title=" " alt="" coords="1467,312,1716,337"/>
+<area shape="poly" id="edge17_Node000015_Node000017" title=" " alt="" coords="1419,306,1453,309,1452,314,1419,311"/>
+<area shape="rect" id="Node000021" href="$classMotorController.html#a94da2be4003f290b86eb5b8f514c5367" title=" " alt="" coords="451,322,695,362"/>
+<area shape="poly" id="edge22_Node000020_Node000021" title=" " alt="" coords="399,332,437,333,437,339,399,337"/>
+<area shape="rect" id="Node000022" href="$classGpioManager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="743,329,937,355"/>
+<area shape="poly" id="edge23_Node000021_Node000022" title=" " alt="" coords="695,339,729,339,729,345,695,345"/>
+</map>

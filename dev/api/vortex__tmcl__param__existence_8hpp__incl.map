@@ -1,0 +1,23 @@
+<map id="vortex_tmcl_param_existence.hpp" name="vortex_tmcl_param_existence.hpp">
+<area shape="rect" id="Node000001" title="For each axis parameter number (NR), determine whether the running TMC9660 ROM accepts a read via GAP..." alt="" coords="443,5,689,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,167,183,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="533,33,386,85,195,154,171,164,169,159,193,150,384,80,532,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="207,152,427,236"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="536,33,490,53,441,81,401,111,366,144,362,140,398,107,438,76,487,49,534,28"/>
+<area shape="rect" id="Node000004" href="$vortex__tmcl__read__probe_8hpp.html" title="Systematic TMCL read probe: GAP on motor 0 only for Rev 0 Table 57 axis NRs 0…334 excluding NR gaps (..." alt="" coords="462,79,670,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="569,31,569,65,563,65,563,31"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="451,181,535,207"/>
+<area shape="poly" id="edge10_Node000001_Node000005" title=" " alt="" coords="520,33,482,51,465,64,452,80,446,102,450,126,461,149,475,169,471,172,457,152,445,128,441,102,448,77,462,60,479,46,518,28"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="559,181,709,207"/>
+<area shape="poly" id="edge11_Node000001_Node000006" title=" " alt="" coords="614,28,653,46,670,60,684,77,691,102,686,128,673,152,657,172,653,169,668,149,681,126,686,102,680,80,667,64,650,51,612,33"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="734,181,851,207"/>
+<area shape="poly" id="edge12_Node000001_Node000007" title=" " alt="" coords="608,28,657,47,706,77,730,98,751,122,782,168,777,171,747,126,726,102,703,81,655,52,606,33"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="875,181,942,207"/>
+<area shape="poly" id="edge13_Node000001_Node000008" title=" " alt="" coords="606,28,669,49,738,76,804,109,865,150,889,170,886,174,862,154,801,113,736,81,667,54,605,33"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="462,106,333,124,195,155,166,164,164,159,193,149,332,119,461,100"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="538,107,432,149,430,144,536,102"/>
+<area shape="poly" id="edge6_Node000004_Node000005" title=" " alt="" coords="560,106,511,172,507,169,555,103"/>
+<area shape="poly" id="edge7_Node000004_Node000006" title=" " alt="" coords="576,103,621,168,616,171,572,106"/>
+<area shape="poly" id="edge8_Node000004_Node000007" title=" " alt="" coords="601,101,658,122,722,150,764,172,761,177,720,154,656,127,599,107"/>
+<area shape="poly" id="edge9_Node000004_Node000008" title=" " alt="" coords="671,97,767,115,817,130,865,150,891,169,888,173,862,154,815,135,766,120,670,102"/>
+</map>

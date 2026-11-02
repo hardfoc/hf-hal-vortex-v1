@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['rawtopercent_0',['RawToPercent',['../classLedManager.html#af56f8e3fe390499c55decd544610b352',1,'LedManager']]],
+  ['read_1',['Read',['../classGpioManager.html#a17b886bff147e7053cd63b742c68a404',1,'GpioManager']]],
+  ['readallangles_2',['ReadAllAngles',['../classEncoderManager.html#a5f9f4fbf090969ce59c3c064e982a038',1,'EncoderManager']]],
+  ['readallvelocities_3',['ReadAllVelocities',['../classEncoderManager.html#a282c571fe5033938e776d7a63ed2f3c9',1,'EncoderManager']]],
+  ['readangle_4',['ReadAngle',['../classEncoderManager.html#ab3018404938f9072f4a7ff4bd9333269',1,'EncoderManager']]],
+  ['readangledegrees_5',['ReadAngleDegrees',['../classEncoderManager.html#a26d4ef1b981945f22df48c3f5c83df3b',1,'EncoderManager']]],
+  ['readdiagnostics_6',['ReadDiagnostics',['../classEncoderManager.html#a55891b42a16447c3db7a2a9d13b04328',1,'EncoderManager']]],
+  ['readinternaltemperature_7',['ReadInternalTemperature',['../classTemperatureManager.html#afd06672ef4c1bf486f05083f53a6e5b7',1,'TemperatureManager']]],
+  ['readmotortemperature_8',['ReadMotorTemperature',['../classTemperatureManager.html#a34eb3f2209f801b1d5c71a1735e4d44a',1,'TemperatureManager']]],
+  ['readntctemperature_9',['ReadNtcTemperature',['../classTemperatureManager.html#a720f24fac8b6f66a4688ae6dcc324ebd',1,'TemperatureManager']]],
+  ['readraw_10',['readraw',['../classAdcManager.html#a3b4944bfde89db7792a4e6c8666cc567',1,'AdcManager::ReadRaw(std::string_view name, uint32_t &amp;raw_value, hf_u8_t numOfSamplesToAvg=1, hf_time_t timeBetweenSamples=0) noexcept'],['../classAdcManager.html#ad76283591466ea8c5f06aebec74d205b',1,'AdcManager::ReadRaw(HfFunctionalAdcChannel channel, uint32_t &amp;raw_value, hf_u8_t numOfSamplesToAvg=1, hf_time_t timeBetweenSamples=0) noexcept']]],
+  ['readtemperaturecelsius_11',['ReadTemperatureCelsius',['../classTemperatureManager.html#a3d1b0613fe2adc2b89285dc146eaae81',1,'TemperatureManager']]],
+  ['readtemperaturecelsiusimpl_12',['ReadTemperatureCelsiusImpl',['../classTmc9660TemperatureWrapper.html#a06d94eb0c7d732883e16c7e7c254bf8b',1,'Tmc9660TemperatureWrapper']]],
+  ['readtemperaturefahrenheit_13',['ReadTemperatureFahrenheit',['../classTemperatureManager.html#a213ee60585b03916b27300cbe5242ad7',1,'TemperatureManager']]],
+  ['readvelocityrpm_14',['ReadVelocityRPM',['../classEncoderManager.html#a13af0e082a3b2741b06508cd0d8bf506',1,'EncoderManager']]],
+  ['readvoltage_15',['readvoltage',['../classAdcManager.html#ae81d3ed6e37b60d4b1db08e3a4e6e42f',1,'AdcManager::ReadVoltage(std::string_view name, float &amp;voltage, hf_u8_t samples=1, hf_time_t timeBetweenSamples=0) noexcept'],['../classAdcManager.html#a5ef308f9b8d1c9792154bff679e122c7',1,'AdcManager::ReadVoltage(HfFunctionalAdcChannel channel, float &amp;voltage, hf_u8_t samples=1, hf_time_t timeBetweenSamples=0) noexcept']]],
+  ['red_16',['RED',['../namespaceLedColors.html#af4d56375fdebf6240c7690d7f8e8f1fe',1,'LedColors']]],
+  ['registertmc9660bridgepinsifneeded_17',['RegisterTmc9660BridgePinsIfNeeded',['../classGpioManager.html#aaa771acc4c28b3d20cf2f5035882b190',1,'GpioManager']]],
+  ['removei2cdevice_18',['RemoveI2cDevice',['../classCommChannelsManager.html#a37780fe331686ddce6d40b3b8a1a1722',1,'CommChannelsManager']]],
+  ['resetvariables_19',['ResetVariables',['../classTestTaskThread.html#af067fad08aa6cc2c77f3727e615b83b8',1,'TestTaskThread']]],
+  ['run_5fanimation_5fticks_20',['run_animation_ticks',['../vortex__led__ws2812__cycle_8cpp.html#abf38eb1f81a7764f4227ec69b5261061',1,'run_animation_ticks(LedManager &amp;leds, int ticks, uint32_t step_ms) noexcept:&#160;vortex_led_ws2812_cycle.cpp'],['../vortex__led__ws2812__smoke_8cpp.html#abf38eb1f81a7764f4227ec69b5261061',1,'run_animation_ticks(LedManager &amp;leds, int ticks, uint32_t step_ms) noexcept:&#160;vortex_led_ws2812_smoke.cpp']]],
+  ['run_5fchecks_21',['run_checks',['../namespacevortex__tmcl__manual__compliance.html#ac8cc31cc0bef96d374bf87f62e3edf4c',1,'vortex_tmcl_manual_compliance']]],
+  ['run_5fdemo_5fcycle_22',['run_demo_cycle',['../vortex__led__ws2812__cycle_8cpp.html#acf82aa2215363ae6e01458a82682e0cd',1,'vortex_led_ws2812_cycle.cpp']]],
+  ['run_5fexistence_5fmatrix_23',['run_existence_matrix',['../namespacevortex__tmcl__param__existence.html#ad510af4c44c1cd192855922566d54130',1,'vortex_tmcl_param_existence']]]
+];

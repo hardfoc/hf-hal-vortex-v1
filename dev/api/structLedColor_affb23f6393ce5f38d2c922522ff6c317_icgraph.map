@@ -1,0 +1,13 @@
+<map id="LedColor::LedColor" name="LedColor::LedColor">
+<area shape="rect" id="Node000001" title="Default&#45;construct black (0, 0, 0)." alt="" coords="723,31,867,56"/>
+<area shape="rect" id="Node000002" href="$structLedColor.html#a6e26ad9fc73de952329f98eb17349abd" title="Unpack from a 24&#45;bit 0xRRGGBB integer." alt="" coords="529,31,675,56"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="709,46,675,46,675,41,709,41"/>
+<area shape="rect" id="Node000003" href="$vortex__led__ws2812__cycle_8cpp.html#a284c0afd88e935e7d03786e9660d8ca8" title=" " alt="" coords="320,5,477,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="515,35,477,30,478,25,516,30"/>
+<area shape="rect" id="Node000006" href="$classLedManager.html#a194780a095eedfc8a9708b777c1b7bd9" title="Set LED colour from a packed 0xRRGGBB integer." alt="" coords="316,55,481,80"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="516,56,482,60,481,55,515,51"/>
+<area shape="rect" id="Node000004" href="$vortex__led__ws2812__cycle_8cpp.html#acf82aa2215363ae6e01458a82682e0cd" title=" " alt="" coords="140,5,268,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="306,21,268,21,268,15,306,15"/>
+<area shape="rect" id="Node000005" href="$vortex__led__ws2812__cycle_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,5,92,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="126,21,92,21,92,15,126,15"/>
+</map>

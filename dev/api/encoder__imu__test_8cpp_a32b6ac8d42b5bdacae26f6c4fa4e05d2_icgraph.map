@@ -1,0 +1,25 @@
+<map id="IMU" name="IMU">
+<area shape="rect" id="Node000001" title=" " alt="" coords="403,153,451,179"/>
+<area shape="rect" id="Node000002" href="$encoder__imu__test_8cpp.html#a3be9bcec124347a7c830b45594b39e5a" title=" " alt="" coords="161,5,333,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="415,141,393,91,375,65,353,44,332,33,335,28,356,40,379,62,397,88,420,139"/>
+<area shape="rect" id="Node000004" href="$encoder__imu__test_8cpp.html#a093fdfa1f751d0b94f4493b70314ce19" title=" " alt="" coords="147,55,348,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="407,144,383,117,353,94,328,83,330,78,356,89,387,113,411,140"/>
+<area shape="rect" id="Node000005" href="$encoder__imu__test_8cpp.html#abe634b9ed30e2105c6ac82f73147fd01" title=" " alt="" coords="159,104,335,129"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="389,155,354,143,310,132,311,127,355,138,391,150"/>
+<area shape="rect" id="Node000006" href="$encoder__imu__test_8cpp.html#ae42c273837097a8205c8b99cdfde7ebc" title=" " alt="" coords="154,153,341,179"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="389,169,341,169,341,163,389,163"/>
+<area shape="rect" id="Node000007" href="$encoder__imu__test_8cpp.html#a66feb3032d1e339f75c1533750162574" title=" " alt="" coords="168,203,327,228"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="391,181,355,193,307,205,305,200,354,187,389,176"/>
+<area shape="rect" id="Node000008" href="$encoder__imu__test_8cpp.html#adf2b2b1811c262c1982f9207399459f3" title=" " alt="" coords="157,252,337,277"/>
+<area shape="poly" id="edge11_Node000001_Node000008" title=" " alt="" coords="410,192,386,218,356,242,326,254,324,249,353,237,383,214,406,188"/>
+<area shape="rect" id="Node000009" href="$encoder__imu__test_8cpp.html#a582bcf3d5b663847ab372c02c30249f1" title=" " alt="" coords="140,301,355,327"/>
+<area shape="poly" id="edge13_Node000001_Node000009" title=" " alt="" coords="420,192,397,243,379,269,356,291,333,303,331,299,353,287,375,265,392,240,415,190"/>
+<area shape="rect" id="Node000003" href="$encoder__imu__test_8cpp.html#a630544a7f0a2cc40d8a7fefab7e2fe70" title=" " alt="" coords="5,153,92,179"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="152,38,142,44,112,70,88,100,58,154,53,152,84,97,108,66,138,40,149,34"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="158,87,141,94,96,124,63,155,60,151,93,120,139,89,156,82"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="174,135,141,143,93,156,91,151,139,138,173,130"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="140,169,92,169,92,163,140,163"/>
+<area shape="poly" id="edge10_Node000007_Node000003" title=" " alt="" coords="178,202,139,193,91,180,93,175,141,187,179,197"/>
+<area shape="poly" id="edge12_Node000008_Node000003" title=" " alt="" coords="159,250,139,242,94,212,60,181,64,177,97,207,141,237,161,245"/>
+<area shape="poly" id="edge14_Node000009_Node000003" title=" " alt="" coords="152,298,138,291,108,265,84,234,53,180,58,177,88,231,112,261,142,286,154,294"/>
+</map>

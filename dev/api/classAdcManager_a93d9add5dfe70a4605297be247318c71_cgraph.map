@@ -1,0 +1,11 @@
+<map id="AdcManager::EnsureInitialized" name="AdcManager::EnsureInitialized">
+<area shape="rect" id="Node000001" title="Initialise the ADC subsystem if not already initialised." alt="" coords="5,55,224,80"/>
+<area shape="rect" id="Node000002" href="$classAdcManager.html#a3561cebd5b27e351c066236543a0bc59" title=" " alt="" coords="272,55,439,80"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,65,258,65,258,70,224,70"/>
+<area shape="rect" id="Node000003" href="$classMotorController.html#a2800ce6994196eaf98678cf543aaa1ca" title="Get the singleton instance." alt="" coords="487,5,697,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="416,52,516,31,517,36,417,57"/>
+<area shape="rect" id="Node000004" href="$classMotorController.html#a88881cf3614bf87b7bc72100ca57ba3a" title="Get access to Tmc9660Handler by device index." alt="" coords="501,55,683,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="439,65,487,65,487,70,439,70"/>
+<area shape="rect" id="Node000005" href="$classMotorController.html#acf27e234e70f790b44b24f1b1db7f7ad" title="Check whether the motor controller subsystem has been initialised." alt="" coords="489,104,695,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="417,77,517,98,516,104,416,83"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="test_led_set_solid_palette" name="test_led_set_solid_palette">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,47,144,87"/>
+<area shape="rect" id="Node000002" href="$namespaceLedColors.html#ae2a97d61b4ffac876640780401177e7f" title="Pure blue." alt="" coords="197,5,325,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="144,46,199,32,200,37,145,52"/>
+<area shape="rect" id="Node000003" href="$namespaceLedColors.html#a10b798abecc127d3529e0fa597426e6a" title="Pure green." alt="" coords="192,55,331,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="145,65,178,65,178,70,145,70"/>
+<area shape="rect" id="Node000004" href="$namespaceLedColors.html#af4d56375fdebf6240c7690d7f8e8f1fe" title="Pure red." alt="" coords="201,104,322,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="145,83,200,98,199,103,144,88"/>
+</map>
