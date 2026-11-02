@@ -99,10 +99,18 @@ set(MANAGER_SOURCES
     "${HF_HAL_ROOT}/lib/managers/TemperatureManager.cpp"
 )
 
+# Board binding: the only HAL sources that include ESP-IDF / Esp* headers.
+# Managers above it are MCU-free (tools/lint/lint_hal_boundary.sh); tests/host
+# links bsp_bind/host/ instead.
+set(BSP_BIND_SOURCES
+    "${HF_HAL_ROOT}/lib/managers/bsp_bind/esp32c6/VortexBoardBindEsp32c6.cpp"
+)
+
 # Combine HAL + core sources
 set(HF_HAL_SRCS
     ${API_SOURCES}
     ${MANAGER_SOURCES}
+    ${BSP_BIND_SOURCES}
     ${HF_CORE_SOURCES}
 )
 
@@ -234,8 +242,8 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     "$<$<COMPILE_LANGUAGE:CXX>:${HF_HAL_WARN_KEPT_CXX}>"
 )
 
-# WS2812 Kconfig defaults — PUBLIC because ws2812 headers are transitively
-# included via LedManager → ws2812_cpp.hpp → ws2812_control.h
+# WS2812 Kconfig defaults for the RMT driver compiled into this component
+# (bsp_bind/esp32c6 drives the status LED through hf-core's Ws2812Handler).
 target_compile_definitions(${COMPONENT_LIB} PUBLIC
     CONFIG_WS2812_NUM_LEDS=1
     CONFIG_WS2812_LED_TYPE_RGB=1
