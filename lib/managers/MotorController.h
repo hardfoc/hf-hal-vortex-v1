@@ -255,6 +255,54 @@ public:
     [[nodiscard]] std::optional<tmc9660::CommMode> TryGetOnboardCommMode() const noexcept;
 
     //**************************************************************************//
+    //**                  TMCL SPI TIMING (BENCH TUNING)                      **//
+    //**************************************************************************//
+
+    /**
+     * @brief Set the SPI TMCL handshake timing for one TMC9660.
+     *
+     * @details The driver polls the TMC9660's NOT_READY status instead of waiting a fixed
+     *          gap (see `tmc9660::TmclSpiTiming`). Every device starts with the driver
+     *          defaults (`TmclSpiTiming{}`: no frame gap, 20 to 200 us back-off, 60 polls).
+     *          The value is stored per slot and applied to the driver now if it is up, and
+     *          again after every (re)initialization of that slot, so it can be set before
+     *          `Vortex` brings the motors up. Measure with the TMC9660 driver's `tmcl_timing`
+     *          example before changing it; `tmc9660::TmclSpiTiming::legacy()` restores the
+     *          1000 us gap used up to driver 1.0.0.
+     *
+     *          The poll budget runs on the calling thread. Lower `maxPolls` for slots that
+     *          are accessed from a high-priority control task.
+     *
+     * @param timing      New timing.
+     * @param deviceIndex Device index (0=onboard, 2-3=external).
+     * @return SUCCESS, INVALID_DEVICE_INDEX, or INVALID_PARAMETER when the active device
+     *         on that slot talks UART (the setting only affects SPI).
+     */
+    [[nodiscard]] MotorError SetTmclSpiTiming(const tmc9660::TmclSpiTiming& timing,
+                                              uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /**
+     * @brief SPI TMCL timing stored for a slot (the driver defaults unless changed).
+     * @return SUCCESS or INVALID_DEVICE_INDEX.
+     */
+    [[nodiscard]] MotorError GetTmclSpiTiming(tmc9660::TmclSpiTiming& timing,
+                                              uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) const noexcept;
+
+    /**
+     * @brief SPI TMCL transport counters (frames, NOT_READY re-sends, stale replies, failures).
+     * @return SUCCESS, INVALID_DEVICE_INDEX, DEVICE_NOT_FOUND (no device or driver not up),
+     *         or INVALID_PARAMETER for a UART device.
+     */
+    [[nodiscard]] MotorError GetTmclSpiStats(tmc9660::TmclSpiStats& stats,
+                                             uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    /**
+     * @brief Reset the SPI TMCL transport counters.
+     * @return Same codes as GetTmclSpiStats().
+     */
+    [[nodiscard]] MotorError ResetTmclSpiStats(uint8_t deviceIndex = ONBOARD_TMC9660_INDEX) noexcept;
+
+    //**************************************************************************//
     //**                  HANDLER AND DRIVER MANAGEMENT                       **//
     //**************************************************************************//
 
@@ -549,11 +597,18 @@ private:
     /** @pre `deviceMutex_` held. */
     [[nodiscard]] MotorError applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660HostSpiGateMode mode) noexcept;
 
+    /** @pre `deviceMutex_` held. Pushes the stored SPI TMCL timing of @p device_index to its driver. */
+    void applyTmclSpiTimingLocked(uint8_t device_index) noexcept;
+
+    /** @pre `deviceMutex_` held. SPI driver of a slot whose handler is initialized, or nullptr. */
+    [[nodiscard]] Tmc9660Handler::SpiDriver* spiDriverLocked(uint8_t device_index) noexcept;
+
     std::array<std::unique_ptr<Tmc9660Handler>, MAX_TMC9660_DEVICES> tmcHandlers_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceInitialized_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceActive_;    ///< Track which devices are active
     std::array<std::atomic<uint32_t>, MAX_TMC9660_DEVICES> deviceErrorCounts_{}; ///< Per-device error counters
     std::array<MotorMechanics, MAX_TMC9660_DEVICES> mechanics_{}; ///< Per-device mechanical mapping (default 1:1)
+    std::array<tmc9660::TmclSpiTiming, MAX_TMC9660_DEVICES> tmclSpiTiming_{}; ///< Per-device SPI TMCL timing
     
     bool onboardDeviceCreated_;         ///< Track if onboard device has been created
     std::atomic<bool> initialized_;      ///< Track if system has been initialized

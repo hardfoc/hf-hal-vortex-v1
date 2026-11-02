@@ -43,6 +43,7 @@ bool MotorController::Initialize() {
         if (deviceActive_[i] && tmcHandlers_[i]) {
             configureOnboardHostBusBeforeHandlerInitLocked(i);
             deviceInitialized_[i] = tmcHandlers_[i]->Initialize();
+            if (deviceInitialized_[i]) applyTmclSpiTimingLocked(i);
             if (!deviceInitialized_[i]) {
                 UpdateLastError(MotorError::INITIALIZATION_FAILED, i);
                 allSuccess = false;
@@ -104,6 +105,7 @@ MotorError MotorController::CreateOnboardDevice(BaseSpi& spiInterface,
     if (IsInitialized()) {
         configureOnboardHostBusBeforeHandlerInitLocked(ONBOARD_TMC9660_INDEX);
         deviceInitialized_[ONBOARD_TMC9660_INDEX] = tmcHandlers_[ONBOARD_TMC9660_INDEX]->Initialize();
+        if (deviceInitialized_[ONBOARD_TMC9660_INDEX]) applyTmclSpiTimingLocked(ONBOARD_TMC9660_INDEX);
         if (!deviceInitialized_[ONBOARD_TMC9660_INDEX]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, ONBOARD_TMC9660_INDEX);
         }
@@ -144,6 +146,7 @@ MotorError MotorController::CreateOnboardDevice(BaseUart& uartInterface,
     if (IsInitialized()) {
         configureOnboardHostBusBeforeHandlerInitLocked(ONBOARD_TMC9660_INDEX);
         deviceInitialized_[ONBOARD_TMC9660_INDEX] = tmcHandlers_[ONBOARD_TMC9660_INDEX]->Initialize();
+        if (deviceInitialized_[ONBOARD_TMC9660_INDEX]) applyTmclSpiTimingLocked(ONBOARD_TMC9660_INDEX);
         if (!deviceInitialized_[ONBOARD_TMC9660_INDEX]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, ONBOARD_TMC9660_INDEX);
         }
@@ -202,6 +205,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     if (IsInitialized()) {
         configureOnboardHostBusBeforeHandlerInitLocked(csDeviceIndex);
         deviceInitialized_[csDeviceIndex] = tmcHandlers_[csDeviceIndex]->Initialize();
+        if (deviceInitialized_[csDeviceIndex]) applyTmclSpiTimingLocked(csDeviceIndex);
         if (!deviceInitialized_[csDeviceIndex]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, csDeviceIndex);
         }
@@ -247,6 +251,7 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     if (IsInitialized()) {
         configureOnboardHostBusBeforeHandlerInitLocked(csDeviceIndex);
         deviceInitialized_[csDeviceIndex] = tmcHandlers_[csDeviceIndex]->Initialize();
+        if (deviceInitialized_[csDeviceIndex]) applyTmclSpiTimingLocked(csDeviceIndex);
         if (!deviceInitialized_[csDeviceIndex]) {
             UpdateLastError(MotorError::INITIALIZATION_FAILED, csDeviceIndex);
         }
@@ -355,6 +360,7 @@ size_t MotorController::InitializeAllDevices(std::array<bool, MAX_TMC9660_DEVICE
         if (deviceActive_[i] && tmcHandlers_[i]) {
             configureOnboardHostBusBeforeHandlerInitLocked(i);
             deviceInitialized_[i] = tmcHandlers_[i]->Initialize();
+            if (deviceInitialized_[i]) applyTmclSpiTimingLocked(i);
             results[i] = deviceInitialized_[i];
             if (deviceInitialized_[i]) ++success_count;
         }
@@ -441,6 +447,87 @@ MotorError MotorController::applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660Host
 #if defined(HF_RTOS_FREERTOS)
     os_delay_msec(1);
 #endif
+    return MotorError::SUCCESS;
+}
+
+// ---------------------------------------------------------------------------
+// TMCL SPI timing
+// ---------------------------------------------------------------------------
+
+Tmc9660Handler::SpiDriver* MotorController::spiDriverLocked(uint8_t device_index) noexcept {
+    if (device_index >= MAX_TMC9660_DEVICES || !deviceActive_[device_index] || !tmcHandlers_[device_index]) {
+        return nullptr;
+    }
+    // driverViaSpi() would run the full bootloader init on a handler that is not up yet; that
+    // must stay with the init paths above (PCAL SPI mux first), so only touch ready drivers.
+    if (!tmcHandlers_[device_index]->IsDriverReady()) {
+        return nullptr;
+    }
+    return tmcHandlers_[device_index]->driverViaSpi();
+}
+
+void MotorController::applyTmclSpiTimingLocked(uint8_t device_index) noexcept {
+    if (auto* drv = spiDriverLocked(device_index)) {
+        drv->comm().setTmclTiming(tmclSpiTiming_[device_index]);
+    }
+}
+
+MotorError MotorController::SetTmclSpiTiming(const tmc9660::TmclSpiTiming& timing, uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (deviceIndex >= MAX_TMC9660_DEVICES) {
+        UpdateLastError(MotorError::INVALID_DEVICE_INDEX);
+        return MotorError::INVALID_DEVICE_INDEX;
+    }
+    if (deviceActive_[deviceIndex] && tmcHandlers_[deviceIndex] &&
+        tmcHandlers_[deviceIndex]->GetCommMode() != tmc9660::CommMode::SPI) {
+        UpdateLastError(MotorError::INVALID_PARAMETER, deviceIndex);
+        return MotorError::INVALID_PARAMETER;
+    }
+    tmclSpiTiming_[deviceIndex] = timing;
+    applyTmclSpiTimingLocked(deviceIndex);
+    return MotorError::SUCCESS;
+}
+
+MotorError MotorController::GetTmclSpiTiming(tmc9660::TmclSpiTiming& timing, uint8_t deviceIndex) const noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (deviceIndex >= MAX_TMC9660_DEVICES) {
+        return MotorError::INVALID_DEVICE_INDEX;
+    }
+    timing = tmclSpiTiming_[deviceIndex];
+    return MotorError::SUCCESS;
+}
+
+MotorError MotorController::GetTmclSpiStats(tmc9660::TmclSpiStats& stats, uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (deviceIndex >= MAX_TMC9660_DEVICES) {
+        return MotorError::INVALID_DEVICE_INDEX;
+    }
+    if (deviceActive_[deviceIndex] && tmcHandlers_[deviceIndex] &&
+        tmcHandlers_[deviceIndex]->GetCommMode() != tmc9660::CommMode::SPI) {
+        return MotorError::INVALID_PARAMETER;
+    }
+    auto* drv = spiDriverLocked(deviceIndex);
+    if (drv == nullptr) {
+        return MotorError::DEVICE_NOT_FOUND;
+    }
+    stats = drv->comm().tmclStats();
+    return MotorError::SUCCESS;
+}
+
+MotorError MotorController::ResetTmclSpiStats(uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (deviceIndex >= MAX_TMC9660_DEVICES) {
+        return MotorError::INVALID_DEVICE_INDEX;
+    }
+    if (deviceActive_[deviceIndex] && tmcHandlers_[deviceIndex] &&
+        tmcHandlers_[deviceIndex]->GetCommMode() != tmc9660::CommMode::SPI) {
+        return MotorError::INVALID_PARAMETER;
+    }
+    auto* drv = spiDriverLocked(deviceIndex);
+    if (drv == nullptr) {
+        return MotorError::DEVICE_NOT_FOUND;
+    }
+    drv->comm().resetTmclStats();
     return MotorError::SUCCESS;
 }
 
