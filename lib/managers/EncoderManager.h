@@ -83,6 +83,12 @@ constexpr const char* As5047uErrorToString(As5047uError error) noexcept {
 // ENCODER DIAGNOSTICS
 //==============================================================================
 
+/** @brief Magnet field readings of one AS5047U (see EncoderManager::ReadFieldStrength()). */
+struct EncoderFieldStrength {
+    uint8_t agc{0};          ///< Automatic gain control value (0–255); near either end means a weak or strong magnet
+    uint16_t magnitude{0};   ///< CORDIC magnitude (0–16383)
+};
+
 /**
  * @brief System-level diagnostics snapshot for encoder health monitoring.
  */
@@ -347,11 +353,21 @@ public:
 
     /**
      * @brief Read diagnostics from specific encoder device.
+     * @details One SPI read of ERRFL (clear-on-read). The counters come from this manager.
+     *          AGC and magnitude are not part of @ref As5047uDiagnostics; use ReadFieldStrength().
      * @param deviceIndex Device slot (0–3)
      * @param diagnostics Output diagnostic information
-    * @return EncoderError::SUCCESS if successful
+     * @return EncoderError::SUCCESS if successful
      */
     EncoderError ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnostics& diagnostics) noexcept;
+
+    /**
+     * @brief Read the AGC value and the CORDIC magnitude (magnet field strength) of one encoder.
+     * @param deviceIndex Device slot (0–3)
+     * @param field Output AGC (0–255) and magnitude (0–16383) readings
+     * @return EncoderError::SUCCESS if successful
+     */
+    EncoderError ReadFieldStrength(uint8_t deviceIndex, EncoderFieldStrength& field) noexcept;
 
     /**
      * @brief Set zero position for specific encoder device.
@@ -451,6 +467,12 @@ private:
     * @return Corresponding EncoderError code
      */
     static EncoderError mapDriverError(AS5047U_Error sticky_flags) noexcept;
+
+    /** @brief Handler of an active, initialised slot, or nullptr. Caller holds manager_mutex_. */
+    As5047uHandler* ReadyHandlerLocked(uint8_t deviceIndex) noexcept;
+
+    /** @brief Count a read and map its sticky flags to an error. Caller holds manager_mutex_. */
+    EncoderError FinishRead(uint8_t deviceIndex, AS5047U_Error sticky, bool count_measurement) noexcept;
 
     // ===============================
     // SYSTEM STATE

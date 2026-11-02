@@ -143,53 +143,43 @@ endif()
 # 5. COMPILE OPTIONS AND DEFINITIONS
 #==============================================================================
 
-# Strict compile options for HAL code quality
-# Note: -Werror=padded, -Werror=suggest-*, -Werror=unused-function removed
-# because they fire on core/third-party struct layouts, header-only static
-# functions, and virtual method patterns the HAL cannot control.
-target_compile_options(${COMPONENT_LIB} PRIVATE
+# Warning policy for this component (HAL sources, the hf-core sources it compiles, and the
+# optional CANopenNode C sources). Each option is applied only to the languages that accept it,
+# so GCC prints no "valid for C/ObjC but not for C++" (or the reverse) notes.
+#
+#  - HF_HAL_WARN_ERRORS: defect classes that must never compile (both languages).
+#  - HF_HAL_WARN_ERRORS_C / _CXX: the same, for options that exist in one language only.
+#  - HF_HAL_WARN_KEPT: shown but not fatal, because they fire on hf-core / third-party layouts
+#    (padding, virtual-method patterns, header-only static functions) the HAL cannot change.
+set(HF_HAL_WARN_ERRORS
     -Wall
     -Wextra
-    -Wno-error=undef
-    -Werror=null-dereference
-    -Werror=nonnull
-    -Werror=nonnull-compare
     -Werror=address
     -Werror=alloca
     -Werror=builtin-macro-redefined
     -Werror=div-by-zero
-    -Wno-error=duplicated-cond
     -Werror=empty-body
     -Werror=enum-compare
-    -Werror=enum-conversion
     -Werror=free-nonheap-object
     -Werror=ignored-qualifiers
-    -Werror=implicit
-    -Werror=implicit-function-declaration
     -Werror=init-self
     -Werror=logical-not-parentheses
     -Werror=logical-op
     -Werror=main
     -Werror=maybe-uninitialized
     -Werror=memset-transposed-args
-    -Werror=mismatched-dealloc
-    -Werror=mismatched-new-delete
-    -Wno-error=missing-include-dirs
     -Werror=multichar
     -Werror=multistatement-macros
-    -Werror=narrowing
-    -Wno-error=noexcept
-    -Werror=non-template-friend
+    -Werror=nonnull
+    -Werror=nonnull-compare
+    -Werror=null-dereference
     -Werror=parentheses
     -Werror=pointer-arith
-    -Werror=pointer-sign
-    -Werror=reorder
     -Werror=return-local-addr
     -Werror=sequence-point
     -Werror=shift-count-negative
     -Werror=shift-count-overflow
     -Werror=shift-negative-value
-    -Werror=shift-overflow
     -Werror=shift-overflow=2
     -Werror=switch-bool
     -Werror=tautological-compare
@@ -200,22 +190,50 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     -Werror=unreachable-code
     -Werror=varargs
     -Werror=variadic-macros
-    -Wno-error=vla
     -Werror=volatile-register-var
     -Werror=write-strings
-    -Wno-error=zero-as-null-pointer-constant
-    -Wno-error=format=
-    # Warnings kept but not treated as errors (fire on core/third-party code)
+)
+set(HF_HAL_WARN_ERRORS_C
+    -Werror=enum-conversion
+    -Werror=implicit
+    -Werror=implicit-function-declaration
+    -Werror=pointer-sign
+)
+set(HF_HAL_WARN_ERRORS_CXX
+    -Werror=mismatched-dealloc
+    -Werror=mismatched-new-delete
+    -Werror=narrowing
+    -Werror=non-template-friend
+    -Werror=reorder
+)
+set(HF_HAL_WARN_KEPT
     -Wpadded
     -Wunused-function
+    -Wno-error=undef
+    -Wno-error=duplicated-cond
+    -Wno-error=missing-include-dirs
+    -Wno-error=vla
+    -Wno-error=format=
     -Wno-unused-parameter
     -Wno-missing-field-initializers
     -Wno-sign-compare
-    -Wno-volatile
     -Wno-duplicated-branches
     -Wno-missing-braces
     -Wno-missing-declarations
+)
+set(HF_HAL_WARN_KEPT_CXX
+    -Wno-error=noexcept
+    -Wno-error=zero-as-null-pointer-constant
+    -Wno-volatile
     -Wno-overloaded-virtual
+)
+
+target_compile_options(${COMPONENT_LIB} PRIVATE
+    ${HF_HAL_WARN_ERRORS}
+    ${HF_HAL_WARN_KEPT}
+    "$<$<COMPILE_LANGUAGE:C>:${HF_HAL_WARN_ERRORS_C}>"
+    "$<$<COMPILE_LANGUAGE:CXX>:${HF_HAL_WARN_ERRORS_CXX}>"
+    "$<$<COMPILE_LANGUAGE:CXX>:${HF_HAL_WARN_KEPT_CXX}>"
 )
 
 # WS2812 Kconfig defaults — PUBLIC because ws2812 headers are transitively

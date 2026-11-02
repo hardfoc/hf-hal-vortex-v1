@@ -24,9 +24,6 @@
 #include "handlers/logger/Logger.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
 static constexpr const char* TAG = "VortexGpio";
 
 /** PCAL95555 lines that are inputs on Vortex (fault, power-good, IMU INT, TMC GPIO17/18 feeds). */
@@ -91,7 +88,6 @@ bool GpioManager::Deinitialize() noexcept {
     }
     pcal95555_handler_.reset();
     pcal_host_int_gpio_.reset();
-    motor_controller_ = nullptr;
     initialized_.store(false, std::memory_order_release);
     return true;
 }
@@ -117,10 +113,6 @@ bool GpioManager::Initialize() noexcept {
             "PCAL95555 early init failed — expander GPIO will be unavailable until bus is fixed");
     }
 
-    // MotorController onboard handler is created later in Vortex::InitializeMotors() — do not call
-    // EnsureInitialized() here (no device slots yet). TMC9660 GPIO17/18 are registered then via
-    // RegisterTmc9660BridgePinsIfNeeded().
-    motor_controller_ = &MotorController::GetInstance();
 
     // Iterate all pins defined in the platform pin config
     for (size_t i = 0; i < HF_GPIO_MAPPING_SIZE; ++i) {
@@ -192,27 +184,11 @@ bool GpioManager::Initialize() noexcept {
                 break;
             }
 
-            case HfGpioChipType::TMC9660_CONTROLLER: {
-                Tmc9660Handler* handler = GetTmc9660Handler(m.chip_unit);
-                if (!handler) {
-                    // Expected on first boot: Vortex runs GPIO init before CreateOnboardDevice().
-                    // RegisterTmc9660BridgePinsIfNeeded() fills these slots after motors are wired up.
-                    break;
-                }
-                if (m.physical_pin != 17 && m.physical_pin != 18) {
-                    Logger::GetInstance().Error(TAG, "TMC9660 only supports GPIO17/18, got %u", m.physical_pin);
-                    break;
-                }
-
-                // Non-owning aliasing shared_ptr — handler retains ownership
-                BaseGpio& ref = handler->gpio(m.physical_pin);
-                gpio = std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, &ref);
-
-                if (m.is_inverted) {
-                    gpio->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
-                }
-                break;
-            }
+            case HfGpioChipType::TMC9660_CONTROLLER:
+                // The TMC9660 bridge pins (GPIO17/18) belong to the MotorController handler, which
+                // does not exist yet: Vortex brings GPIO up before motors. They are registered by
+                // RegisterTmc9660BridgePinsIfNeeded() once the onboard handler exists.
+                continue;
 
             default:
                 continue;
@@ -228,13 +204,8 @@ bool GpioManager::Initialize() noexcept {
                                       static_cast<int>(m.name.size()), m.name.data(),
                                       m.chip_type, m.physical_pin);
         } else {
-            const auto chip_fail = static_cast<HfGpioChipType>(m.chip_type);
-            if (chip_fail == HfGpioChipType::TMC9660_CONTROLLER && !GetTmc9660Handler(m.chip_unit)) {
-                // TMC bridge pins: no handler yet (Vortex GPIO phase before motors) — no error.
-            } else {
-                Logger::GetInstance().Error(TAG, "Failed to create GPIO: %.*s",
-                                           static_cast<int>(m.name.size()), m.name.data());
-            }
+            Logger::GetInstance().Error(TAG, "Failed to create GPIO: %.*s",
+                                       static_cast<int>(m.name.size()), m.name.data());
         }
     }
 
@@ -294,7 +265,7 @@ bool GpioManager::EnsurePcal95555Handler() noexcept {
         }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(1));
+    os_delay_msec(1);
 
     BaseGpio* const int_pin = pcal_host_int_gpio_ ? pcal_host_int_gpio_.get() : nullptr;
     pcal95555_handler_ = std::make_unique<Pcal95555Handler>(*i2c_device, int_pin);
@@ -333,26 +304,15 @@ hf_gpio_err_t GpioManager::DebugReadPcal95555InputSnapshot(uint16_t& out_bits) n
     return pcal95555_handler_->ReadAllInputLevels(out_bits);
 }
 
-Tmc9660Handler* GpioManager::GetTmc9660Handler(uint8_t device_index) noexcept {
-    if (!motor_controller_) {
-        motor_controller_ = &MotorController::GetInstance();
-    }
-    // Do not require MotorController::EnsureInitialized() here: that waits for a
-    // successful TMC9660 bootloader bring-up. GPIO code only needs the handler object
-    // once MotorController has registered the onboard device (even if init failed).
-    return motor_controller_->handler(device_index);
-}
-
 void GpioManager::RegisterTmc9660BridgePinsIfNeeded() noexcept {
-    MutexLockGuard lock(mutex_);
-    if (!initialized_.load(std::memory_order_acquire)) {
+    // Lock order is MotorController -> GpioManager (MotorController drives PCAL_TMC_SPI_COMM_EN
+    // through this manager while it holds its own lock), so look the handler up before taking ours.
+    Tmc9660Handler* const h = MotorController::GetInstance().handler(0);
+    if (!h) {
         return;
     }
-    if (!motor_controller_) {
-        motor_controller_ = &MotorController::GetInstance();
-    }
-    Tmc9660Handler* const h = motor_controller_->handler(0);
-    if (!h) {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) {
         return;
     }
 
@@ -406,6 +366,7 @@ size_t GpioManager::FindByName(std::string_view name) const noexcept {
 }
 
 std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire)) return nullptr;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return nullptr;
@@ -413,29 +374,25 @@ std::shared_ptr<BaseGpio> GpioManager::Get(std::string_view name) noexcept {
 }
 
 std::shared_ptr<BaseGpio> GpioManager::Get(HfFunctionalGpioPin pin) noexcept {
-    if (!initialized_.load(std::memory_order_acquire)) return nullptr;
-    size_t idx = static_cast<size_t>(pin);
-    if (idx >= kMaxEntries) return nullptr;
-
-    if (!entries_[idx].registered &&
-        (pin == HfFunctionalGpioPin::TMC_GPIO17 || pin == HfFunctionalGpioPin::TMC_GPIO18)) {
-        Tmc9660Handler* h = GetTmc9660Handler(0);
-        if (h) {
-            const int tmc_pin = (pin == HfFunctionalGpioPin::TMC_GPIO17) ? 17 : 18;
-            BaseGpio& ref = h->gpio(tmc_pin);
-            return std::shared_ptr<BaseGpio>(std::shared_ptr<BaseGpio>{}, &ref);
-        }
+    const size_t idx = static_cast<size_t>(pin);
+    if (idx >= kMaxEntries || !initialized_.load(std::memory_order_acquire)) return nullptr;
+    if (pin == HfFunctionalGpioPin::TMC_GPIO17 || pin == HfFunctionalGpioPin::TMC_GPIO18) {
+        // The TMC9660 bridge pins appear once MotorController has its onboard handler.
+        // Registering takes the MotorController lock before ours (see RegisterTmc9660BridgePinsIfNeeded).
+        RegisterTmc9660BridgePinsIfNeeded();
     }
-
+    MutexLockGuard lock(mutex_);
     if (!entries_[idx].registered) return nullptr;
     return entries_[idx].driver;
 }
 
 bool GpioManager::Contains(std::string_view name) const noexcept {
+    MutexLockGuard lock(mutex_);
     return FindByName(name) != kInvalidIndex;
 }
 
 size_t GpioManager::Size() const noexcept {
+    MutexLockGuard lock(mutex_);
     return registered_count_;
 }
 
@@ -444,6 +401,8 @@ size_t GpioManager::Size() const noexcept {
 //==============================================================================
 
 hf_gpio_err_t GpioManager::Set(std::string_view name, bool value) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) { ++failed_ops_; return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND; }
     auto& e = entries_[idx];
@@ -455,6 +414,8 @@ hf_gpio_err_t GpioManager::Set(std::string_view name, bool value) noexcept {
 }
 
 hf_gpio_err_t GpioManager::SetActive(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) { ++failed_ops_; return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND; }
     auto& e = entries_[idx];
@@ -466,6 +427,8 @@ hf_gpio_err_t GpioManager::SetActive(std::string_view name) noexcept {
 }
 
 hf_gpio_err_t GpioManager::SetInactive(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) { ++failed_ops_; return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND; }
     auto& e = entries_[idx];
@@ -477,6 +440,8 @@ hf_gpio_err_t GpioManager::SetInactive(std::string_view name) noexcept {
 }
 
 hf_gpio_err_t GpioManager::Read(std::string_view name, bool& state) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) { ++failed_ops_; return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND; }
     auto& e = entries_[idx];
@@ -488,6 +453,8 @@ hf_gpio_err_t GpioManager::Read(std::string_view name, bool& state) noexcept {
 }
 
 hf_gpio_err_t GpioManager::Toggle(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) { ++failed_ops_; return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND; }
     auto& e = entries_[idx];
@@ -507,18 +474,24 @@ hf_gpio_err_t GpioManager::IsActive(std::string_view name, bool& active) noexcep
 //==============================================================================
 
 hf_gpio_err_t GpioManager::SetDirection(std::string_view name, hf_gpio_direction_t direction) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     return entries_[idx].driver->SetDirection(direction);
 }
 
 hf_gpio_err_t GpioManager::SetPullMode(std::string_view name, hf_gpio_pull_mode_t pull_mode) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     return entries_[idx].driver->SetPullMode(pull_mode);
 }
 
 hf_gpio_err_t GpioManager::SetOutputMode(std::string_view name, hf_gpio_output_mode_t mode) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     return entries_[idx].driver->SetOutputMode(mode);
@@ -532,24 +505,32 @@ hf_gpio_err_t GpioManager::ConfigureInterrupt(std::string_view name,
                                               hf_gpio_interrupt_trigger_t trigger,
                                               InterruptCallback callback,
                                               void* user_data) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     return entries_[idx].driver->ConfigureInterrupt(trigger, callback, user_data);
 }
 
 hf_gpio_err_t GpioManager::EnableInterrupt(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     return entries_[idx].driver->EnableInterrupt();
 }
 
 hf_gpio_err_t GpioManager::DisableInterrupt(std::string_view name) noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return hf_gpio_err_t::GPIO_ERR_PIN_NOT_FOUND;
     return entries_[idx].driver->DisableInterrupt();
 }
 
 bool GpioManager::SupportsInterrupts(std::string_view name) const noexcept {
+    MutexLockGuard lock(mutex_);
+    if (!initialized_.load(std::memory_order_acquire)) return false;
     size_t idx = FindByName(name);
     if (idx == kInvalidIndex) return false;
     return entries_[idx].driver->SupportsInterrupts() == hf_gpio_err_t::GPIO_SUCCESS;

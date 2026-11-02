@@ -84,11 +84,7 @@ Vortex::Vortex() noexcept
       encoders_initialized_(false),
       leds_initialized_(false),
       temp_initialized_(false),
-      diagnostics_(),
-      system_warnings_{},
-      system_warnings_count_(0),
-      failed_components_{},
-      failed_components_count_(0) {
+      diagnostics_() {
     
     // Initialize Logger first (this is always available)
     Logger::GetInstance().Initialize();
@@ -103,6 +99,10 @@ Vortex::Vortex() noexcept
 bool Vortex::EnsureInitialized() noexcept {
     if (initialized_) {
         return true;
+    }
+    MutexLockGuard lock(lifecycle_mutex_);
+    if (initialized_) {
+        return true;  // another task finished initialisation while this one waited
     }
     
     Logger::GetInstance().Info("Vortex", "Starting Vortex API initialization");
@@ -138,17 +138,18 @@ bool Vortex::EnsureInitialized() noexcept {
         Logger::GetInstance().Error("Vortex", "Vortex API initialization failed");
         
         // Log failed components
-        if (failed_components_count_ > 0) {
+        if (report_.FailedCount() > 0) {
             char failed_list[256] = {};
             size_t pos = 0;
-            for (size_t i = 0; i < failed_components_count_; ++i) {
+            for (size_t i = 0; i < report_.FailedCount(); ++i) {
                 if (pos > 0 && pos + 2 < sizeof(failed_list)) {
                     failed_list[pos++] = ',';
                     failed_list[pos++] = ' ';
                 }
-                size_t len = std::strlen(failed_components_[i]);
+                const char* name = report_.Failed(i);
+                size_t len = std::strlen(name);
                 if (pos + len < sizeof(failed_list) - 1) {
-                    std::memcpy(failed_list + pos, failed_components_[i], len);
+                    std::memcpy(failed_list + pos, name, len);
                     pos += len;
                 }
             }
@@ -156,11 +157,12 @@ bool Vortex::EnsureInitialized() noexcept {
             Logger::GetInstance().Error("Vortex", "Failed components: %s", failed_list);
         }
     }
-    
+
     return success;
 }
 
 bool Vortex::GetSystemDiagnostics(VortexSystemDiagnostics& diagnostics) const noexcept {
+    MutexLockGuard lock(lifecycle_mutex_);
     if (!initialized_) {
         return false;
     }
@@ -188,19 +190,13 @@ std::array<bool, kVortexManagerCount> Vortex::GetComponentInitializationStatus()
 }
 
 size_t Vortex::GetFailedComponents(const char* out_names[], size_t max_entries) const noexcept {
-    size_t count = (failed_components_count_ < max_entries) ? failed_components_count_ : max_entries;
-    for (size_t i = 0; i < count; ++i) {
-        out_names[i] = failed_components_[i];
-    }
-    return count;
+    MutexLockGuard lock(lifecycle_mutex_);
+    return report_.CopyFailed(out_names, max_entries);
 }
 
 size_t Vortex::GetSystemWarnings(const char* out_warnings[], size_t max_entries) const noexcept {
-    size_t count = (system_warnings_count_ < max_entries) ? system_warnings_count_ : max_entries;
-    for (size_t i = 0; i < count; ++i) {
-        out_warnings[i] = system_warnings_[i];
-    }
-    return count;
+    MutexLockGuard lock(lifecycle_mutex_);
+    return report_.CopyWarnings(out_warnings, max_entries);
 }
 
 //==============================================================================
@@ -208,6 +204,7 @@ size_t Vortex::GetSystemWarnings(const char* out_warnings[], size_t max_entries)
 //==============================================================================
 
 bool Vortex::CollectManagerHealth(ManagerHealthSnapshot& snapshot) noexcept {
+    MutexLockGuard lock(lifecycle_mutex_);
     if (!initialized_) return false;
 
     snapshot = ManagerHealthSnapshot{};
@@ -352,6 +349,7 @@ const char* Vortex::GetSystemVersion() const noexcept {
 }
 
 bool Vortex::Shutdown() noexcept {
+    MutexLockGuard lock(lifecycle_mutex_);
     if (!initialized_) {
         Logger::GetInstance().Warn("Vortex", "Shutdown called but not initialized");
         return false;
@@ -398,8 +396,7 @@ bool Vortex::Shutdown() noexcept {
     }
 
     initialized_ = false;
-    failed_components_count_ = 0;
-    system_warnings_count_ = 0;
+    report_.Clear();
 
     Logger::GetInstance().Info("Vortex", "Vortex API shutdown complete");
     return true;
@@ -411,6 +408,7 @@ bool Vortex::Shutdown() noexcept {
 
 bool Vortex::InitializeAllComponents() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing all Vortex components in dependency order");
+    report_.Clear();
 
     if (!InitializeNvs()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize NVS");
@@ -437,19 +435,19 @@ bool Vortex::InitializeAllComponents() noexcept {
 
     // Remaining subsystems: best-effort for bench bring-up (log warnings, do not fail API init)
     if (!InitializeMotors()) {
-        Logger::GetInstance().Warn("Vortex", "Motor controllers not ready (optional for LED-only bench)");
+        AddSystemWarning("Motor controllers not ready; running without the TMC9660");
     }
     if (!InitializeAdc()) {
-        Logger::GetInstance().Warn("Vortex", "ADC management not ready (TMC9660-dependent)");
+        AddSystemWarning("ADC not ready (TMC9660-hosted channels unavailable)");
     }
     if (!InitializeImu()) {
-        Logger::GetInstance().Warn("Vortex", "IMU management not ready");
+        AddSystemWarning("IMU not ready");
     }
     if (!InitializeEncoders()) {
-        Logger::GetInstance().Warn("Vortex", "Encoder management not ready");
+        AddSystemWarning("Encoders not ready");
     }
     if (!InitializeTemperature()) {
-        Logger::GetInstance().Warn("Vortex", "Temperature management not ready");
+        AddSystemWarning("Temperature sensors not ready");
     }
 
     const bool core_ok =
@@ -484,9 +482,7 @@ bool Vortex::InitializeNvs() noexcept {
         Logger::GetInstance().Info("Vortex", "NVS initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "NVS initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents) {
-            failed_components_[failed_components_count_++] = "NvsManager";
-        }
+        report_.AddFailed("NvsManager");
     }
 
     return success;
@@ -502,10 +498,9 @@ bool Vortex::InitializeComms() noexcept {
         Logger::GetInstance().Info("Vortex", "Communication channels initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "Communication channels initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "CommChannelsManager";
+        report_.AddFailed("CommChannelsManager");
     }
-    
+
     return success;
 }
 
@@ -519,10 +514,9 @@ bool Vortex::InitializeGpio() noexcept {
         Logger::GetInstance().Info("Vortex", "GPIO management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "GPIO management initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "GpioManager";
+        report_.AddFailed("GpioManager");
     }
-    
+
     return success;
 }
 
@@ -552,9 +546,10 @@ bool Vortex::InitializeMotors() noexcept {
                     if (reg != MotorError::SUCCESS) {
                         Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(UART) returned %s",
                             MotorErrorToString(reg));
+                        AddSystemWarning("Onboard TMC9660 (UART) could not be registered");
                     }
                 } else {
-                    Logger::GetInstance().Warn("Vortex", "TMC9660 UART bus not registered — skip onboard motor");
+                    AddSystemWarning("TMC9660 UART bus not registered; onboard motor skipped");
                 }
             } else {
                 BaseSpi* spi = comms.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
@@ -563,6 +558,7 @@ bool Vortex::InitializeMotors() noexcept {
                     if (reg != MotorError::SUCCESS) {
                         Logger::GetInstance().Warn("Vortex", "CreateOnboardDevice(SPI) returned %s",
                             MotorErrorToString(reg));
+                        AddSystemWarning("Onboard TMC9660 (SPI) could not be registered");
                     } else {
                         // Steer shared SPI to the TMC9660 before bridge GPIO registration or handler init.
                         // Otherwise the PCAL mux line can sit at its default until MotorController::Initialize(),
@@ -571,11 +567,11 @@ bool Vortex::InitializeMotors() noexcept {
                             Tmc9660HostSpiGateMode::EnabledForHostSpiMotor);
                     }
                 } else {
-                    Logger::GetInstance().Warn("Vortex", "TMC9660 SPI device not registered — skip onboard motor");
+                    AddSystemWarning("TMC9660 SPI device not registered; onboard motor skipped");
                 }
             }
         } else {
-            Logger::GetInstance().Warn("Vortex", "PCAL control GPIOs incomplete — skip onboard TMC9660");
+            AddSystemWarning("PCAL95555 TMC9660 control GPIOs incomplete; onboard motor skipped");
         }
     }
 
@@ -587,20 +583,12 @@ bool Vortex::InitializeMotors() noexcept {
 
     if (success) {
         if (motors.GetDeviceCount() == 0) {
-            if (transport == VortexOnboardTmc9660Transport::Uart) {
-                Logger::GetInstance().Warn(
-                    "Vortex",
-                    "UART transport selected but no onboard motor device — "
-                    "check UART wiring and PCAL RST/DRV_EN/FAULT/WAKE");
-            } else {
-                BaseSpi* const tmc_spi = comms.GetSpiDevice(SpiDeviceId::TMC9660_MOTOR_CONTROLLER);
-                if (tmc_spi != nullptr) {
-                    Logger::GetInstance().Warn(
-                        "Vortex",
-                        "TMC9660 SPI is configured but no motor device is registered — "
-                        "check PCAL95555 on I2C (0x20) and that RST/DRV_EN/FAULT/WAKE GPIOs registered");
-                }
-            }
+            // MotorController initialises with no device registered; say so instead of reporting OK.
+            AddSystemWarning(transport == VortexOnboardTmc9660Transport::Uart
+                                 ? "No motor device registered (UART transport): check UART wiring and "
+                                   "PCAL RST/DRV_EN/FAULT/WAKE"
+                                 : "No motor device registered (SPI transport): check PCAL95555 at 0x20 and "
+                                   "the RST/DRV_EN/FAULT/WAKE GPIOs");
         }
     }
 
@@ -608,10 +596,9 @@ bool Vortex::InitializeMotors() noexcept {
         Logger::GetInstance().Info("Vortex", "Motor controllers initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "Motor controllers initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "MotorController";
+        report_.AddFailed("MotorController");
     }
-    
+
     return success;
 }
 
@@ -625,10 +612,9 @@ bool Vortex::InitializeAdc() noexcept {
         Logger::GetInstance().Info("Vortex", "ADC management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "ADC management initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "AdcManager";
+        report_.AddFailed("AdcManager");
     }
-    
+
     return success;
 }
 
@@ -642,10 +628,9 @@ bool Vortex::InitializeImu() noexcept {
         Logger::GetInstance().Info("Vortex", "IMU management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "IMU management initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "ImuManager";
+        report_.AddFailed("ImuManager");
     }
-    
+
     return success;
 }
 
@@ -659,10 +644,9 @@ bool Vortex::InitializeEncoders() noexcept {
         Logger::GetInstance().Info("Vortex", "Encoder management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "Encoder management initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "EncoderManager";
+        report_.AddFailed("EncoderManager");
     }
-    
+
     return success;
 }
 
@@ -676,10 +660,9 @@ bool Vortex::InitializeLeds() noexcept {
         Logger::GetInstance().Info("Vortex", "LED management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "LED management initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "LedManager";
+        report_.AddFailed("LedManager");
     }
-    
+
     return success;
 }
 
@@ -693,10 +676,9 @@ bool Vortex::InitializeTemperature() noexcept {
         Logger::GetInstance().Info("Vortex", "Temperature management initialized successfully");
     } else {
         Logger::GetInstance().Error("Vortex", "Temperature management initialization failed");
-        if (failed_components_count_ < kMaxFailedComponents)
-            failed_components_[failed_components_count_++] = "TemperatureManager";
+        report_.AddFailed("TemperatureManager");
     }
-    
+
     return success;
 }
 
@@ -739,21 +721,18 @@ void Vortex::UpdateSystemDiagnostics() noexcept {
     diagnostics_.system_healthy = (diagnostics_.failed_components == 0) && initialized_;
     
     // Update failed components list
-    diagnostics_.failed_components_list_count = failed_components_count_;
-    for (size_t i = 0; i < failed_components_count_ && i < VortexSystemDiagnostics::kMaxDiagEntries; ++i) {
-        diagnostics_.failed_components_list[i] = failed_components_[i];
-    }
-    
+    diagnostics_.failed_components_list_count =
+        report_.CopyFailed(diagnostics_.failed_components_list, VortexSystemDiagnostics::kMaxDiagEntries);
+
     // Update warnings
-    diagnostics_.warnings_count = system_warnings_count_;
-    for (size_t i = 0; i < system_warnings_count_ && i < VortexSystemDiagnostics::kMaxDiagEntries; ++i) {
-        diagnostics_.warnings[i] = system_warnings_[i];
-    }
+    diagnostics_.warnings_count =
+        report_.CopyWarnings(diagnostics_.warnings, VortexSystemDiagnostics::kMaxDiagEntries);
 }
 
 void Vortex::AddSystemWarning(const char* warning) noexcept {
-    if (system_warnings_count_ < kMaxWarnings) {
-        system_warnings_[system_warnings_count_++] = warning;
+    if (!report_.AddWarning(warning)) {
+        Logger::GetInstance().Warn("Vortex", "Warning list full; dropped: %s", warning);
+        return;
     }
     Logger::GetInstance().Warn("Vortex", "Vortex API Warning: %s", warning);
 } 
