@@ -184,9 +184,10 @@ public:
     //==========================================================================
 
     /**
-     * @brief Set a GPIO output to high (true) or low (false).
+     * @brief Drive a GPIO output to its active (true) or inactive (false) state.
+     * @details Logical, like Read(): for an active-low pin, true drives the line low.
      * @param name   Pin name from pincfg.
-     * @param value  true = active/high, false = inactive/low.
+     * @param value  true = active, false = inactive.
      * @return GPIO_SUCCESS on success.
      */
     [[nodiscard]] hf_gpio_err_t Set(std::string_view name, bool value) noexcept;
@@ -206,9 +207,12 @@ public:
     [[nodiscard]] hf_gpio_err_t SetInactive(std::string_view name) noexcept;
 
     /**
-     * @brief Read the current digital level of a pin.
+     * @brief Read the logical (active) state of a pin.
+     * @details The result honours the pin's polarity from the pin map: for an active-low pin
+     *          (`PIN_LOGIC_INVERTED`), a low electrical level reads as true. It is the same as
+     *          IsActive(). It is not the electrical level.
      * @param      name   Pin name from pincfg.
-     * @param[out] state  true = high, false = low.
+     * @param[out] state  true = active, false = inactive.
      * @return GPIO_SUCCESS on success.
      */
     [[nodiscard]] hf_gpio_err_t Read(std::string_view name, bool& state) noexcept;
@@ -326,8 +330,6 @@ private:
     /** @brief Lazy-init the PCAL95555 handler (needs I²C from CommChannelsManager). */
     [[nodiscard]] bool EnsurePcal95555Handler() noexcept;
 
-    /** @brief Get TMC9660 handler from MotorController. */
-    [[nodiscard]] Tmc9660Handler* GetTmc9660Handler(uint8_t device_index = 0) noexcept;
 
     //--------------------------------------------------------------------------
     // Storage
@@ -356,7 +358,6 @@ private:
     std::unique_ptr<Pcal95555Handler> pcal95555_handler_;
     /// ESP32 GPIO for PCAL95555 /INT (COMM_I2C_PCAL95555_INT); not in the GPIO registry table.
     std::shared_ptr<BaseGpio> pcal_host_int_gpio_;
-    MotorController* motor_controller_{nullptr};
 };
 
 //==============================================================================
