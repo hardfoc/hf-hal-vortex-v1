@@ -1,0 +1,5 @@
+<map id="MotorController::visitDriver" name="MotorController::visitDriver">
+<area shape="rect" id="Node000001" title="Visit the underlying typed TMC9660 driver by device index." alt="" coords="233,13,433,38"/>
+<area shape="rect" id="Node000002" href="$class_motor_controller.html#a05bd442a1a1628d3168696de027b37a8" title="Run fn on the SPI driver of a ready device, through the handler (handler lock held)." alt="" coords="5,5,185,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,28,185,28,185,23,220,23"/>
+</map>

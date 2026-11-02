@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['magnitude_0',['magnitude',['../struct_encoder_field_strength.html#a355bd7ed22edf2362a5cbae65afc13bd',1,'EncoderFieldStrength']]],
+  ['manager_5fmutex_5f_1',['manager_mutex_',['../class_encoder_manager.html#a0026ee77b7f82489f5edf92188d3d845',1,'EncoderManager::manager_mutex_'],['../class_imu_manager.html#a071cb24a1153dd0f68d618b39770bae9',1,'ImuManager::manager_mutex_']]],
+  ['managers_2',['managers',['../struct_vortex_board_diagnostics.html#a60a32a99f360dc8108b5160dfa7dafad',1,'VortexBoardDiagnostics']]],
+  ['managers_5fup_3',['managers_up',['../struct_vortex_board_diagnostics.html#abdff727233b8cf4aee2712d8d5d1a1b3',1,'VortexBoardDiagnostics']]],
+  ['managers_5fwith_5ferrors_4',['managers_with_errors',['../struct_manager_health_snapshot.html#a543afaded82fdf457f3b30d99c62361e',1,'ManagerHealthSnapshot']]],
+  ['max_5fbrightness_5f_5',['max_brightness_',['../class_led_manager.html#ab847f327106345f0614863b41c3571f9',1,'LedManager']]],
+  ['max_5fencoder_5fdevices_6',['MAX_ENCODER_DEVICES',['../class_encoder_manager.html#a4e57bc07b30d6d703cc41b733ab77c5f',1,'EncoderManager']]],
+  ['max_5fimu_5fdevices_7',['MAX_IMU_DEVICES',['../class_imu_manager.html#ab9cc3254a418f9818ddef6afa948d739',1,'ImuManager']]],
+  ['max_5ftmc9660_5fdevices_8',['MAX_TMC9660_DEVICES',['../class_motor_controller.html#ab67fc18a2f258e3eab684a4940c5bdcd',1,'MotorController']]],
+  ['measurement_5fcount_9',['measurement_count',['../struct_encoder_system_diagnostics_1_1_device_snapshot.html#af4739c973de5403c025c51050fead1f1',1,'EncoderSystemDiagnostics::DeviceSnapshot']]],
+  ['measurement_5fcounts_5f_10',['measurement_counts_',['../class_encoder_manager.html#a77e6b774cca11f83557552b0c0de3b8e',1,'EncoderManager']]],
+  ['mechanics_5f_11',['mechanics_',['../class_motor_controller.html#a686a8ae6438f9cbdc373553fc17d7a6f',1,'MotorController']]],
+  ['miso_5fpin_12',['miso_pin',['../structvortex_1_1bsp_1_1_spi_bus_spec.html#abc61b104bab0cb7406ea0fe43cd64c20',1,'vortex::bsp::SpiBusSpec']]],
+  ['mode_13',['mode',['../structvortex_1_1bsp_1_1_spi_device_spec.html#a6de95250695998971dc48c16f9603f28',1,'vortex::bsp::SpiDeviceSpec']]],
+  ['mosi_5fpin_14',['mosi_pin',['../structvortex_1_1bsp_1_1_spi_bus_spec.html#a920d371e51160008024b11388efaf827',1,'vortex::bsp::SpiBusSpec']]],
+  ['motor_5fcontroller_5f_15',['motor_controller_',['../class_adc_manager.html#ad6bfea00516121ef9f0d17fc12f9317f',1,'AdcManager']]],
+  ['motor_5fdevices_5factive_16',['motor_devices_active',['../struct_vortex_board_diagnostics.html#ae3de124239268b99fdd85c515ba6e5b3',1,'VortexBoardDiagnostics']]],
+  ['motor_5fdevices_5fready_17',['motor_devices_ready',['../struct_vortex_board_diagnostics.html#a783f93cc4108c3d5632f19ee05fb0aef',1,'VortexBoardDiagnostics']]],
+  ['motors_18',['motors',['../class_vortex.html#a4210b823cfd62eabc25e65a4e47cbbbd',1,'Vortex']]],
+  ['motors_5finitialized_19',['motors_initialized',['../struct_vortex_system_diagnostics.html#a99d263928eb72455cd39aab60ab5bc4e',1,'VortexSystemDiagnostics']]],
+  ['motors_5finitialized_5f_20',['motors_initialized_',['../class_vortex.html#a0255f2804a609d36b3528575f6115973',1,'Vortex']]],
+  ['mutex_5f_21',['mutex_',['../class_adc_manager.html#a02875729af4323140dcf06f4b28fad35',1,'AdcManager::mutex_'],['../class_comm_channels_manager.html#accc06226e7641ae8cafc942071cb499a',1,'CommChannelsManager::mutex_'],['../class_gpio_manager.html#a8f57a9a6a4857a71755e3c765a00d166',1,'GpioManager::mutex_'],['../class_led_manager.html#aa444abdbf45bb567a688ff9e8e76869e',1,'LedManager::mutex_'],['../class_temperature_manager.html#a0380614084f01baf0fd4c4e687ec1151',1,'TemperatureManager::mutex_']]]
+];

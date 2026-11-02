@@ -1,0 +1,15 @@
+<map id="CommChannelsManager::Deinitialize" name="CommChannelsManager::Deinitialize">
+<area shape="rect" id="Node000001" title="Release all bus resources and reset to uninitialized state." alt="" coords="5,97,188,137"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#ac26134b220ce180e441ad956e8b2c77a" title="Close every bus through the binding and forget the indices. Caller holds mutex_." alt="" coords="236,97,419,137"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,114,222,114,222,119,188,119"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1bsp.html#ad26bd18d793f8e0fbbc21a6155a41853" title="Close the CAN controller (idempotent)." alt="" coords="495,5,659,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="358,94,408,66,466,40,490,32,492,37,468,44,410,71,361,99"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#a0cc7add19c6638325d27459be2904c60" title="Remove every device and release the bus (idempotent)." alt="" coords="498,55,657,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="418,96,498,80,499,85,420,101"/>
+<area shape="rect" id="Node000005" href="$namespacevortex_1_1bsp.html#a1ed38d2d17078ea2092389581c9935ea" title="Remove one device." alt="" coords="467,104,688,129"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="419,114,453,114,453,119,419,119"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1bsp.html#a1c98342fa8df72349ad475ee1996878a" title="Remove every device and release the bus (idempotent)." alt="" coords="498,153,657,179"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="420,132,499,148,498,153,418,137"/>
+<area shape="rect" id="Node000007" href="$namespacevortex_1_1bsp.html#af992a8685e3d7827637b047758fb3f43" title="Close the UART opened by UartOpen() (idempotent)." alt="" coords="494,203,661,228"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="362,135,411,162,468,188,497,197,495,202,466,192,409,167,360,139"/>
+</map>

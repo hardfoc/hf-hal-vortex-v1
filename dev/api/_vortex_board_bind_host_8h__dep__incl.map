@@ -1,0 +1,5 @@
+<map id="VortexBoardBindHost.h" name="VortexBoardBindHost.h">
+<area shape="rect" id="Node000001" title="Host implementation of the Vortex board binding, over the hf&#45;core host mocks." alt="" coords="13,5,186,31"/>
+<area shape="rect" id="Node000002" href="$_vortex_board_bind_host_8cpp.html" title="Host implementation of VortexBoardBind.h over hf&#45;core&#39;s host mocks (tests/host only)." alt="" coords="5,79,193,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,44,102,79,97,79,97,44"/>
+</map>

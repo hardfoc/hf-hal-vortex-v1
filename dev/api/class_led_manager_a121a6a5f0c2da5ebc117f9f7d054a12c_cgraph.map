@@ -1,0 +1,9 @@
+<map id="LedManager::StopAnimation" name="LedManager::StopAnimation">
+<area shape="rect" id="Node000001" title="Stop the current animation and turn the LED off." alt="" coords="5,31,212,56"/>
+<area shape="rect" id="Node000002" href="$namespace_led_colors.html#ac73d9c4d71b45c9f83cf04a51e6dbb3c" title="Off / black." alt="" coords="279,5,417,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,30,265,24,265,29,212,35"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#a32cf3a054189142932736ab7a1e99a02" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="260,55,436,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,51,246,54,246,60,212,56"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#aeabe621406616ba6d8213f6b4fd14fe1" title="Latch colours onto the chain." alt="" coords="484,55,687,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="436,65,470,65,470,70,436,70"/>
+</map>

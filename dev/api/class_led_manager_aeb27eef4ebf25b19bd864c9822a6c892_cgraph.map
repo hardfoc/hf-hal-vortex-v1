@@ -1,0 +1,15 @@
+<map id="LedManager::Initialize" name="LedManager::Initialize">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,104,172,129"/>
+<area shape="rect" id="Node000002" href="$class_led_manager.html#a38f49900a4847b036422fbd5edcbcf21" title=" " alt="" coords="241,5,448,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,101,156,70,219,40,244,32,246,37,221,44,158,75,109,106"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#aec49368647c9b09857ea1b775d655e5e" title=" " alt="" coords="220,55,469,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="155,101,219,89,264,80,265,85,221,94,156,107"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#a32cf3a054189142932736ab7a1e99a02" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="257,104,433,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="172,114,243,114,243,119,172,119"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1bsp.html#ae278939510e12d6f78ab2f042e53482f" title="Open the addressable status LED chain on data_pin." alt="" coords="244,153,445,179"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="156,127,265,148,264,153,155,132"/>
+<area shape="rect" id="Node000007" href="$class_led_manager.html#a6305fee5cff625bb3332808eb7e63207" title=" " alt="" coords="237,203,452,228"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="110,127,159,158,221,188,250,197,249,202,219,192,156,162,107,132"/>
+<area shape="rect" id="Node000005" href="$namespacevortex_1_1bsp.html#aeabe621406616ba6d8213f6b4fd14fe1" title="Latch colours onto the chain." alt="" coords="517,104,720,129"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="433,114,503,114,503,119,433,119"/>
+</map>
