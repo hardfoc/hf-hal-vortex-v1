@@ -35,6 +35,4 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 | Gap | Where | Page |
 | --- | --- | --- |
 | hf-core handlers (`Tmc9660Handler`, `Bno08xHandler`, `As5047uHandler`, `Pcal95555Handler`, ...) still create their drivers on the heap at init | hf-core `handlers/` | [ADR 0002](adr/0002-static-allocation.md) |
-| hf-core `Tmc9660Handler::gpio()` / `adc()` dereference wrappers that exist only after a successful bring-up; the HAL guards its calls | hf-core `handlers/tmc9660` | [GpioManager](managers/gpio.md) |
 | 13 example apps still include HAL internals (handlers, TMC9660 driver headers, the pin map) | `tools/lint/hal_boundary_allowlist.txt` | [ADR 0001](adr/0001-mcu-agnostic-boundary.md) |
-| hf-core `NtcTemperatureHandler` recurses until the stack overflows when `enable_threshold_monitoring` is set in its config; the HAL applies the window after init instead | hf-core `handlers/ntc` | [TemperatureManager](managers/temperature.md) |
