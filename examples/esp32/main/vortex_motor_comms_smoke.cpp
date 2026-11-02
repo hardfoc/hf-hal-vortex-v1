@@ -3,7 +3,6 @@
  * @brief TMC9660 comms smoke: PCAL95555 control-line readback, bootloader bring-up, telemetry (no motion).
  */
 #include "api/Vortex.h"
-#include "base/BaseGpio.h"
 #include "managers/GpioManager.h"
 #include "managers/MotorController.h"
 #include "vortex_motor_bench_common.hpp"

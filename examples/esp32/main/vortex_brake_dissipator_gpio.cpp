@@ -3,9 +3,7 @@
  * @brief GPIO-level exercise of TMC9660 chip GPIO lines (brake / dissipator paths per schematic).
  */
 #include "api/Vortex.h"
-#include "managers/GpioManager.h"
-
-#include "core/hf-core-drivers/internal/hf-pincfg/src/hf_functional_pin_config_vortex_v1.hpp"
+#include "managers/GpioManager.h"  // also brings the pin map (HfFunctionalGpioPin)
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"

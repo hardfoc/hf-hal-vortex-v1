@@ -1,0 +1,21 @@
+# Known HAL boundary violations (tools/lint/lint_hal_boundary.sh). This list may only
+# shrink: remove a line when you fix its file; the lint fails on a stale entry, and CI
+# fails if the list grows.
+#
+# Example apps that include HAL internals below lib/managers/ (chip handlers, the
+# TMC9660 driver headers, the pin map). Each goes once the facade exposes what the app
+# needs (motor telemetry and TMCL access through MotorController, pins through the
+# facade).
+examples/esp32/main/common/vortex_board_pins.hpp
+examples/esp32/main/common/vortex_motor_bench_common.hpp
+examples/esp32/main/common/vortex_motor_bench_probe.hpp
+examples/esp32/main/common/vortex_motor_diagnostics.hpp
+examples/esp32/main/common/vortex_tmcl_manual_compliance.hpp
+examples/esp32/main/common/vortex_tmcl_param_existence.hpp
+examples/esp32/main/common/vortex_tmcl_read_probe.hpp
+examples/esp32/main/encoder_imu_test.cpp
+examples/esp32/main/vortex_api_test.cpp
+examples/esp32/main/vortex_bldc_abn_as5047_dynamics.cpp
+examples/esp32/main/vortex_i2c_scan_pcal_bno_pca.cpp
+examples/esp32/main/vortex_pcal_gpio_imu_bringup.cpp
+examples/esp32/main/vortex_tmcl_gap_smoke.cpp
