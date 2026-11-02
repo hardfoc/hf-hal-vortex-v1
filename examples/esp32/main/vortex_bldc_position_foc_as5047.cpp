@@ -40,14 +40,15 @@ extern "C" void app_main(void) {
     VORTEX_API.motors.visitDriver(
         [kShaftCpr](auto& d) {
             namespace tmcl = tmc9660::tmcl;
-            if (!vortex_motor_bench::configure_basic_bldc(d, vortex_bench_safety::kDefaultPolePairs)) {
+            if (!vortex_motor_bench::configure_motor(d, TAG, vortex_bench_safety::kDefaultPolePairs)) {
                 return;
             }
             if (!d.feedbackSense.configureABNEncoder(kShaftCpr)) {
                 ESP_LOGE(TAG, "configureABNEncoder failed");
                 return;
             }
-            if (!vortex_motor_bench::configure_torque_velocity_loops(d)) {
+            if (!vortex_motor_bench::configure_torque_flux_loop(d, TAG) ||
+                !vortex_motor_bench::configure_velocity_loop(d, TAG)) {
                 return;
             }
             if (!d.motorConfig.setCommutationMode(tmcl::CommutationMode::FOC_ABN)) {
