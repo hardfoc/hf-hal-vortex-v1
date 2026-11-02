@@ -25,6 +25,7 @@ Pins are in the [pin map](../hardware/pin-map.md) (the `COMM_*` rows).
 | `RemoveI2cDevice(index)`, `I2cProbeAddress(address, timeout_ms)`, `I2cScanBus(out, max)`, `I2cResetBus()` | Runtime I2C helpers |
 | `GetUartBus()` | `BaseUart*` to the TMC9660 link |
 | `GetCanBus()`, `GetCanOpenBus()` | `BaseCan*` |
+| `GetCanBitRate()` | The nominal TWAI bit rate the bus was opened with (bit/s) |
 | `GetLastError()`, `GetSystemDiagnostics(CommSystemDiagnostics&)`, `DumpStatistics()` | Per-bus validity, device counts, last error |
 
 ## Example: scan the I2C bus
@@ -43,10 +44,22 @@ for (size_t i = 0; i < n; ++i) {
 
 ## CANopen
 
-The HAL gives CANopen code the TWAI port as a `BaseCan*` (`GetCanOpenBus()`) and nothing more; the node itself
-lives in the product firmware. Its design, including the transport router that puts the same object dictionary on
-CAN, a future CAN FD port and wireless links, is in the product repository:
-[CANopen node design](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/canopen-node.md).
+The HAL gives CANopen code the TWAI port as a `BaseCan*` (`GetCanOpenBus()`) and its bit rate
+(`GetCanBitRate()`). hf-core's CANopenNode driver needs the concrete controller for its `hf::can::EspTwaiPort`;
+this manager does not hand that out, because its header is MCU-free. ESP32-C6 platform code gets it from the board
+binding instead:
+
+```cpp
+#include "bsp_bind/esp32c6/VortexBoardBindEsp32c6.h"
+
+EspCan* twai = vortex::bsp::esp32c6::CanController();  // nullptr if CAN did not open
+if (twai != nullptr) {
+    hf::can::EspTwaiPort port(*twai, Vortex::GetInstance().comms.GetCanBitRate());
+}
+```
+
+The node itself (object dictionary, CiA 402 drive, threads, a future CAN FD port and wireless links) is in the
+product repository: [CANopen node design](https://github.com/hardfoc/hardfoc-vortex-v1/blob/main/docs/design/canopen-node.md).
 
 ## Diagnostics
 
