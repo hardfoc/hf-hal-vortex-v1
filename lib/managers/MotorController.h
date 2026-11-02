@@ -603,7 +603,8 @@ private:
     /** @pre `deviceMutex_` held. SPI driver of a slot whose handler is initialized, or nullptr. */
     [[nodiscard]] Tmc9660Handler::SpiDriver* spiDriverLocked(uint8_t device_index) noexcept;
 
-    std::array<std::unique_ptr<Tmc9660Handler>, MAX_TMC9660_DEVICES> tmcHandlers_;
+    /// Handlers in place (no heap): a slot is emplaced by Create*Device() and reset on delete/deinit.
+    std::array<std::optional<Tmc9660Handler>, MAX_TMC9660_DEVICES> tmcHandlers_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceInitialized_;
     std::array<bool, MAX_TMC9660_DEVICES> deviceActive_;    ///< Track which devices are active
     std::array<std::atomic<uint32_t>, MAX_TMC9660_DEVICES> deviceErrorCounts_{}; ///< Per-device error counters

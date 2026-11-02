@@ -16,9 +16,6 @@ MotorController& MotorController::GetInstance() noexcept {
 MotorController::MotorController() 
     : onboardDeviceCreated_(false), initialized_(false), last_error_(MotorError::SUCCESS), deviceMutex_() {
     // Initialize all device slots as empty and not active
-    for (auto& handler : tmcHandlers_) {
-        handler.reset();
-    }
     deviceInitialized_.fill(false);
     deviceActive_.fill(false);
     for (auto& c : deviceErrorCounts_) c.store(0, std::memory_order_relaxed);
@@ -61,6 +58,10 @@ bool MotorController::Deinitialize() noexcept {
 
     (void)applyOnboardTmc9660HostSpiGateModeLocked(Tmc9660HostSpiGateMode::Disabled);
 
+    // GpioManager hands out the onboard handler's GPIO17/18 objects; drop them before the
+    // handler goes (lock order MotorController -> GpioManager).
+    GpioManager::GetInstance().UnregisterTmc9660BridgePins();
+
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
         tmcHandlers_[i].reset();
         deviceActive_[i] = false;
@@ -89,14 +90,12 @@ MotorError MotorController::CreateOnboardDevice(BaseSpi& spiInterface,
     }
     
     // Create onboard TMC9660 handler with SPI and control pins
-    auto onboardHandler = std::make_unique<Tmc9660Handler>(
+    tmcHandlers_[ONBOARD_TMC9660_INDEX].emplace(
         spiInterface, 
         pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
-    
-    tmcHandlers_[ONBOARD_TMC9660_INDEX] = std::move(onboardHandler);
     deviceActive_[ONBOARD_TMC9660_INDEX] = true;
     deviceInitialized_[ONBOARD_TMC9660_INDEX] = false;
     onboardDeviceCreated_ = true;
@@ -130,14 +129,12 @@ MotorError MotorController::CreateOnboardDevice(BaseUart& uartInterface,
     }
     
     // Create onboard TMC9660 handler with UART and control pins
-    auto onboardHandler = std::make_unique<Tmc9660Handler>(
+    tmcHandlers_[ONBOARD_TMC9660_INDEX].emplace(
         uartInterface, 
         pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
-    
-    tmcHandlers_[ONBOARD_TMC9660_INDEX] = std::move(onboardHandler);
     deviceActive_[ONBOARD_TMC9660_INDEX] = true;
     deviceInitialized_[ONBOARD_TMC9660_INDEX] = false;
     onboardDeviceCreated_ = true;
@@ -190,14 +187,12 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     }
     
     // Create external TMC9660 handler with SPI and control pins
-    auto externalHandler = std::make_unique<Tmc9660Handler>(
+    tmcHandlers_[csDeviceIndex].emplace(
         *spiInterface, 
         pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
-    
-    tmcHandlers_[csDeviceIndex] = std::move(externalHandler);
     deviceActive_[csDeviceIndex] = true;
     deviceInitialized_[csDeviceIndex] = false;
     
@@ -236,14 +231,12 @@ MotorError MotorController::CreateExternalDevice(uint8_t csDeviceIndex,
     }
     
     // Create external TMC9660 handler with UART and control pins
-    auto externalHandler = std::make_unique<Tmc9660Handler>(
+    tmcHandlers_[csDeviceIndex].emplace(
         uartInterface, 
         pins.rst, pins.drv_en, pins.faultn, pins.wake,
         address, 
         bootCfg ? bootCfg : &Tmc9660Handler::kDefaultBootConfig
     );
-    
-    tmcHandlers_[csDeviceIndex] = std::move(externalHandler);
     deviceActive_[csDeviceIndex] = true;
     deviceInitialized_[csDeviceIndex] = false;
     
@@ -343,7 +336,7 @@ Tmc9660Handler* MotorController::handler(uint8_t deviceIndex) noexcept {
         return nullptr; // Invalid or inactive device
     }
     
-    return tmcHandlers_[deviceIndex].get();
+    return &*tmcHandlers_[deviceIndex];
 }
 
 // ---------------------------------------------------------------------------
@@ -583,7 +576,7 @@ void MotorController::DumpStatistics() const noexcept {
     
     Logger::GetInstance().Info(TAG, "Device Status Summary:");
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
-        if (deviceActive_[i] && tmcHandlers_[i] != nullptr) {
+        if (deviceActive_[i] && tmcHandlers_[i].has_value()) {
             bool is_initialized = deviceInitialized_[i];
             const char* device_type;
             
@@ -611,7 +604,8 @@ void MotorController::DumpStatistics() const noexcept {
             
             // Dump handler-level diagnostics
             if (is_initialized) {
-                tmcHandlers_[i]->DumpDiagnostics();
+                // DumpDiagnostics() only logs; it is not const in hf-core.
+                const_cast<Tmc9660Handler&>(*tmcHandlers_[i]).DumpDiagnostics();
             }
         } else if (i == ONBOARD_TMC9660_INDEX) {
             Logger::GetInstance().Info(TAG, "  Device %d (Onboard TMC9660): NOT_ACTIVE", i);
@@ -642,7 +636,7 @@ void MotorController::DumpStatistics() const noexcept {
     Logger::GetInstance().Info(TAG, "Memory Usage:");
     size_t handler_memory = 0;
     for (uint8_t i = 0; i < MAX_TMC9660_DEVICES; ++i) {
-        if (tmcHandlers_[i] != nullptr) {
+        if (tmcHandlers_[i].has_value()) {
             handler_memory += sizeof(Tmc9660Handler);
         }
     }

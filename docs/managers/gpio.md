@@ -24,7 +24,7 @@ Each pin takes its polarity from the pin map. "Active" means the asserted level,
 
 | Call | Notes |
 | --- | --- |
-| `Get(std::string_view name)`, `Get(HfFunctionalGpioPin pin)` | `std::shared_ptr<BaseGpio>`, empty if the pin is not registered |
+| `Get(std::string_view name)`, `Get(HfFunctionalGpioPin pin)` | `BaseGpio*` (not owned; valid until the manager is de-initialised), `nullptr` if the pin is not registered. Look a pin up once and keep the pointer |
 | `Set(name, bool active)`, `SetActive(name)`, `SetInactive(name)`, `Toggle(name)` | Return `hf_gpio_err_t` |
 | `Read(name, bool& active)`, `IsActive(name, bool& active)` | Logical state: `true` means asserted (polarity applied) |
 | `SetDirection`, `SetPullMode`, `SetOutputMode` | Reconfigure a pin at run time |

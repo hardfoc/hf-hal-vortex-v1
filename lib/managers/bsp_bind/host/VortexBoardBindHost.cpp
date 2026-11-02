@@ -243,6 +243,7 @@ void Reset() noexcept {
     s.fail = Failures{};
     s.i2c_present.clear();
     s.led_frames.clear();
+    s.led_frames.reserve(4096);  // so a test can count the HAL's own allocations
     for (size_t i = 0; i < s.nvs.size(); ++i) {
         (void)s.nvs[i].EnsureDeinitialized();
     }

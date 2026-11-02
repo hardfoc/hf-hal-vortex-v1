@@ -356,50 +356,228 @@ bool Vortex::Shutdown() noexcept {
     }
 
     Logger::GetInstance().Info("Vortex", "Shutting down Vortex API (reverse init order)");
-
-    // Reverse initialization order: Temp → … → Comms → NVS
-    if (temp_initialized_) {
-        (void)temp.Deinitialize();
-        temp_initialized_ = false;
-    }
-    if (leds_initialized_) {
-        (void)leds.Deinitialize();
-        leds_initialized_ = false;
-    }
-    if (encoders_initialized_) {
-        encoders.Deinitialize();
-        encoders_initialized_ = false;
-    }
-    if (imu_initialized_) {
-        imu.Deinitialize();
-        imu_initialized_ = false;
-    }
-    if (adc_initialized_) {
-        (void)adc.Deinitialize();
-        adc_initialized_ = false;
-    }
-    if (motors_initialized_) {
-        motors.Deinitialize();
-        motors_initialized_ = false;
-    }
-    if (gpio_initialized_) {
-        (void)gpio.Deinitialize();
-        gpio_initialized_ = false;
-    }
-    if (comms_initialized_) {
-        comms.Deinitialize();
-        comms_initialized_ = false;
-    }
-    if (nvs_initialized_) {
-        (void)nvs.Deinitialize();
-        nvs_initialized_ = false;
-    }
-
+    ShutdownComponentsLocked();
     initialized_ = false;
     report_.Clear();
-
+    last_error_.store(ManagerError::None);
     Logger::GetInstance().Info("Vortex", "Vortex API shutdown complete");
     return true;
+}
+
+namespace {
+
+/** Drive the TMC9660 driver-enable line inactive (gate drivers off), if the GPIO manager is up. */
+void DisableMotorDriver(GpioManager& gpio) noexcept {
+    if (!gpio.IsInitialized()) {
+        return;
+    }
+    if (BaseGpio* drv_en = gpio.Get(HfFunctionalGpioPin::PCAL_TMC_DRV_EN)) {
+        (void)drv_en->SetInactive();
+    }
+}
+
+}  // namespace
+
+void Vortex::FailClosed(ManagerError why) noexcept {
+    last_error_.store(why);
+    ShutdownComponentsLocked();
+}
+
+void Vortex::ShutdownComponentsLocked() noexcept {
+    // Reverse initialization order: Temp → … → Comms → NVS. Every Deinitialize() is idempotent and
+    // also releases what a failed Initialize() left behind, so each one is called unconditionally.
+    (void)temp.Deinitialize();
+    temp_initialized_ = false;
+    (void)encoders.Deinitialize();
+    encoders_initialized_ = false;
+    (void)imu.Deinitialize();
+    imu_initialized_ = false;
+    (void)adc.Deinitialize();
+    adc_initialized_ = false;
+    // Gate drivers off before the TMC9660 handler goes away.
+    DisableMotorDriver(gpio);
+    (void)motors.Deinitialize();
+    motors_initialized_ = false;
+    (void)leds.Deinitialize();
+    leds_initialized_ = false;
+    (void)gpio.Deinitialize();
+    gpio_initialized_ = false;
+    (void)comms.Deinitialize();
+    comms_initialized_ = false;
+    (void)nvs.Deinitialize();
+    nvs_initialized_ = false;
+}
+
+//==============================================================================
+// AGGREGATED DIAGNOSTICS
+//==============================================================================
+
+namespace {
+
+ManagerError ToManagerError(CommError e) noexcept {
+    switch (e) {
+        case CommError::SUCCESS:                return ManagerError::None;
+        case CommError::NOT_INITIALIZED:        return ManagerError::NotInitialized;
+        case CommError::INITIALIZATION_FAILED:
+        case CommError::DEVICE_CREATION_FAILED: return ManagerError::InitFailed;
+        case CommError::BUS_NOT_AVAILABLE:      return ManagerError::BusUnavailable;
+        case CommError::DEVICE_NOT_FOUND:       return ManagerError::DeviceNotFound;
+        case CommError::COMMUNICATION_FAILED:   return ManagerError::CommunicationFailed;
+        case CommError::INVALID_BUS_INDEX:
+        case CommError::INVALID_DEVICE_INDEX:
+        case CommError::DEVICE_ALREADY_EXISTS:
+        case CommError::INVALID_PARAMETER:      return ManagerError::InvalidParameter;
+        default:                                return ManagerError::Unknown;
+    }
+}
+
+ManagerError ToManagerError(MotorError e) noexcept {
+    switch (e) {
+        case MotorError::SUCCESS:                 return ManagerError::None;
+        case MotorError::NOT_INITIALIZED:         return ManagerError::NotInitialized;
+        case MotorError::INITIALIZATION_FAILED:
+        case MotorError::HANDLER_CREATION_FAILED: return ManagerError::InitFailed;
+        case MotorError::DEVICE_NOT_FOUND:        return ManagerError::DeviceNotFound;
+        case MotorError::DEPENDENCY_NOT_READY:    return ManagerError::DependencyNotReady;
+        case MotorError::COMMUNICATION_FAILED:    return ManagerError::CommunicationFailed;
+        case MotorError::DEVICE_ALREADY_EXISTS:
+        case MotorError::INVALID_DEVICE_INDEX:
+        case MotorError::CANNOT_DELETE_ONBOARD:
+        case MotorError::INVALID_PARAMETER:       return ManagerError::InvalidParameter;
+        default:                                  return ManagerError::Unknown;
+    }
+}
+
+ManagerError ToManagerError(ImuError e) noexcept {
+    switch (e) {
+        case ImuError::SUCCESS:                    return ManagerError::None;
+        case ImuError::NOT_INITIALIZED:
+        case ImuError::ALREADY_DEINITIALIZED:      return ManagerError::NotInitialized;
+        case ImuError::INITIALIZATION_FAILED:
+        case ImuError::HANDLER_CREATION_FAILED:
+        case ImuError::I2C_DEVICE_CREATION_FAILED: return ManagerError::InitFailed;
+        case ImuError::DEVICE_NOT_FOUND:           return ManagerError::DeviceNotFound;
+        case ImuError::DEPENDENCY_NOT_READY:       return ManagerError::DependencyNotReady;
+        case ImuError::COMMUNICATION_FAILED:       return ManagerError::CommunicationFailed;
+        case ImuError::INTERRUPT_ERROR:            return ManagerError::HardwareFault;
+        case ImuError::DEVICE_ALREADY_EXISTS:
+        case ImuError::INVALID_DEVICE_INDEX:
+        case ImuError::CANNOT_DELETE_ONBOARD:
+        case ImuError::INVALID_I2C_ADDRESS:        return ManagerError::InvalidParameter;
+        default:                                   return ManagerError::Unknown;
+    }
+}
+
+ManagerError ToManagerError(EncoderError e) noexcept {
+    switch (e) {
+        case EncoderError::SUCCESS:                  return ManagerError::None;
+        case EncoderError::NOT_INITIALIZED:          return ManagerError::NotInitialized;
+        case EncoderError::INITIALIZATION_FAILED:    return ManagerError::InitFailed;
+        case EncoderError::INVALID_PARAMETER:        return ManagerError::InvalidParameter;
+        case EncoderError::SPI_COMMUNICATION_FAILED:
+        case EncoderError::CRC_ERROR:
+        case EncoderError::FRAMING_ERROR:
+        case EncoderError::TIMEOUT:                  return ManagerError::CommunicationFailed;
+        case EncoderError::SENSOR_ERROR:             return ManagerError::HardwareFault;
+        default:                                     return ManagerError::Unknown;
+    }
+}
+
+ManagerError ToManagerError(LedError e) noexcept {
+    switch (e) {
+        case LedError::SUCCESS:               return ManagerError::None;
+        case LedError::NOT_INITIALIZED:       return ManagerError::NotInitialized;
+        case LedError::INITIALIZATION_FAILED: return ManagerError::InitFailed;
+        case LedError::HARDWARE_ERROR:
+        case LedError::ANIMATION_FAILED:      return ManagerError::HardwareFault;
+        case LedError::INVALID_PARAMETER:
+        case LedError::INVALID_COLOR:
+        case LedError::INVALID_BRIGHTNESS:    return ManagerError::InvalidParameter;
+        default:                              return ManagerError::Unknown;
+    }
+}
+
+/** hf_*_err_t codes: 0 is success everywhere; NOT_INITIALIZED is named per type. */
+template <typename E>
+ManagerError ToManagerErrorGeneric(E e, E not_initialized) noexcept {
+    if (static_cast<int>(e) == 0) return ManagerError::None;
+    if (e == not_initialized) return ManagerError::NotInitialized;
+    return ManagerError::HardwareFault;
+}
+
+void Fill(ManagerDiagnostics& d, const char* name, bool required, bool initialized, ManagerError error,
+          uint8_t raw) noexcept {
+    d.name = name;
+    d.required = required;
+    d.initialized = initialized;
+    // A manager that is down reports NotInitialized even if it never recorded an error.
+    d.error = (!initialized && error == ManagerError::None) ? ManagerError::NotInitialized : error;
+    d.raw_error = raw;
+}
+
+}  // namespace
+
+bool Vortex::CollectDiagnostics(VortexBoardDiagnostics& out) const noexcept {
+    MutexLockGuard lock(lifecycle_mutex_);
+    out = VortexBoardDiagnostics{};
+    out.initialized = initialized_;
+    out.last_error = last_error_.load();
+
+    // Init order: NVS, comms, GPIO, LEDs (required), then motors, ADC, IMU, encoders, temperature.
+    auto& m = out.managers;
+    Fill(m[0], "NvsManager", true, nvs.IsInitialized(),
+         ToManagerErrorGeneric(nvs.GetLastError(), hf_nvs_err_t::NVS_ERR_NOT_INITIALIZED),
+         static_cast<uint8_t>(nvs.GetLastError()));
+    Fill(m[1], "CommChannelsManager", true, comms.IsInitialized(), ToManagerError(comms.GetLastError()),
+         static_cast<uint8_t>(comms.GetLastError()));
+    Fill(m[2], "GpioManager", true, gpio.IsInitialized(),
+         ToManagerErrorGeneric(gpio.GetLastError(), hf_gpio_err_t::GPIO_ERR_NOT_INITIALIZED),
+         static_cast<uint8_t>(gpio.GetLastError()));
+    Fill(m[3], "LedManager", true, leds.IsInitialized(), ToManagerError(leds.GetLastError()),
+         static_cast<uint8_t>(leds.GetLastError()));
+    Fill(m[4], "MotorController", false, motors.IsInitialized(), ToManagerError(motors.GetLastError()),
+         static_cast<uint8_t>(motors.GetLastError()));
+    Fill(m[5], "AdcManager", false, adc.IsInitialized(),
+         ToManagerErrorGeneric(adc.GetLastError(), hf_adc_err_t::ADC_ERR_NOT_INITIALIZED),
+         static_cast<uint8_t>(adc.GetLastError()));
+    Fill(m[6], "ImuManager", false, imu.IsInitialized(), ToManagerError(imu.GetLastError()),
+         static_cast<uint8_t>(imu.GetLastError()));
+    Fill(m[7], "EncoderManager", false, encoders.IsInitialized(), ToManagerError(encoders.GetLastError()),
+         static_cast<uint8_t>(encoders.GetLastError()));
+    Fill(m[8], "TemperatureManager", false, temp.IsInitialized(),
+         ToManagerErrorGeneric(temp.GetLastError(), hf_temp_err_t::TEMP_ERR_NOT_INITIALIZED),
+         static_cast<uint8_t>(temp.GetLastError()));
+    for (const auto& d : m) {
+        out.managers_up = static_cast<uint8_t>(out.managers_up + (d.initialized ? 1 : 0));
+    }
+
+    CommSystemDiagnostics c{};
+    if (comms.GetSystemDiagnostics(c) == CommError::SUCCESS) {
+        out.spi_ok = c.spi_bus_valid;
+        out.i2c_ok = c.i2c_bus_valid;
+        out.uart_ok = c.uart_bus_valid;
+        out.can_ok = c.can_bus_valid;
+    }
+    out.gpio_pins = static_cast<uint16_t>(gpio.Size());
+    MotorSystemDiagnostics md{};
+    if (motors.GetSystemDiagnostics(md) == MotorError::SUCCESS) {
+        out.motor_devices_active = md.active_device_count;
+        out.motor_devices_ready = md.initialized_device_count;
+    }
+    ImuSystemDiagnostics id{};
+    if (imu.GetSystemDiagnostics(id) == ImuError::SUCCESS) {
+        out.imu_devices_ready = id.initialized_device_count;
+    }
+    EncoderSystemDiagnostics ed{};
+    if (encoders.GetSystemDiagnostics(ed) == EncoderError::SUCCESS) {
+        out.encoder_devices_ready = ed.initialized_device_count;
+    }
+    out.adc_channels = static_cast<uint8_t>(adc.Size());
+    out.temperature_sensors = static_cast<uint8_t>(temp.GetSensorCount());
+    out.failed_components = static_cast<uint8_t>(report_.FailedCount());
+    out.warnings = static_cast<uint8_t>(report_.WarningCount());
+    out.init_time_ms = static_cast<uint32_t>(GetInitializationTimeMs());
+    return out.initialized;
 }
 
 //==============================================================================
@@ -409,33 +587,42 @@ bool Vortex::Shutdown() noexcept {
 bool Vortex::InitializeAllComponents() noexcept {
     Logger::GetInstance().Info("Vortex", "Initializing all Vortex components in dependency order");
     report_.Clear();
+    last_error_.store(ManagerError::None);
 
+    // A required step that fails ends the attempt fail-closed (FailClosed()): every manager that came
+    // up is shut down again, so a failed EnsureInitialized() leaves no bus, pin or handler behind.
     if (!InitializeNvs()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize NVS");
+        FailClosed(ManagerError::InitFailed);
         return false;
     }
 
     // Step 2: Initialize communication channels (foundation)
     if (!InitializeComms()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize communication channels");
+        FailClosed(ManagerError::BusUnavailable);
         return false;
     }
     
     // Step 3: Initialize GPIO management (depends on CommChannelsManager)
     if (!InitializeGpio()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize GPIO management");
+        FailClosed(ManagerError::DependencyNotReady);
         return false;
     }
 
     // Step 4: LED / status (early — allows WS2812 bench when TMC9660 or sensors are absent)
     if (!InitializeLeds()) {
         Logger::GetInstance().Error("Vortex", "Failed to initialize LED management");
+        FailClosed(ManagerError::InitFailed);
         return false;
     }
 
     // Remaining subsystems: best-effort for bench bring-up (log warnings, do not fail API init)
     if (!InitializeMotors()) {
-        AddSystemWarning("Motor controllers not ready; running without the TMC9660");
+        // Fail-safe: a TMC9660 that did not come up must not be left with its gate drivers enabled.
+        DisableMotorDriver(gpio);
+        AddSystemWarning("Motor controllers not ready; running without the TMC9660 (driver disabled)");
     }
     if (!InitializeAdc()) {
         AddSystemWarning("ADC not ready (TMC9660-hosted channels unavailable)");
@@ -454,6 +641,7 @@ bool Vortex::InitializeAllComponents() noexcept {
         nvs_initialized_ && comms_initialized_ && gpio_initialized_ && leds_initialized_;
     if (!core_ok) {
         Logger::GetInstance().Error("Vortex", "Core subsystems incomplete (NVS+Comms+GPIO+LEDs required)");
+        FailClosed(ManagerError::DependencyNotReady);
         return false;
     }
 

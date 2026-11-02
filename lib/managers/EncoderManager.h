@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include <memory>
-#include <functional>
 #include <array>
+#include <atomic>
+#include <optional>
 #include "RtosMutex.h"
 #include "handlers/as5047u/As5047uHandler.h"
 
@@ -499,11 +499,10 @@ private:
     // ===============================
 
     /**
-     * @brief Array of AS5047U encoder handlers (one per device slot).
-     * Uses unique_ptr for exclusive ownership of each handler.
-     * Protected by RtosMutex for thread-safe access.
+     * @brief AS5047U encoder handlers (one per device slot), in place (no heap):
+     *        emplaced on create, reset on delete/deinit. Protected by manager_mutex_.
      */
-    std::array<std::unique_ptr<As5047uHandler>, MAX_ENCODER_DEVICES> as5047u_handlers_;
+    std::array<std::optional<As5047uHandler>, MAX_ENCODER_DEVICES> as5047u_handlers_;
 
     /**
      * @brief Device initialization status tracking.

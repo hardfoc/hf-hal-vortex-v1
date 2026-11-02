@@ -17,7 +17,6 @@
 #include "bsp_bind/VortexBoardBind.h"
 #include "config/VortexNtcConfig.h"
 #include "handlers/logger/Logger.h"
-#include "core/hf-core-drivers/internal/hf-internal-interface-wrap/inc/utils/memory_utils.h"
 #include "core/hf-core-utils/hf-utils-rtos-wrap/include/OsUtility.h"
 
 #include <algorithm>
@@ -87,9 +86,7 @@ TemperatureManager& TemperatureManager::GetInstance() noexcept {
     return instance;
 }
 
-TemperatureManager::~TemperatureManager() {
-    // unique_ptrs clean up automatically
-}
+TemperatureManager::~TemperatureManager() = default;
 
 //==============================================================================
 // INITIALIZATION
@@ -109,13 +106,29 @@ bool TemperatureManager::Deinitialize() noexcept {
     MutexLockGuard lock(mutex_);
     Logger::GetInstance().Info(TAG, "Deinitializing Vortex temperature manager");
 
-    for (size_t i = 0; i < registered_count_; ++i) {
-        entries_[i] = {};
-    }
-    registered_count_ = 0;
+    ReleaseLocked();
     last_error_.store(hf_temp_err_t::TEMP_SUCCESS, std::memory_order_release);
     initialized_.store(false, std::memory_order_release);
     return true;
+}
+
+void TemperatureManager::ReleaseLocked() noexcept {
+    for (auto& entry : entries_) {
+        entry = {};
+    }
+    registered_count_ = 0;
+    if (tmc9660_temp_) {
+        (void)tmc9660_temp_->EnsureDeinitialized();
+    }
+    tmc9660_temp_.reset();
+    if (ntc_handler_) {
+        (void)ntc_handler_->EnsureDeinitialized();
+    }
+    ntc_handler_.reset();
+    if (esp32_temp_ != nullptr) {
+        (void)esp32_temp_->EnsureDeinitialized();
+    }
+    esp32_temp_ = nullptr;
 }
 
 bool TemperatureManager::Initialize() noexcept {
@@ -134,7 +147,11 @@ bool TemperatureManager::Initialize() noexcept {
                               tmc_ok ? "OK" : "FAIL",
                               registered_count_);
 
-    return registered_count_ > 0;
+    if (registered_count_ == 0) {
+        ReleaseLocked();  // fail closed
+        return false;
+    }
+    return true;
 }
 
 bool TemperatureManager::InitializeEsp32Internal() noexcept {
@@ -176,11 +193,7 @@ bool TemperatureManager::InitializeNtcThermistor() noexcept {
 
     const ntc_temp_handler_config_t ntc_cfg = vortex::config::MakeBoardNtcConfig();
 
-    ntc_handler_ = hf::utils::make_unique_nothrow<NtcTemperatureHandler>(adc_driver, ntc_cfg);
-    if (!ntc_handler_) {
-        Logger::GetInstance().Error(TAG, "Failed to allocate NTC handler");
-        return false;
-    }
+    ntc_handler_.emplace(adc_driver, ntc_cfg);
 
     if (!ntc_handler_->EnsureInitialized()) {
         Logger::GetInstance().Error(TAG, "NTC handler init failed");
@@ -213,8 +226,8 @@ bool TemperatureManager::InitializeTmc9660Chip() noexcept {
         return false;
     }
 
-    tmc9660_temp_ = hf::utils::make_unique_nothrow<Tmc9660TemperatureWrapper>(*handler);
-    if (!tmc9660_temp_ || !tmc9660_temp_->Initialize()) {
+    tmc9660_temp_.emplace(*handler);
+    if (!tmc9660_temp_->Initialize()) {
         Logger::GetInstance().Error(TAG, "TMC9660 temp wrapper init failed");
         tmc9660_temp_.reset();
         return false;
@@ -269,8 +282,8 @@ hf_temp_err_t TemperatureManager::ReadTemperatureCelsius(std::string_view name,
 
     switch (entry.sensor_type) {
         case VortexTempSensorType::ESP32_INTERNAL: sensor = esp32_temp_;         break;
-        case VortexTempSensorType::NTC_THERMISTOR: sensor = ntc_handler_.get();  break;
-        case VortexTempSensorType::TMC9660_CHIP:   sensor = tmc9660_temp_.get(); break;
+        case VortexTempSensorType::NTC_THERMISTOR: sensor = ntc_handler_ ? &*ntc_handler_ : nullptr;  break;
+        case VortexTempSensorType::TMC9660_CHIP:   sensor = tmc9660_temp_ ? &*tmc9660_temp_ : nullptr; break;
         default:
             last_error_.store(TEMP_ERR_SENSOR_NOT_AVAILABLE, std::memory_order_release);
             return TEMP_ERR_SENSOR_NOT_AVAILABLE;

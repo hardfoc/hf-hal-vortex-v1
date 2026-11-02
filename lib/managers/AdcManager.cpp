@@ -93,11 +93,7 @@ bool AdcManager::Initialize() noexcept {
     // Create single Tmc9660AdcWrapper — all channels route through this
     //==========================================================================
 
-    tmc9660_adc_ = std::make_unique<Tmc9660AdcWrapper>(*handler);
-    if (!tmc9660_adc_) {
-        Logger::GetInstance().Error(TAG, "Failed to allocate Tmc9660AdcWrapper");
-        return false;
-    }
+    tmc9660_adc_.emplace(*handler);
 
     //==========================================================================
     // Register channels from pincfg — TMC9660 channels only
@@ -129,7 +125,7 @@ bool AdcManager::Initialize() noexcept {
         entry.adc_unit = mapping.adc_unit;
         entry.hw_channel = mapping.physical_channel;
         entry.voltage_divider = mapping.voltage_divider;
-        entry.driver = tmc9660_adc_.get();
+        entry.driver = &*tmc9660_adc_;
         entry.registered = true;
         ++registered_count_;
 
@@ -140,7 +136,11 @@ bool AdcManager::Initialize() noexcept {
     }
 
     Logger::GetInstance().Info(TAG, "ADC manager initialized (%zu TMC9660 channels)", registered_count_);
-    return registered_count_ > 0;
+    if (registered_count_ == 0) {
+        tmc9660_adc_.reset();  // fail closed
+        return false;
+    }
+    return true;
 }
 
 //==============================================================================

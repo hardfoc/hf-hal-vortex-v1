@@ -8,7 +8,7 @@
  *            3. TMC9660 internal chip temperature sensor
  *
  *          Fixed-size array of TempEntry structs, no heap vectors or maps.
- *          Sensor drivers heap-allocated via unique_ptr (singleton lifetime).
+ *          Sensor handlers live in place (std::optional); the die sensor in the board binding.
  *
  * @version 2.0
  */
@@ -19,7 +19,7 @@
 #include <array>
 #include <atomic>
 #include <cstdint>
-#include <memory>
+#include <optional>
 #include <string_view>
 
 #include "base/BaseTemperature.h"
@@ -291,6 +291,8 @@ private:
     ~TemperatureManager();
 
     [[nodiscard]] bool Initialize() noexcept;
+    /** @brief Destroy every sensor object and clear the table. Caller holds mutex_. */
+    void ReleaseLocked() noexcept;
     bool InitializeEsp32Internal() noexcept;
     bool InitializeNtcThermistor() noexcept;
     bool InitializeTmc9660Chip() noexcept;
@@ -310,8 +312,8 @@ private:
 
     // Named sensor driver instances
     BaseTemperature*                         esp32_temp_{nullptr};   ///< MCU die sensor, owned by the board binding
-    std::unique_ptr<NtcTemperatureHandler>   ntc_handler_;
-    std::unique_ptr<Tmc9660TemperatureWrapper> tmc9660_temp_;
+    std::optional<NtcTemperatureHandler>     ntc_handler_;     ///< In place; emplaced at init
+    std::optional<Tmc9660TemperatureWrapper> tmc9660_temp_;   ///< In place; emplaced at init
 
     std::atomic<bool> initialized_{false};
     std::atomic<hf_temp_err_t> last_error_{hf_temp_err_t::TEMP_SUCCESS};

@@ -247,6 +247,7 @@ void LedManager::DumpStatistics() const noexcept {
 
 bool LedManager::Initialize() noexcept {
     Logger::GetInstance().Info(TAG, "Initializing Vortex LED manager");
+    UpdateLastError(LedError::SUCCESS);  // a new attempt starts clean
 
     const int led_gpio = GetLedGpioPin();
     current_led_gpio_ = led_gpio;

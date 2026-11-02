@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <memory>
-#include <functional>
 #include <array>
+#include <optional>
 #include "RtosMutex.h"
 #include "SignalSemaphore.h"
 #include "handlers/bno08x/Bno08xHandler.h"
@@ -86,6 +85,12 @@ class BaseSpi;
  * @note This manager follows the same architectural excellence as MotorController
  *       for consistent device management across the HardFOC system.
  */
+
+/**
+ * @brief Callback for the onboard IMU interrupt (task context: the PCAL95555 handler dispatches it).
+ * @param user_data The pointer given to ImuManager::ConfigureInterrupt().
+ */
+using ImuInterruptCallback = void (*)(void* user_data);
 
 //==============================================================================
 // IMU ERROR CODES
@@ -379,7 +384,8 @@ public:
      * @note Uses PCAL_IMU_INT functional pin through GpioManager for onboard device
      * @note External devices may use different interrupt pins
      */
-    bool ConfigureInterrupt(uint8_t deviceIndex, std::function<void()> callback = nullptr) noexcept;
+    bool ConfigureInterrupt(uint8_t deviceIndex, ImuInterruptCallback callback = nullptr,
+                            void* user_data = nullptr) noexcept;
 
     /**
      * @brief Enable BNO08x GPIO interrupt for specific device.
@@ -517,7 +523,8 @@ private:
      * Uses unique_ptr for exclusive ownership of each handler.
      * Protected by RtosMutex for thread-safe access.
      */
-    std::array<std::unique_ptr<Bno08xHandler>, MAX_IMU_DEVICES> bno08x_handlers_;
+    /// Handlers in place (no heap): emplaced on create, reset on delete/deinit.
+    std::array<std::optional<Bno08xHandler>, MAX_IMU_DEVICES> bno08x_handlers_;
 
     /**
      * @brief Device initialization status tracking.
@@ -565,9 +572,10 @@ private:
     /**
      * @brief PCAL95555 nets for onboard BNO08x (Vortex): RSTN, BOOTN, INT — kept alive for handler lifetime.
      */
-    std::shared_ptr<BaseGpio> onboard_bno_reset_gpio_shared_{};
-    std::shared_ptr<BaseGpio> onboard_bno_boot_gpio_shared_{};
-    std::shared_ptr<BaseGpio> onboard_bno_int_gpio_shared_{};
+    // PCAL95555 pins from GpioManager (non-owning; valid while GpioManager is initialised).
+    BaseGpio* onboard_bno_reset_gpio_{nullptr};
+    BaseGpio* onboard_bno_boot_gpio_{nullptr};
+    BaseGpio* onboard_bno_int_gpio_{nullptr};
 
     // ===============================
     // INTERRUPT SUPPORT
@@ -578,8 +586,8 @@ private:
      * External devices may have their own interrupt configurations.
      */
     BaseGpio* interrupt_gpio_ = nullptr;                    ///< Raw pointer for compatibility
-    std::shared_ptr<BaseGpio> interrupt_gpio_shared_;       ///< Shared pointer for safe ownership
-    std::function<void()> interrupt_callback_;
+    ImuInterruptCallback interrupt_callback_{nullptr};      ///< Plain function pointer (no heap)
+    void* interrupt_callback_user_{nullptr};
     bool interrupt_configured_ = false;
     bool interrupt_enabled_ = false;
     std::atomic<uint32_t> interrupt_count_{0};
