@@ -1,0 +1,77 @@
+{
+  "managers": {
+    "AdcManager": {
+      "handlers": [
+        "tmc9660"
+      ],
+      "drivers": []
+    },
+    "CommChannelsManager": {
+      "handlers": [],
+      "drivers": []
+    },
+    "EncoderManager": {
+      "handlers": [
+        "as5047u"
+      ],
+      "drivers": []
+    },
+    "GpioManager": {
+      "handlers": [
+        "pcal95555",
+        "tmc9660"
+      ],
+      "drivers": []
+    },
+    "ImuManager": {
+      "handlers": [
+        "bno08x"
+      ],
+      "drivers": []
+    },
+    "LedManager": {
+      "handlers": [],
+      "drivers": [
+        "hf-ws2812-rmt"
+      ]
+    },
+    "MotorController": {
+      "handlers": [
+        "tmc9660"
+      ],
+      "drivers": []
+    },
+    "NvsManager": {
+      "handlers": [],
+      "drivers": []
+    },
+    "TemperatureManager": {
+      "handlers": [
+        "ntc",
+        "tmc9660"
+      ],
+      "drivers": []
+    }
+  },
+  "handler_drivers": {
+    "as5047u": [
+      "hf-as5047u"
+    ],
+    "bno08x": [
+      "hf-bno08x"
+    ],
+    "ntc": [
+      "hf-ntc-thermistor"
+    ],
+    "pcal95555": [
+      "hf-pcal95555"
+    ],
+    "tmc9660": [
+      "hf-tmc9660"
+    ]
+  },
+  "sources": [
+    "lib/managers:#includes",
+    "lib/core/handlers:#includes"
+  ]
+}
