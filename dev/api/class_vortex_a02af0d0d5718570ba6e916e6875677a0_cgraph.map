@@ -1,7 +1,0 @@
-<map id="Vortex::InitializeComms" name="Vortex::InitializeComms">
-<area shape="rect" id="Node000001" title="Initialize communication channels (step 2)" alt="" coords="5,13,184,38"/>
-<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#af67cc44d654cf6c433e4d7ef4d3927d8" title="Initialise all communication buses if not already initialised." alt="" coords="232,5,415,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,23,219,23,219,28,184,28"/>
-<area shape="rect" id="Node000003" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="463,5,645,45"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="415,23,449,23,449,28,415,28"/>
-</map>
