@@ -5,11 +5,10 @@ controller, an AS5047U encoder slot, a BNO08x IMU, a PCAL95555 I/O expander, tem
 through one `Vortex` object.
 
 [![ESP32 Examples Build CI](https://github.com/hardfoc/hf-hal-vortex-v1/actions/workflows/esp32-examples-build-ci.yml/badge.svg?branch=main)](https://github.com/hardfoc/hf-hal-vortex-v1/actions/workflows/esp32-examples-build-ci.yml)
-[![Docs Publish CI](https://github.com/hardfoc/hf-hal-vortex-v1/actions/workflows/ci-docs-publish.yml/badge.svg?branch=main)](https://github.com/hardfoc/hf-hal-vortex-v1/actions/workflows/ci-docs-publish.yml)
-[![Documentation](https://img.shields.io/badge/docs-hardfoc.github.io-3b38c4)](https://hardfoc.github.io/hf-hal-vortex-v1/)
+[![Docs](https://github.com/hardfoc/hf-hal-vortex-v1/actions/workflows/ci-docs-publish.yml/badge.svg?branch=main)](https://hardfoc.github.io/hf-hal-vortex-v1/latest/)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://github.com/hardfoc/hf-hal-vortex-v1/blob/main/LICENSE)
 
-**Documentation: <https://hardfoc.github.io/hf-hal-vortex-v1/>**
+**Documentation: <https://hardfoc.github.io/hf-hal-vortex-v1/latest/>**
 
 ## Architecture
 
@@ -42,7 +41,7 @@ cd hf-hal-vortex-v1/examples/esp32
 ```
 
 The log ends with a `Component Status` line: `OK` or `FAIL` per manager. Step by step, with how to tell each step
-worked: [Get started](https://hardfoc.github.io/hf-hal-vortex-v1/latest/getting-started/).
+worked: [Get started](https://hardfoc.github.io/hf-hal-vortex-v1/latest/quickstart/).
 
 ## Use it
 
@@ -83,13 +82,13 @@ Motor control goes through `vortex.motors` (the TMC9660); see
 | `examples/esp32` | Buildable example, bench and test apps ([catalogue](https://hardfoc.github.io/hf-hal-vortex-v1/latest/examples/)) |
 | `third_party/CANopenNode` | CANopenNode submodule, built with the HAL's CANopen option |
 | `docs` | The documentation site (MkDocs); figures and tables are generated from the code |
-| `_config` | Doxygen, lint and link-check configuration |
+| `_config` | Lint and link-check configuration (`Doxyfile` is at the root) |
 
 ## Contributing
 
 Pull requests run the example build, C++ lint and analysis, Markdown and YAML lint, and the docs checks; see
-[Testing and CI](https://hardfoc.github.io/hf-hal-vortex-v1/latest/guides/testing-and-ci/). If you change a pin, an
-example or a manager's dependencies, run `python3 tools/docs/gen.py` and `python3 tools/figkit/build.py` and commit
+[Testing and CI](https://hardfoc.github.io/hf-hal-vortex-v1/latest/testing/). If you change a pin, an
+example or a manager's dependencies, run `hardfoc-docs gen` and `hardfoc-docs figures` and commit
 the result.
 
 ## License
