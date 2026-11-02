@@ -55,10 +55,11 @@ counts. `DumpStatistics()` logs the same, with per-pin access and error counts.
 
 ## Pitfalls
 
-- **`Read()` returns the logical state**, not the electrical level: the header comment says "true = high", but the
-  code returns `IsActive()`. For an active-low pin, `true` means the line is low.
+- **`Read()` returns the logical state**, not the electrical level, the same as `IsActive()`. For an active-low pin,
+  `true` means the line is low. `Set(name, true)` likewise drives the pin to its active level.
 - **Expander pins are slow.** Every PCAL95555 access is an I2C transfer; do not toggle them in a fast loop.
 - **`MotorController` owns the TMC9660 control lines.** Driving `PCAL_TMC_DRV_EN`, `PCAL_TMC_RST_CTRL` or
   `PCAL_TMC_SPI_COMM_EN` yourself disables or confuses the motor controller.
-- **No lock on pin operations.** Give each pin one owner task. See [Threading](../architecture/threading.md).
+- **Pin operations are serialised**, but a read-then-write sequence of your own is not atomic; give such a pin one
+  owner task. See [Threading](../architecture/threading.md).
 - **A wrong name** returns `GPIO_ERR_PIN_NOT_FOUND`. Copy names from the pin map.

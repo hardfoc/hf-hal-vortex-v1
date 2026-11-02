@@ -59,7 +59,14 @@ if (Vortex::GetInstance().CollectManagerHealth(health) && !health.all_healthy) {
 }
 ```
 
-!!! note "Known gap"
-    `GetSystemWarnings()` always returns no entries today: the facade has a warning list, but nothing adds to it.
-    Best-effort start-up failures are visible in the log (`Initialized in degraded mode ...`) and through
-    `GetFailedComponents()` / `GetComponentInitializationStatus()`.
+`GetSystemWarnings()` lists what `EnsureInitialized()` ran without: each best-effort manager that did not come up
+(motors, ADC, IMU, encoders, temperature) and motor bring-up problems such as no TMC9660 registered. The texts have
+static storage; the list is cleared at the start of each attempt and holds up to 12 entries.
+
+```cpp
+const char* warnings[12];
+const size_t n = Vortex::GetInstance().GetSystemWarnings(warnings, 12);
+for (size_t i = 0; i < n; ++i) {
+    ESP_LOGW("app", "%s", warnings[i]);
+}
+```

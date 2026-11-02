@@ -9,7 +9,8 @@ What runs on a pull request, what each check means, and how to run it on your ma
 
 | Workflow | File | Runs on | Checks |
 | --- | --- | --- | --- |
-| ESP32 Examples Build CI | `esp32-examples-build-ci.yml` | push, pull request | Builds every app with `ci_enabled: true` in `app_config.yml`, Debug and Release, with ESP-IDF release/v5.5 |
+| ESP32 Examples Build CI | `esp32-examples-build-ci.yml` | push, pull request | Builds every app in `app_config.yml` (all have `ci_enabled: true`), Debug and Release, with ESP-IDF release/v5.5 |
+| Host Tests CI | `ci-host-tests.yml` | push, every pull request | Builds the MCU-free HAL sources on Linux with GCC and Clang against hf-core's host mocks and runs `tests/host` |
 | C++ Lint CI | `ci-cpp-lint.yml` | push, pull request | clang-format and clang-tidy with `_config/.clang-format` and `_config/.clang-tidy` |
 | C++ Analysis CI | `ci-cpp-analysis.yml` | push, pull request | cppcheck on `lib/managers` and `lib/api` (C++20) |
 | Docs Publish CI | `ci-docs-publish.yml` | push to main, `v*` tags, pull request | `hardfoc-docs check` (figures and generated tables current), strict MkDocs build, Doxygen under `api/`, offline link check of the built site, Lighthouse budget, phone and desktop screenshots (artifact `docs-screenshots`); publishes on main and tags |
@@ -19,7 +20,29 @@ What runs on a pull request, what each check means, and how to run it on your ma
 | Release | `release.yml` | `v*` tags | Builds the release artifacts |
 
 The examples are integration tests: they run on a board, not in CI. CI proves they compile; a person flashes them.
-There are no host unit tests in this repository yet.
+
+## Host unit tests
+
+[`tests/host`](../tests/host) builds the HAL sources that do not need ESP-IDF, with hf-core added as a
+subdirectory (`HF_CORE_MCU=NONE`, `HF_CORE_RTOS=NONE`), and runs them against hf-core's scriptable `Base*` fakes
+(`hf_core_host_mocks`): a test hands a manager a `MockSpi` with a chip model behind it and checks the frames it
+sends. One file is one executable and one ctest entry.
+
+| Test | Proves |
+| --- | --- |
+| `test_board_config` | The board NTC config reads TMC9660 AIN3 (not AIN0) on a shared ADC; the examples' GPIO numbers equal the pin map |
+| `test_boot_report` | What `Vortex::GetFailedComponents()` and `GetSystemWarnings()` return: no duplicates, bounded, overflow counted |
+| `test_encoder_manager` | `EncoderManager` reads on an AS5047U register model: `ReadDiagnostics()` makes one ERRFL read, `ReadFieldStrength()` returns AGC and magnitude, empty slots touch no SPI |
+
+```bash
+cd tests/host
+cmake --preset host-debug
+cmake --build --preset host-debug
+ctest --preset host-debug
+```
+
+The host RTOS layer has no scheduler, so its mutex is a no-op: lock *order* and lock *coverage* are reviewed, not
+tested here.
 
 ## Run the checks locally
 

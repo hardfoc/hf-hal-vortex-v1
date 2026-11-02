@@ -31,11 +31,7 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 
 | Gap | Where | Page |
 | --- | --- | --- |
-| `GetSystemWarnings()` always returns no entries | `Vortex.cpp` | [Errors](architecture/errors.md) |
-| `Vortex::EnsureInitialized()` and `Shutdown()` take no lock | `Vortex.cpp` | [Threading](architecture/threading.md) |
-| Per-pin GPIO calls and single-encoder reads take no lock | `GpioManager.cpp`, `EncoderManager.cpp` | [Threading](architecture/threading.md) |
-| `GpioManager::Read()` documents "true = high" but returns the logical (active) state | `GpioManager.h` | [GpioManager](managers/gpio.md) |
 | Most managers allocate with throwing `make_unique`, so a failed allocation aborts | `lib/managers` | [ADR 0002](adr/0002-static-allocation.md) |
-| `vortex_board_pins.hpp` repeats GPIO numbers without a check against the pin map | `examples/esp32/main/common` | [ADR 0003](adr/0003-pin-map-ownership.md) |
 | ESP32 port numbers and `gpio_num_t` in managers | `CommChannelsManager.cpp`, `LedManager.h` | [ADR 0001](adr/0001-mcu-agnostic-boundary.md) |
-| No host unit tests in this repository; the examples prove behaviour on a board | - | [Testing and CI](testing.md) |
+| Only some managers build on the host (the rest still construct ESP32 peripherals themselves) | `tests/host/seams` | [Testing and CI](testing.md) |
+| hf-core `NtcTemperatureHandler` recurses until the stack overflows when `enable_threshold_monitoring` is set in its config; the HAL applies the window after init instead | hf-core `handlers/ntc` | [TemperatureManager](managers/temperature.md) |
