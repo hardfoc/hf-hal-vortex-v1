@@ -1,0 +1,13 @@
+<map id="ImuManager.h" name="ImuManager.h">
+<area shape="rect" id="Node000001" title="IMU device management for the HardFOC Vortex V1 platform." alt="" coords="189,5,304,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,83,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,33,90,77,89,72,213,28"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="107,79,194,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="233,33,179,72,176,68,230,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="219,79,275,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="249,31,249,65,244,65,244,31"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="299,79,403,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="265,28,324,68,321,73,262,33"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="427,79,672,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="296,28,488,73,487,78,295,33"/>
+</map>

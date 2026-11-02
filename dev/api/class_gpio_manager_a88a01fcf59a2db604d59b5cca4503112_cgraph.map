@@ -1,0 +1,17 @@
+<map id="GpioManager::EnsureInitialized" name="GpioManager::EnsureInitialized">
+<area shape="rect" id="Node000001" title="Register all GPIO pins and initialise drivers (idempotent)." alt="" coords="5,121,231,146"/>
+<area shape="rect" id="Node000002" href="$class_gpio_manager.html#a71081920f92fb76254ccd258ec539c9e" title=" " alt="" coords="279,121,452,146"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,131,265,131,265,136,231,136"/>
+<area shape="rect" id="Node000003" href="$class_gpio_manager.html#a9ce1eed8b041919d8bb970b729077993" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="511,5,739,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="387,118,437,91,499,62,538,47,540,52,501,66,440,95,390,123"/>
+<area shape="rect" id="Node000004" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="813,49,995,89"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="452,120,799,79,800,84,453,126"/>
+<area shape="rect" id="Node000005" href="$class_motor_controller.html#a2800ce6994196eaf98678cf543aaa1ca" title="Get the singleton instance." alt="" coords="799,135,1009,161"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="452,133,785,142,785,147,452,138"/>
+<area shape="rect" id="Node000006" href="$class_gpio_manager.html#a96f5ad1c215eeb7764bbd0ad7d4a0e5b" title="Get TMC9660 handler from MotorController." alt="" coords="500,171,751,197"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="432,144,547,166,546,171,431,149"/>
+<area shape="rect" id="Node000007" href="$_gpio_manager_8cpp.html#a21c68b780d73db23df2fb67f98b2aff1" title=" " alt="" coords="555,221,695,246"/>
+<area shape="poly" id="edge8_Node000002_Node000007" title=" " alt="" coords="386,144,436,176,501,207,543,219,541,224,499,212,434,180,383,148"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="740,41,800,50,799,55,739,46"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="724,169,791,160,792,165,724,174"/>
+</map>
