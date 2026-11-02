@@ -55,6 +55,8 @@ set(HF_CORE_ENABLE_PWM            ON)
 set(HF_CORE_ENABLE_PIO            ON)
 
 # CANopenNode CiA 301 stack — default OFF; enable via `idf.py menuconfig` → HardFOC Vortex HAL.
+# The application provides the OD: HF_CORE_CANOPENNODE_OD_DIR (and optionally
+# HF_CORE_CANOPENNODE_CONFIG_DIR), set in its project CMakeLists.txt.
 if(COMMAND idf_component_register)
     if(CONFIG_HARDFOC_HAL_CANOPENNODE_SLAVE)
         set(HF_CORE_ENABLE_CANOPENNODE ON)
