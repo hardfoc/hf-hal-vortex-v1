@@ -1406,7 +1406,7 @@
 <h1 id="imumanager">ImuManager<a class="headerlink" href="#imumanager" title="Permanent link">&para;</a></h1>
 <p>Owns the BNO08x IMUs: the onboard one on I2C at 0x4A, and up to three external ones on I2C or SPI. The BNO08x runs
 its own sensor fusion; this manager creates its handler (which drives the reset and boot lines on the PCAL95555) and
-optionally wires its data-ready interrupt. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/ImuManager.h"><code>ImuManager.h</code></a>.</p>
+optionally wires its data-ready interrupt. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/ImuManager.h"><code>ImuManager.h</code></a>.</p>
 <h2 id="devices">Devices<a class="headerlink" href="#devices" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1451,8 +1451,8 @@ optionally wires its data-ready interrupt. Source: <a href="https://github.com/h
 <td>External IMUs</td>
 </tr>
 <tr>
-<td><code>ConfigureInterrupt(index, callback)</code>, <code>EnableInterrupt</code>, <code>DisableInterrupt</code>, <code>IsInterruptEnabled</code>, <code>WaitForInterrupt(index, timeout_ms)</code></td>
-<td>Data-ready interrupt; the onboard IMU uses <code>PCAL_IMU_INT</code> through <code>GpioManager</code></td>
+<td><code>ConfigureInterrupt(index, callback, user_data)</code>, <code>EnableInterrupt</code>, <code>DisableInterrupt</code>, <code>IsInterruptEnabled</code>, <code>WaitForInterrupt(index, timeout_ms)</code></td>
+<td>Data-ready interrupt; the onboard IMU uses <code>PCAL_IMU_INT</code> through <code>GpioManager</code>. <code>callback</code> is a plain <code>void (*)(void*)</code>, called in task context</td>
 </tr>
 <tr>
 <td><code>IsDeviceValid</code>, <code>GetActiveDeviceIndices</code>, <code>GetAvailableDevices</code>, <code>GetDeviceType</code></td>

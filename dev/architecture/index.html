@@ -1200,7 +1200,7 @@ wrap. Only the board binding names an ESP32 type.</p>
 <details class="hf-figure-desc">
 <summary>Figure description and sources</summary>
 <p>From top to bottom, each layer only calls the one under it. Your application asks the facade singleton for the managers. The managers (one per board function) are MCU-free: they own the hf-core handlers, which wrap one chip driver each, and they get every bus, MCU pin, NVS namespace and the status LED from the board binding. The binding is the only HAL code that names an ESP32 type; it constructs the ESP32 implementations of the interface classes, which sit on ESP-IDF. Drivers talk to hardware only through those interface classes. Every name in a band is read from the code: the managers from the facade's member references, the binding's classes from its #include lines, the handlers, drivers and interface classes from the managers' and handlers' #include lines.</p>
-<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/api/Vortex.h"><code>lib/api/Vortex.h</code></a> <code>Vortex (manager references)</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers"><code>lib/managers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/core/handlers"><code>lib/core/handlers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/esp32c6"><code>lib/managers/bsp_bind/esp32c6</code></a> <code>#includes</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/docs/diagrams/figures/hal-layers.py"><code>docs/diagrams/figures/hal-layers.py</code></a>.</p>
+<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/api/Vortex.h"><code>lib/api/Vortex.h</code></a> <code>Vortex (manager references)</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers"><code>lib/managers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/core/handlers"><code>lib/core/handlers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/esp32c6"><code>lib/managers/bsp_bind/esp32c6</code></a> <code>#includes</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/docs/diagrams/figures/hal-layers.py"><code>docs/diagrams/figures/hal-layers.py</code></a>.</p>
 </details>
 <h2 id="the-layers">The layers<a class="headerlink" href="#the-layers" title="Permanent link">&para;</a></h2>
 <table>
@@ -1215,25 +1215,25 @@ wrap. Only the board binding names an ESP32 type.</p>
 <tbody>
 <tr>
 <td>Application</td>
-<td>your project, <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/examples/esp32"><code>examples/esp32</code></a></td>
+<td>your project, <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/examples/esp32"><code>examples/esp32</code></a></td>
 <td>Tasks, control loops, protocols</td>
 <td>Always</td>
 </tr>
 <tr>
 <td>Facade</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/api/Vortex.h"><code>lib/api/Vortex.h</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/api/Vortex.h"><code>lib/api/Vortex.h</code></a></td>
 <td>One singleton; brings the managers up in order; system diagnostics</td>
 <td>Always: <code>Vortex::GetInstance()</code></td>
 </tr>
 <tr>
 <td>Managers</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers"><code>lib/managers</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers"><code>lib/managers</code></a></td>
 <td>One per board function (motors, encoders, IMU, ADC, ...); know the board's wiring from the pin map; MCU-free</td>
 <td>Almost always: <code>vortex.motors</code>, <code>vortex.encoders</code>, ...</td>
 </tr>
 <tr>
 <td>Board binding</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/VortexBoardBind.h"><code>lib/managers/bsp_bind</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/VortexBoardBind.h"><code>lib/managers/bsp_bind</code></a></td>
 <td>Creates the buses, MCU pins, NVS namespaces, die sensor and status LED for one MCU (<code>esp32c6/</code>), or mocks them for host tests (<code>host/</code>)</td>
 <td>When porting to another MCU</td>
 </tr>
@@ -1261,16 +1261,16 @@ wrap. Only the board binding names an ESP32 type.</p>
 that knows Vortex V1 exists; handlers and drivers are shared with other HardFOC boards. Why the line is drawn there is
 recorded in <a href="../adr/0001-mcu-agnostic-boundary/">ADR 0001</a>.</p>
 <h2 id="the-board-binding">The board binding<a class="headerlink" href="#the-board-binding" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a> is a set of free functions (<code>UartOpen()</code>,
+<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a> is a set of free functions (<code>UartOpen()</code>,
 <code>SpiOpen()</code>, <code>SpiAddDevice()</code>, <code>I2cOpen()</code>, <code>McuGpioOpen()</code>, <code>Nvs()</code>, <code>McuTemperature()</code>, <code>StatusLedShow()</code>, ...)
 with one implementation per platform; CMake links exactly one. The ESP-IDF component builds
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/esp32c6/VortexBoardBindEsp32c6.cpp"><code>bsp_bind/esp32c6/</code></a>, and the
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/esp32c6/VortexBoardBindEsp32c6.cpp"><code>bsp_bind/esp32c6/</code></a>, and the
 <a href="../testing/#host-unit-tests">host tests</a> build <code>bsp_bind/host/</code>, which hands out hf-core's mocks. Every object
 the binding creates lives in static storage inside it, so a manager holds plain pointers and indices.</p>
 <!-- generated: board-binding -->
-<p>From <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a>,
+<p>From <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/VortexBoardBind.h"><code>VortexBoardBind.h</code></a>,
 the <code>vortex::bsp::</code> calls in the managers and the <code>#include</code> lines of
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/bsp_bind/esp32c6"><code>lib/managers/bsp_bind/esp32c6</code></a>; do not edit.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers/bsp_bind/esp32c6"><code>lib/managers/bsp_bind/esp32c6</code></a>; do not edit.</p>
 <table>
 <thead>
 <tr>

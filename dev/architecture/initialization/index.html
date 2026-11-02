@@ -1322,11 +1322,11 @@
 <details class="hf-figure-desc">
 <summary>Figure description and sources</summary>
 <p>Left to right, then the second row. The facade initialises the managers one at a time, in the order of the calls in its init function. The first group is required: if any of them fails, EnsureInitialized() returns false and the application should not continue. The second group is best effort: a failure there is logged as a warning, the manager stays unavailable and the system reports itself as degraded, so a bench with only some chips fitted still comes up. The order and the required / best-effort split are read from the init function, which returns false only in the required branches.</p>
-<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/api/Vortex.cpp"><code>lib/api/Vortex.cpp</code></a> <code>Vortex::InitializeAllComponents</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/docs/diagrams/figures/init-order.py"><code>docs/diagrams/figures/init-order.py</code></a>.</p>
+<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/api/Vortex.cpp"><code>lib/api/Vortex.cpp</code></a> <code>Vortex::InitializeAllComponents</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/docs/diagrams/figures/init-order.py"><code>docs/diagrams/figures/init-order.py</code></a>.</p>
 </details>
 <h2 id="the-order">The order<a class="headerlink" href="#the-order" title="Permanent link">&para;</a></h2>
 <!-- generated: init-order -->
-<p>From <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/api/Vortex.cpp"><code>Vortex.cpp</code></a>
+<p>From <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/api/Vortex.cpp"><code>Vortex.cpp</code></a>
 (<code>Vortex::InitializeAllComponents</code>); do not edit.</p>
 <table>
 <thead>
@@ -1403,12 +1403,18 @@ so an LED-only bench works without the motor controller. After that come the man
 the chip temperature from the TMC9660.</p>
 <h2 id="what-happens-when-a-step-fails">What happens when a step fails<a class="headerlink" href="#what-happens-when-a-step-fails" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Required steps (NVS, comms, GPIO, LEDs).</strong> If one fails, <code>EnsureInitialized()</code> logs an error, stops and returns
-  <code>false</code>. <code>IsInitialized()</code> stays <code>false</code>, and calling <code>EnsureInitialized()</code> again retries from the start.</li>
+<li><strong>Required steps (NVS, comms, GPIO, LEDs).</strong> If one fails, <code>EnsureInitialized()</code> fails <em>closed</em>: it shuts down,
+  in reverse order, every manager that had come up, so no bus, pin or handler is left open behind a facade that
+  says it is not initialised. It returns <code>false</code>, <code>GetLastError()</code> says why (<code>BusUnavailable</code>, <code>InitFailed</code>, ...), and
+  calling <code>EnsureInitialized()</code> again retries from the start. Each manager also fails closed on its own: a manager
+  whose <code>Initialize()</code> fails releases what it had opened before it returns.</li>
 <li><strong>Best-effort steps (motors, ADC, IMU, encoders, temperature).</strong> A failure is logged as a warning and the manager
   stays unavailable; the remaining steps still run and <code>EnsureInitialized()</code> returns <code>true</code>. The log then says
   <code>Initialized in degraded mode</code> and lists which of Motors, ADC, IMU, Enc and Temp are <code>OFF</code>. Check
   <code>vortex.motors.IsInitialized()</code> (or the <a href="../errors/">diagnostics</a>) before relying on a best-effort manager.</li>
+<li><strong>The motor controller is the exception to "just a warning".</strong> If <code>MotorController</code> does not come up, the facade
+  drives the TMC9660 driver-enable line (<code>PCAL_TMC_DRV_EN</code>) inactive, so a chip that half-booted cannot leave its
+  gate drivers enabled. <code>Shutdown()</code> does the same before it releases the motor controller.</li>
 </ul>
 <p>This lets a bench with only some chips fitted, or with the motor supply off, still come up and log.</p>
 <h2 id="the-onboard-tmc9660-and-its-transport">The onboard TMC9660 and its transport<a class="headerlink" href="#the-onboard-tmc9660-and-its-transport" title="Permanent link">&para;</a></h2>

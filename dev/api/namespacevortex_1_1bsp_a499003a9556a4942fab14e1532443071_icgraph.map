@@ -1,9 +1,0 @@
-<map id="vortex::bsp::McuGpioCloseAll" name="vortex::bsp::McuGpioCloseAll">
-<area shape="rect" id="Node000001" title="Destroy every MCU GPIO created by McuGpioOpen(). Pointers handed out become invalid." alt="" coords="428,35,641,60"/>
-<area shape="rect" id="Node000002" href="$class_gpio_manager.html#a5ee2f2ebc0252f5c8f894089486d4ba7" title="Reset GPIO manager to uninitialised state." alt="" coords="189,5,380,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="414,36,380,32,381,27,415,31"/>
-<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp_1_1host.html#ad0b1010de755429fd027123607ac654e" title="Close every object, forget the log and the failures, and remove every simulated I2C chip." alt="" coords="215,55,354,95"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="415,63,354,70,354,65,414,58"/>
-<area shape="rect" id="Node000003" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,5,141,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="175,21,141,21,141,15,175,15"/>
-</map>

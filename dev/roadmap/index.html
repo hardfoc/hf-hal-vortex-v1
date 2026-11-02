@@ -1106,7 +1106,7 @@ host tests that run the same node against a simulated motor.</p>
 </tr>
 <tr>
 <td>CANopenNode sources</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
 <td>Present</td>
 </tr>
 </tbody>
@@ -1128,9 +1128,14 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 </thead>
 <tbody>
 <tr>
-<td>Most managers allocate with throwing <code>make_unique</code>, so a failed allocation aborts</td>
-<td><code>lib/managers</code></td>
+<td>hf-core handlers (<code>Tmc9660Handler</code>, <code>Bno08xHandler</code>, <code>As5047uHandler</code>, <code>Pcal95555Handler</code>, ...) still create their drivers on the heap at init</td>
+<td>hf-core <code>handlers/</code></td>
 <td><a href="../adr/0002-static-allocation/">ADR 0002</a></td>
+</tr>
+<tr>
+<td>hf-core <code>Tmc9660Handler::gpio()</code> / <code>adc()</code> dereference wrappers that exist only after a successful bring-up; the HAL guards its calls</td>
+<td>hf-core <code>handlers/tmc9660</code></td>
+<td><a href="../managers/gpio/">GpioManager</a></td>
 </tr>
 <tr>
 <td>13 example apps still include HAL internals (handlers, TMC9660 driver headers, the pin map)</td>

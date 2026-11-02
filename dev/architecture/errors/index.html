@@ -808,6 +808,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#one-catalog-managererror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One catalog: ManagerError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#error-types-by-manager" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1221,6 +1232,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#one-catalog-managererror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One catalog: ManagerError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#error-types-by-manager" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1278,6 +1300,12 @@ in the return value. This page lists the error types, where to read the last err
 <li>Every manager has <code>GetLastError()</code>. Prefer the value a call returns: the last error is shared by every caller
    of that manager and may already describe a later call.</li>
 </ol>
+<h2 id="one-catalog-managererror">One catalog: <code>ManagerError</code><a class="headerlink" href="#one-catalog-managererror" title="Permanent link">&para;</a></h2>
+<p>Each manager keeps its own error type (table below), and the facade maps all of them onto one catalog,
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/api/VortexDiagnostics.h"><code>ManagerError</code></a>: <code>None</code>, <code>NotInitialized</code>, <code>DependencyNotReady</code>,
+<code>BusUnavailable</code>, <code>DeviceNotFound</code>, <code>InitFailed</code>, <code>CommunicationFailed</code>, <code>InvalidParameter</code>, <code>HardwareFault</code>,
+<code>Unknown</code>. <code>Vortex::GetLastError()</code> uses it to say why the last <code>EnsureInitialized()</code> failed, and
+<code>CollectDiagnostics()</code> reports every manager in it, with the manager's own code alongside.</p>
 <h2 id="error-types-by-manager">Error types by manager<a class="headerlink" href="#error-types-by-manager" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1340,7 +1368,7 @@ in the return value. This page lists the error types, where to read the last err
 are shared with every HardFOC board.</p>
 <h2 id="system-diagnostics">System diagnostics<a class="headerlink" href="#system-diagnostics" title="Permanent link">&para;</a></h2>
 <p>All of these are on the <code>Vortex</code> object. <code>CollectManagerHealth()</code> and <code>PerformHealthCheck()</code> return <code>false</code> until
-<code>EnsureInitialized()</code> has succeeded.</p>
+<code>EnsureInitialized()</code> has succeeded; <code>CollectDiagnostics()</code> works at any time.</p>
 <table>
 <thead>
 <tr>
@@ -1349,6 +1377,14 @@ are shared with every HardFOC board.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>CollectDiagnostics(VortexBoardDiagnostics&amp;)</code></td>
+<td>Everything in one snapshot, without a bus transfer or an allocation: per manager (in init order) whether it is required, up, and its <code>ManagerError</code>; the four buses; GPIO pin, motor, IMU, encoder, ADC and temperature counts; failed components, warnings, start-up time. Safe from a periodic health task</td>
+</tr>
+<tr>
+<td><code>GetLastError()</code></td>
+<td><code>ManagerError</code> of the last failed <code>EnsureInitialized()</code> (<code>None</code> after a success)</td>
+</tr>
 <tr>
 <td><code>GetSystemDiagnostics(VortexSystemDiagnostics&amp;)</code></td>
 <td>Which managers initialised, how many failed (and their names), start-up time, uptime; <code>system_healthy</code></td>

@@ -1,9 +1,0 @@
-<map id="vortex::bsp::CanClose" name="vortex::bsp::CanClose">
-<area shape="rect" id="Node000001" title="Close the CAN controller (idempotent)." alt="" coords="420,45,584,70"/>
-<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#a8f73e8183217a6d09ec4e581f8010ed9" title="Release all bus resources and reset to uninitialized state." alt="" coords="189,5,372,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="406,46,372,41,372,36,407,41"/>
-<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp_1_1host.html#ad0b1010de755429fd027123607ac654e" title="Close every object, forget the log and the failures, and remove every simulated I2C chip." alt="" coords="211,69,350,109"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="407,74,351,82,350,77,406,69"/>
-<area shape="rect" id="Node000003" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,13,141,38"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="176,28,142,28,142,23,176,23"/>
-</map>

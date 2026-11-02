@@ -1323,12 +1323,12 @@ managers borrow them.</p>
 <details class="hf-figure-desc">
 <summary>Figure description and sources</summary>
 <p>Managers on the left, hf-core handlers in the middle, chip drivers on the right. An arrow means "includes and uses": a manager owns or borrows the handler it points at, and each handler wraps exactly one driver. Several managers share the TMC9660 handler, because that one chip provides motor control, GPIO, ADC channels and a temperature sensor; MotorController owns it and the others reach it through MotorController. LedManager uses its driver directly, without a handler. Managers with no arrow (communication buses, NVS) talk to the interface wrap only.</p>
-<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers"><code>lib/managers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/core/handlers"><code>lib/core/handlers</code></a> <code>#includes</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/docs/diagrams/figures/manager-dependencies.py"><code>docs/diagrams/figures/manager-dependencies.py</code></a>.</p>
+<p>Drawn from: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers"><code>lib/managers</code></a> <code>#includes</code>; <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/core/handlers"><code>lib/core/handlers</code></a> <code>#includes</code>; figure module <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/docs/diagrams/figures/manager-dependencies.py"><code>docs/diagrams/figures/manager-dependencies.py</code></a>.</p>
 </details>
 <h2 id="managers-handlers-and-drivers">Managers, handlers and drivers<a class="headerlink" href="#managers-handlers-and-drivers" title="Permanent link">&para;</a></h2>
 <!-- generated: manager-map -->
 <p>From the <code>#include</code> lines of
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers"><code>lib/managers</code></a> and the hf-core handlers; do not edit.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/6220955b542e455785599df113b846aec84af24d/lib/managers"><code>lib/managers</code></a> and the hf-core handlers; do not edit.</p>
 <table>
 <thead>
 <tr>
@@ -1341,63 +1341,63 @@ managers borrow them.</p>
 </thead>
 <tbody>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/AdcManager.h"><code>AdcManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/AdcManager.h"><code>AdcManager</code></a></td>
 <td><code>MotorController</code></td>
 <td><code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
 <td><code>BaseAdc</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/CommChannelsManager.h"><code>CommChannelsManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/CommChannelsManager.h"><code>CommChannelsManager</code></a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 <td><code>BaseCan</code>, <code>BaseI2c</code>, <code>BaseSpi</code>, <code>BaseUart</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/EncoderManager.h"><code>EncoderManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/EncoderManager.h"><code>EncoderManager</code></a></td>
 <td><code>CommChannelsManager</code>, <code>GpioManager</code></td>
 <td><code>as5047u</code> (hf-as5047u)</td>
 <td>-</td>
 <td><code>BaseGpio</code>, <code>BaseSpi</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/GpioManager.h"><code>GpioManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/GpioManager.h"><code>GpioManager</code></a></td>
 <td><code>CommChannelsManager</code>, <code>MotorController</code></td>
 <td><code>pcal95555</code> (hf-pcal95555), <code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
 <td><code>BaseGpio</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/ImuManager.h"><code>ImuManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/ImuManager.h"><code>ImuManager</code></a></td>
 <td><code>CommChannelsManager</code>, <code>GpioManager</code></td>
 <td><code>bno08x</code> (hf-bno08x)</td>
 <td>-</td>
 <td><code>BaseGpio</code>, <code>BaseI2c</code>, <code>BaseSpi</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/LedManager.h"><code>LedManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/LedManager.h"><code>LedManager</code></a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/MotorController.h"><code>MotorController</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/MotorController.h"><code>MotorController</code></a></td>
 <td><code>CommChannelsManager</code>, <code>GpioManager</code></td>
 <td><code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
 <td>-</td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/NvsManager.h"><code>NvsManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/NvsManager.h"><code>NvsManager</code></a></td>
 <td>-</td>
 <td>-</td>
 <td>-</td>
 <td><code>BaseNvs</code></td>
 </tr>
 <tr>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d8275ce3cbcfa709b463b3e9104604c4e7b29541/lib/managers/TemperatureManager.h"><code>TemperatureManager</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/6220955b542e455785599df113b846aec84af24d/lib/managers/TemperatureManager.h"><code>TemperatureManager</code></a></td>
 <td><code>AdcManager</code>, <code>MotorController</code></td>
 <td><code>ntc</code> (hf-ntc-thermistor), <code>tmc9660</code> (hf-tmc9660)</td>
 <td>-</td>
@@ -1439,8 +1439,8 @@ same object; prefer the facade in application code so the start-up order is resp
 </tr>
 <tr>
 <td>GPIO pin objects</td>
-<td><code>GpioManager</code> (one <code>std::shared_ptr&lt;BaseGpio&gt;</code> per registered pin)</td>
-<td><code>Get(name)</code> / <code>Get(enum)</code> return a <code>std::shared_ptr</code></td>
+<td>Static storage (see below); <code>GpioManager</code> holds one <code>BaseGpio*</code> per registered pin</td>
+<td><code>Get(name)</code> / <code>Get(enum)</code> return a <code>BaseGpio*</code>, valid until <code>GpioManager</code> is de-initialised</td>
 </tr>
 <tr>
 <td><code>Bno08xHandler</code> (onboard at index 0, up to three external)</td>
@@ -1482,22 +1482,26 @@ same object; prefer the facade in application code so the start-up order is resp
 <p>Borrowed pointers and references stay valid until the owning manager is de-initialised (<code>Vortex::Shutdown()</code> or the
 manager's own <code>Deinitialize()</code>). Do not keep them across a shutdown.</p>
 <h2 id="gpio-pins-have-three-owners">GPIO pins have three owners<a class="headerlink" href="#gpio-pins-have-three-owners" title="Permanent link">&para;</a></h2>
-<p><code>GpioManager</code> stores every pin as a <code>std::shared_ptr&lt;BaseGpio&gt;</code>, because the pins come from three places:</p>
+<p><code>GpioManager</code> stores every pin as a plain <code>BaseGpio*</code>; no pin object is on the heap or reference counted. The
+objects come from three places:</p>
 <ul>
-<li><strong>ESP32 pins</strong>: the board binding creates them (<code>McuGpioOpen()</code>, static storage); <code>GpioManager</code> holds a
-  non-owning shared pointer.</li>
-<li><strong>PCAL95555 pins</strong>: the expander handler creates the pin object; the shared pointer keeps it alive.</li>
-<li><strong>TMC9660 pins</strong> (<code>TMC_GPIO17</code>, <code>TMC_GPIO18</code>): the TMC9660 handler owns them; <code>GpioManager</code> holds a non-owning
-  shared pointer, registered by <code>RegisterTmc9660BridgePinsIfNeeded()</code> once the onboard handler exists.</li>
+<li><strong>ESP32 pins</strong>: the board binding creates them (<code>McuGpioOpen()</code>, static storage).</li>
+<li><strong>PCAL95555 pins</strong>: <code>GpioManager</code> keeps them in a fixed array of 16 and attaches each to the expander handler
+  (<code>Pcal95555Handler::AttachStaticPin()</code>); they are destroyed, after their pointers are cleared, in <code>Deinitialize()</code>.</li>
+<li><strong>TMC9660 pins</strong> (<code>TMC_GPIO17</code>, <code>TMC_GPIO18</code>): the TMC9660 handler owns them. They are registered by
+  <code>RegisterTmc9660BridgePinsIfNeeded()</code> once the onboard handler has come up, and removed by
+  <code>UnregisterTmc9660BridgePins()</code>, which <code>MotorController::Deinitialize()</code> calls before it destroys the handler.</li>
 </ul>
+<p>So a pointer from <code>Get()</code> cannot outlive its object: every owner clears the entry before the object goes.</p>
 <h2 id="allocation">Allocation<a class="headerlink" href="#allocation" title="Permanent link">&para;</a></h2>
-<p>Device tables are fixed-size arrays sized at compile time (from the pin map or a <code>MAX_*_DEVICES</code> constant), so
-there are no growing containers. The objects in those tables (buses, handlers, drivers, pin objects) are created on
-the heap during initialisation with <code>std::make_unique</code> / <code>std::make_shared</code> and live as long as the manager. After
-start-up, the heap is used again only when you create or delete a device at run time: <code>CreateI2cDevice()</code>,
-<code>MotorController::CreateExternalDevice()</code>, <code>ImuManager::CreateExternalBno08xDevice()</code>,
-<code>EncoderManager::CreateAs5047uDevice()</code>. <a href="../../adr/0002-static-allocation/">ADR 0002</a> records this rule and where
-the code does not yet meet it.</p>
+<p>Device tables are fixed-size arrays sized at compile time (from the pin map or a <code>MAX_*_DEVICES</code> constant), and the
+objects in them live in place: handlers in <code>std::optional</code> slots (<code>MotorController</code>, <code>ImuManager</code>,
+<code>EncoderManager</code>, <code>AdcManager</code>, <code>TemperatureManager</code>, the PCAL95555 handler), pin objects in fixed arrays, buses in
+the board binding's static storage. Nothing in <code>lib/api</code> or <code>lib/managers</code> calls <code>new</code>, <code>make_unique</code> or
+<code>make_shared</code>, and no manager stores a <code>std::function</code>. A host test counts <code>operator new</code> during steady-state calls
+(LED, GPIO, bus lookups, <code>CollectDiagnostics()</code>) and requires zero. Allocation still happens inside hf-core handlers
+and ESP-IDF drivers while they initialise; <a href="../../adr/0002-static-allocation/">ADR 0002</a> records the rule and that
+boundary.</p>
 
 
 

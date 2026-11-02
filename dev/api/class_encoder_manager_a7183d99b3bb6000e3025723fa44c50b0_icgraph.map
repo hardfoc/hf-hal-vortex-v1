@@ -1,5 +1,0 @@
-<map id="EncoderManager::GetInstance" name="EncoderManager::GetInstance">
-<area shape="rect" id="Node000001" title="Get the singleton instance of EncoderManager." alt="" coords="208,5,425,31"/>
-<area shape="rect" id="Node000002" href="$_encoder_manager_8h.html#aad28f7de25e3a1e9131accd7588909c8" title="Convenience accessor — equivalent to EncoderManager::GetInstance()." alt="" coords="5,5,160,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,21,160,21,160,15,194,15"/>
-</map>

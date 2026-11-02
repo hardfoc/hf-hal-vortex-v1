@@ -1,5 +1,0 @@
-<map id="LedManager::ShowPixel" name="LedManager::ShowPixel">
-<area shape="rect" id="Node000001" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="5,5,181,31"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#aeabe621406616ba6d8213f6b4fd14fe1" title="Latch colours onto the chain." alt="" coords="229,5,432,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,15,216,15,216,21,181,21"/>
-</map>

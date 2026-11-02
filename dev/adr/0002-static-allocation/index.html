@@ -1302,7 +1302,7 @@
 <tbody>
 <tr>
 <td>Status</td>
-<td>Accepted (records the current design, with the exceptions listed)</td>
+<td>Accepted; tightened by the static-allocation change (see "Decision" and "Consequences")</td>
 </tr>
 <tr>
 <td>Date</td>
@@ -1331,9 +1331,15 @@ easiest to create on the heap. The examples build with C++ exceptions off.</p>
   (<code>SpiDeviceId::DEVICE_COUNT</code>), the handler slots (<code>MAX_TMC9660_DEVICES</code>, <code>MAX_IMU_DEVICES</code>,
   <code>MAX_ENCODER_DEVICES</code>, all 4), the bounded runtime I2C slots, and the facade's diagnostics arrays
   (<code>kVortexManagerCount</code>).</li>
-<li>Bus objects, handlers and drivers are held in <code>std::unique_ptr</code> (GPIO pins in <code>std::shared_ptr</code>, because their
-  owners differ), created when the owning manager initialises or when you create a device.</li>
-<li>No manager allocates in its read, write, motion or LED calls.</li>
+<li>Handlers live in place in fixed slots (<code>std::array&lt;std::optional&lt;Handler&gt;, N&gt;</code>, emplaced when a device is created,
+  reset when it is deleted or the manager shuts down). Bus objects and MCU pins live in the board binding's static
+  storage. GPIO entries are plain <code>BaseGpio*</code> into those objects.</li>
+<li><code>lib/api</code> and <code>lib/managers</code> contain no <code>new</code>, <code>make_unique</code>, <code>make_shared</code> or <code>std::function</code>; callbacks are a
+  function pointer plus a <code>void*</code>.</li>
+<li>No manager allocates in its read, write, motion, LED or diagnostics calls; a host test counts <code>operator new</code>
+  across steady-state calls and requires zero.</li>
+<li>Initialisation fails closed: a manager whose bring-up fails releases what it opened, and the facade shuts down
+  every manager again if a required one fails.</li>
 </ul>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1342,13 +1348,12 @@ easiest to create on the heap. The examples build with C++ exceptions off.</p>
 </ul>
 <p>Where this is not strictly true today:</p>
 <ul>
-<li>Run-time device creation allocates: <code>CreateI2cDevice()</code>, <code>MotorController::CreateExternalDevice()</code>,
-  <code>ImuManager::CreateExternalBno08xDevice()</code>, <code>EncoderManager::CreateAs5047uDevice()</code>. Create devices during your
-  own start-up.</li>
-<li>Most managers use <code>std::make_unique</code> / <code>std::make_shared</code>; with exceptions off, an allocation failure aborts
-  instead of failing initialisation. Only <code>TemperatureManager</code> uses <code>hf::utils::make_unique_nothrow</code>.</li>
-<li><code>ImuManager::ConfigureInterrupt()</code> stores a <code>std::function</code>, which may allocate for a capturing callback.</li>
-<li>Allocations inside ESP-IDF and the chip drivers are not covered by this decision.</li>
+<li>Run-time device creation (<code>MotorController::CreateExternalDevice()</code>, <code>ImuManager::CreateExternalBno08xDevice()</code>,
+  <code>EncoderManager::CreateAs5047uDevice()</code>) emplaces into a fixed slot; the manager itself no longer allocates. The
+  handler it builds may (next point), so create devices during your own start-up.</li>
+<li>Allocations inside hf-core handlers and the ESP-IDF drivers are outside this decision: <code>Tmc9660Handler</code>,
+  <code>As5047uHandler</code>, <code>Bno08xHandler</code>, <code>Pcal95555Handler</code>, <code>NtcTemperatureHandler</code> and <code>Ws2812Handler</code> create their
+  drivers with <code>std::unique_ptr</code> when they initialise. Moving those in place is hf-core work.</li>
 </ul>
 
 
