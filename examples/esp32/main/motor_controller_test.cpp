@@ -22,6 +22,8 @@
 #include "managers/MotorController.h"
 #include "TestFramework.h"
 
+#include <cinttypes>
+
 static const char* TAG = "MotorCtrlTest";
 static TestResults g_test_results;
 
@@ -54,6 +56,55 @@ static bool test_onboard_transport_matches_build() noexcept {
 #else
   return Vortex::GetOnboardTmc9660Transport() == VortexOnboardTmc9660Transport::Spi;
 #endif
+}
+
+/**
+ * SPI TMCL timing knob: the stored value starts at the driver defaults, a change reads back and
+ * reaches the driver, and the transport counters move after a TMCL access. UART slots refuse it.
+ */
+static bool test_motor_tmcl_spi_timing() noexcept {
+  tmc9660::TmclSpiTiming stored{};
+  if (MOTORS().GetTmclSpiTiming(stored) != MotorError::SUCCESS) {
+    return false;
+  }
+  const tmc9660::TmclSpiTiming defaults{};
+  ESP_LOGI(TAG, "  TMCL SPI timing: gap=%" PRIu32 " us poll=%" PRIu32 "..%" PRIu32 " us maxPolls=%u echo=%d",
+           stored.frameGapUs, stored.pollIntervalUs, stored.pollIntervalMaxUs,
+           static_cast<unsigned>(stored.maxPolls), stored.verifyReplyOpcode ? 1 : 0);
+
+  const auto mode = MOTORS().TryGetOnboardCommMode();
+  tmc9660::TmclSpiTiming tuned = stored;
+  tuned.maxPolls = 40;
+  const MotorError set_err = MOTORS().SetTmclSpiTiming(tuned);
+  if (mode && *mode == tmc9660::CommMode::UART) {
+    return set_err == MotorError::INVALID_PARAMETER;
+  }
+  if (set_err != MotorError::SUCCESS) {
+    return false;
+  }
+  tmc9660::TmclSpiTiming readback{};
+  (void)MOTORS().GetTmclSpiTiming(readback);
+  bool ok = (readback.maxPolls == tuned.maxPolls);
+
+  tmc9660::TmclSpiStats stats{};
+  if (mode && MOTORS().ResetTmclSpiStats() == MotorError::SUCCESS) {
+    MOTORS().visitDriver([&ok](auto& driver) {
+      if constexpr (requires { driver.comm().tmclTiming(); }) {
+        ok = ok && (driver.comm().tmclTiming().maxPolls == 40U);
+      }
+      uint32_t value = 0;
+      (void)driver.readGlobal(tmc9660::tmcl::GlobalParamBank0::SERIAL_ADDRESS, value);
+    });
+    if (MOTORS().GetTmclSpiStats(stats) == MotorError::SUCCESS) {
+      ESP_LOGI(TAG, "  TMCL SPI stats: accesses=%" PRIu32 " frames=%" PRIu32 " notReady=%" PRIu32
+                    " stale=%" PRIu32 " failures=%" PRIu32,
+               stats.accesses, stats.frames, stats.notReady, stats.staleReplies, stats.failures);
+      ok = ok && (stats.accesses > 0U);
+    }
+  }
+
+  (void)MOTORS().SetTmclSpiTiming(defaults);
+  return ok;
 }
 
 static bool test_motor_handler_0() noexcept {
@@ -143,6 +194,7 @@ extern "C" void app_main(void) {
   RUN_TEST(test_onboard_transport_matches_build);
   RUN_TEST(test_motor_ensure_initialized);
   RUN_TEST(test_onboard_comm_mode_matches_policy);
+  RUN_TEST(test_motor_tmcl_spi_timing);
   RUN_TEST(test_motor_handler_0);
   RUN_TEST(test_motor_handler_1);
   RUN_TEST(test_motor_visit_driver_slot0);
