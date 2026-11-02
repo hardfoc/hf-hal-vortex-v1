@@ -67,6 +67,7 @@ bool MotorController::Deinitialize() noexcept {
         deviceActive_[i] = false;
         deviceInitialized_[i] = false;
         deviceErrorCounts_[i].store(0, std::memory_order_relaxed);
+        accessStats_[i] = MotorAccessStats{};
     }
     onboardDeviceCreated_ = false;
     last_error_.store(MotorError::SUCCESS, std::memory_order_release);
@@ -506,6 +507,159 @@ MotorError MotorController::ResetTmclSpiStats(uint8_t deviceIndex) noexcept {
         return MotorError::DEVICE_NOT_FOUND;
     }
     return MotorError::SUCCESS;
+}
+
+//==============================================================================
+// DRIVE OBSERVABILITY
+//==============================================================================
+
+void MotorController::recordBatchLocked(uint8_t device_index, size_t accesses, size_t failed,
+                                        uint32_t duration_us) noexcept {
+    if (device_index >= MAX_TMC9660_DEVICES) {
+        return;
+    }
+    auto& st = accessStats_[device_index];
+    ++st.batches;
+    st.accesses += static_cast<uint32_t>(accesses);
+    st.failed_accesses += static_cast<uint32_t>(failed);
+    st.last_batch_us = duration_us;
+    st.max_batch_us = std::max(st.max_batch_us, duration_us);
+    if (failed > 0) {
+        UpdateLastError(MotorError::COMMUNICATION_FAILED, device_index);
+    }
+}
+
+namespace {
+
+/** Run a batch helper and time it; returns the number of elements answered OK. */
+template <typename Fn>
+size_t TimedBatch(Fn&& fn, uint32_t& duration_us) noexcept {
+    const uint64_t t0 = RtosTime::GetCurrentTimeUs();
+    const size_t ok = fn();
+    duration_us = static_cast<uint32_t>(RtosTime::GetCurrentTimeUs() - t0);
+    return ok;
+}
+
+}  // namespace
+
+MotorError MotorController::ReadParameters(std::span<MotorParameterAccess> items, uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    size_t ok = 0;
+    uint32_t us = 0;
+    const MotorError e = withReadyDriverLocked(deviceIndex, [&](auto& drv) {
+        ok = TimedBatch([&] { return vortex::motor::BatchRead(drv, items); }, us);
+    });
+    if (e != MotorError::SUCCESS) {
+        return e;
+    }
+    recordBatchLocked(deviceIndex, items.size(), items.size() - ok, us);
+    return ok == items.size() ? MotorError::SUCCESS : MotorError::COMMUNICATION_FAILED;
+}
+
+MotorError MotorController::WriteParameters(std::span<MotorParameterAccess> items, uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    size_t ok = 0;
+    uint32_t us = 0;
+    const MotorError e = withReadyDriverLocked(deviceIndex, [&](auto& drv) {
+        ok = TimedBatch([&] { return vortex::motor::BatchWrite(drv, items); }, us);
+    });
+    if (e != MotorError::SUCCESS) {
+        return e;
+    }
+    recordBatchLocked(deviceIndex, items.size(), items.size() - ok, us);
+    return ok == items.size() ? MotorError::SUCCESS : MotorError::COMMUNICATION_FAILED;
+}
+
+MotorError MotorController::ReadTelemetry(MotorTelemetrySet set, MotorTelemetrySnapshot& snapshot,
+                                          uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    const MotorError e = withReadyDriverLocked(deviceIndex, [&](auto& drv) {
+        (void)vortex::motor::ReadTelemetry(drv, set, snapshot);
+    });
+    if (e != MotorError::SUCCESS) {
+        return e;
+    }
+    recordBatchLocked(deviceIndex, snapshot.accesses, snapshot.failed, snapshot.batch_duration_us);
+    return snapshot.failed == 0 ? MotorError::SUCCESS : MotorError::COMMUNICATION_FAILED;
+}
+
+MotorError MotorController::ReadDriveDiagnostics(MotorDriveDiagnostics& out, uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    bool all = false;
+    const MotorError e = withReadyDriverLocked(deviceIndex, [&](auto& drv) {
+        all = vortex::motor::ReadDriveDiagnostics(drv, out);
+    });
+    if (e != MotorError::SUCCESS) {
+        return e;
+    }
+    size_t failed = 0;
+    for (unsigned i = 0; i < 4; ++i) {
+        failed += ((out.words_valid >> i) & 1U) ? 0 : 1;
+    }
+    recordBatchLocked(deviceIndex, 4, failed, out.batch_duration_us);
+    out.spi_stats_valid = withSpiDriverLocked(deviceIndex, [&](Tmc9660Handler::SpiDriver& drv) {
+        out.spi_stats = drv.comm().tmclStats();
+    });
+    return all ? MotorError::SUCCESS : MotorError::COMMUNICATION_FAILED;
+}
+
+MotorError MotorController::ClearLatchedFaults(uint32_t general_errors, uint32_t gate_driver_errors,
+                                               uint32_t adc_status, uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    bool ok = false;
+    uint32_t us = 0;
+    const MotorError e = withReadyDriverLocked(deviceIndex, [&](auto& drv) {
+        ok = TimedBatch([&] {
+                 return vortex::motor::ClearLatchedFlags(drv, general_errors, gate_driver_errors, adc_status)
+                            ? size_t{1}
+                            : size_t{0};
+             },
+             us) == 1;
+    });
+    if (e != MotorError::SUCCESS) {
+        return e;
+    }
+    const size_t n = (general_errors ? 1 : 0) + (gate_driver_errors ? 1 : 0) + (adc_status ? 1 : 0);
+    recordBatchLocked(deviceIndex, n, ok ? 0 : 1, us);
+    return ok ? MotorError::SUCCESS : MotorError::COMMUNICATION_FAILED;
+}
+
+MotorError MotorController::ApplyParameterImage(std::span<const MotorParameterWrite> image,
+                                                const MotorApplyOptions& options, MotorApplyResult& result,
+                                                uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    uint32_t us = 0;
+    const MotorError e = withReadyDriverLocked(deviceIndex, [&](auto& drv) {
+        (void)TimedBatch([&] {
+            result = vortex::motor::ApplyParameterImage(drv, image, options);
+            return size_t{0};
+        }, us);
+    });
+    if (e != MotorError::SUCCESS) {
+        return e;
+    }
+    recordBatchLocked(deviceIndex, result.written, result.rejected, us);
+    if (!result.ok()) {
+        UpdateLastError(MotorError::COMMUNICATION_FAILED, deviceIndex);
+        return MotorError::COMMUNICATION_FAILED;
+    }
+    return MotorError::SUCCESS;
+}
+
+MotorError MotorController::GetAccessStats(MotorAccessStats& stats, uint8_t deviceIndex) const noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (deviceIndex >= MAX_TMC9660_DEVICES) {
+        return MotorError::INVALID_DEVICE_INDEX;
+    }
+    stats = accessStats_[deviceIndex];
+    return MotorError::SUCCESS;
+}
+
+void MotorController::ResetAccessStats(uint8_t deviceIndex) noexcept {
+    MutexLockGuard lock(deviceMutex_);
+    if (deviceIndex < MAX_TMC9660_DEVICES) {
+        accessStats_[deviceIndex] = MotorAccessStats{};
+    }
 }
 
 MotorError MotorController::ApplyOnboardTmc9660HostSpiGateMode(Tmc9660HostSpiGateMode mode) noexcept {
