@@ -134,5 +134,5 @@ do not edit.
 
 1. Edit the X-macro row in the pin header (in the [hf-pincfg](https://github.com/hardfoc/hf-pincfg) repository) and
    advance the `lib/core` submodule.
-2. Run `python3 tools/docs/gen.py` and `python3 tools/figkit/build.py`, and commit the regenerated pages and figures
+2. Run `hardfoc-docs gen` and `hardfoc-docs figures`, and commit the regenerated pages and figures
    with the submodule bump.
