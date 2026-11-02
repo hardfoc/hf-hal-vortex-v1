@@ -112,6 +112,8 @@ class TemperatureManager;
 
 // Include the unified Logger
 #include "handlers/logger/Logger.h"
+#include "RtosMutex.h"
+#include "VortexBootReport.h"
 #include "VortexVersion.h"
 
 /** @brief Number of subsystem managers on `Vortex` (including NVS). */
@@ -303,8 +305,9 @@ public:
     [[nodiscard]] size_t GetFailedComponents(const char* out_names[], size_t max_entries) const noexcept;
 
     /**
-     * @brief Get system warnings and issues
-     * @param out_warnings Array to receive warning string pointers
+     * @brief Get the warnings recorded by the last EnsureInitialized() (degraded subsystems and
+     *        unusual conditions that did not fail initialisation).
+     * @param out_warnings Array to receive warning string pointers (static storage)
      * @param max_entries Maximum entries the array can hold
      * @return Number of warnings written
      */
@@ -491,12 +494,10 @@ private:
     // System diagnostics (fixed-size, no heap allocation)
     mutable VortexSystemDiagnostics diagnostics_;
 
-    static constexpr size_t kMaxWarnings = 8;
-    static constexpr size_t kMaxFailedComponents = 8;
-    mutable const char* system_warnings_[kMaxWarnings]{};
-    mutable size_t system_warnings_count_{0};
-    mutable const char* failed_components_[kMaxFailedComponents]{};
-    mutable size_t failed_components_count_{0};
+    VortexBootReport report_{};          ///< Failed components and warnings of the last init attempt
+
+    /// Serialises EnsureInitialized(), Shutdown() and the diagnostics readers (recursive).
+    mutable RtosMutex lifecycle_mutex_;
 
     /** 0 = Spi, 1 = Uart — must match `VortexOnboardTmc9660Transport` enumerators. */
     static std::atomic<std::uint8_t> onboard_tmc9660_transport_;
