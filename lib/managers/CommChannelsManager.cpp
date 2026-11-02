@@ -217,8 +217,15 @@ bool CommChannelsManager::Initialize() noexcept {
                               i2c_bus_valid_  ? "OK" : "FAIL",
                               can_bus_valid_  ? "OK" : "FAIL");
 
-    // At minimum SPI or I2C must work for the system to be useful
-    return spi_bus_valid_ || i2c_bus_valid_;
+    // At minimum SPI or I2C must work for the system to be useful. Otherwise fail closed:
+    // close whatever did open, so a failed manager holds no bus.
+    if (!spi_bus_valid_ && !i2c_bus_valid_) {
+        ReleaseLocked();
+        UpdateLastError(CommError::BUS_NOT_AVAILABLE);
+        return false;
+    }
+    UpdateLastError(CommError::SUCCESS);
+    return true;
 }
 
 //==============================================================================
@@ -472,6 +479,12 @@ bool CommChannelsManager::Deinitialize() noexcept {
 
     Logger::GetInstance().Info(TAG, "Deinitializing Vortex CommChannels manager");
 
+    ReleaseLocked();
+    initialized_.store(false, std::memory_order_release);
+    return true;
+}
+
+void CommChannelsManager::ReleaseLocked() noexcept {
     // Clean up runtime I2C devices first
     for (auto& slot : i2c_runtime_slots_) {
         if (slot.active) {
@@ -495,7 +508,4 @@ bool CommChannelsManager::Deinitialize() noexcept {
     vortex::bsp::CanClose();
     can_bus_ = nullptr;
     can_bus_valid_ = false;
-
-    initialized_.store(false, std::memory_order_release);
-    return true;
 }

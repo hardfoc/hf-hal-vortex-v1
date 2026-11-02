@@ -319,6 +319,9 @@ private:
 
     bool Initialize() noexcept;
 
+    /** @brief Close every bus through the binding and forget the indices. Caller holds mutex_. */
+    void ReleaseLocked() noexcept;
+
     //==========================================================================
     // BUS RESOURCES — created by the board binding (bsp_bind/VortexBoardBind.h),
     // which owns the bus objects in static storage; this manager keeps indices
