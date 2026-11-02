@@ -1,0 +1,21 @@
+<map id="MotorController" name="MotorController">
+<area shape="rect" id="Node000001" title="Singleton managing multiple TMC9660 motor controllers on Vortex V1." alt="" coords="703,193,827,219"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="315,5,522,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="536,43,610,63,646,78,680,97,707,119,729,145,759,192,755,195,725,149,703,123,677,102,644,83,608,68,535,49"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,13,200,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,30,315,30,315,35,214,35"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="335,85,503,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="517,122,597,141,680,166,739,191,736,196,678,171,596,147,516,127"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="313,149,524,204"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="538,184,703,198,702,203,538,189"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="13,164,192,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="206,174,313,174,313,179,206,179"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="313,229,524,269"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="538,234,678,217,702,213,703,219,679,222,538,239"/>
+<area shape="rect" id="Node000008" href="$struct_motor_mechanics.html" title="Mechanical mapping between the motor (rotor) frame and the load (output&#45;shaft) frame." alt="" coords="38,236,167,261"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="181,246,313,246,313,251,181,251"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="342,293,495,319"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="508,293,592,278,678,253,714,236,744,217,747,221,716,240,680,258,593,283,509,299"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="321,343,516,368"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="529,350,605,336,642,323,677,306,703,287,725,262,754,217,759,220,729,265,707,290,680,311,644,328,606,341,530,355"/>
+</map>

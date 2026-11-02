@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['calibration_5f_0',['calibration_',['../class_nvs_manager.html#a8917cd9d6b83479efa576e1be4b473fd',1,'NvsManager']]],
+  ['can_5fbus_5f_1',['can_bus_',['../class_comm_channels_manager.html#a754d30087a22ebd991e7c8377c31a3e9',1,'CommChannelsManager']]],
+  ['can_5fbus_5fvalid_2',['can_bus_valid',['../struct_comm_system_diagnostics.html#a37d15e6a78ea791aa41533d05c5bf6dc',1,'CommSystemDiagnostics']]],
+  ['can_5fbus_5fvalid_5f_3',['can_bus_valid_',['../class_comm_channels_manager.html#ab504eada5dae1a445fcbdc4cc1b2401d',1,'CommChannelsManager']]],
+  ['channels_5fby_5fchip_4',['channels_by_chip',['../struct_adc_system_diagnostics.html#a50d00941e93077dafb4b7687fa664fc1',1,'AdcSystemDiagnostics']]],
+  ['comm_5fmanager_5f_5',['comm_manager_',['../class_encoder_manager.html#ae43bb67717b0f2b9265b7f6cb2c67e65',1,'EncoderManager::comm_manager_'],['../class_imu_manager.html#af405b393f95fc7455898024ae820433a',1,'ImuManager::comm_manager_']]],
+  ['comms_6',['comms',['../class_vortex.html#a6ccb45fee4c8b6707fb0fc609a1c205a',1,'Vortex']]],
+  ['comms_5finitialized_7',['comms_initialized',['../struct_vortex_system_diagnostics.html#a7d4f63434b644ddeac411cb686f81833',1,'VortexSystemDiagnostics']]],
+  ['comms_5finitialized_5f_8',['comms_initialized_',['../class_vortex.html#ac70c5290e8941b3618f7037990b7126b',1,'Vortex']]],
+  ['communication_5ferror_5fcount_9',['communication_error_count',['../struct_encoder_system_diagnostics_1_1_device_snapshot.html#a82488e7e6671d940a4a792c0da7fee89',1,'EncoderSystemDiagnostics::DeviceSnapshot']]],
+  ['communication_5ferror_5fcounts_5f_10',['communication_error_counts_',['../class_encoder_manager.html#a848a0a044fec741f4f7a74aa675da3d5',1,'EncoderManager']]],
+  ['communication_5ferrors_11',['communication_errors',['../struct_adc_system_diagnostics.html#aa9f604923662e7ffb23d45077e4b811e',1,'AdcSystemDiagnostics::communication_errors'],['../struct_temp_system_diagnostics.html#aecee2a17b1602a65eddbe6e050add2c7',1,'TempSystemDiagnostics::communication_errors']]],
+  ['config_5f_12',['config_',['../class_nvs_manager.html#a9fabd5dfa9ea47561d58fd8dc8d5d897',1,'NvsManager']]],
+  ['count_13',['count',['../struct_manager_health_snapshot.html#abf0d28195894517c44f6f7897447e740',1,'ManagerHealthSnapshot']]],
+  ['current_5fanimation_14',['current_animation',['../struct_led_system_diagnostics.html#a4200e061728511f78dc3c8c7acdc7b02',1,'LedSystemDiagnostics']]],
+  ['current_5fanimation_5f_15',['current_animation_',['../class_led_manager.html#a7f517fde3b4761d25c85d044145a98da',1,'LedManager']]],
+  ['current_5fbrightness_16',['current_brightness',['../struct_led_system_diagnostics.html#a4279c93e54a7a11911c6cde4eb884b6a',1,'LedSystemDiagnostics']]],
+  ['current_5fbrightness_5f_17',['current_brightness_',['../class_led_manager.html#aa603ede706949a8a1c2a9a5e53eb083d',1,'LedManager']]],
+  ['current_5fcolor_18',['current_color',['../struct_led_system_diagnostics.html#a39605b8ede35a17ad4dbe6ec3bb11eed',1,'LedSystemDiagnostics']]],
+  ['current_5fcolor_5f_19',['current_color_',['../class_led_manager.html#a1eeaaedd9784dc129a8c04dfe968d5b3',1,'LedManager']]],
+  ['current_5fled_5fgpio_5f_20',['current_led_gpio_',['../class_led_manager.html#a259aa6f8180344df5a833150d1bd7102',1,'LedManager']]]
+];

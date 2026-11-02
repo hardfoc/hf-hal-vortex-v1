@@ -1,0 +1,17 @@
+<map id="Vortex.h" name="Vortex.h">
+<area shape="rect" id="Node000001" title="Unified API singleton for the HardFOC Vortex platform." alt="" coords="262,5,338,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,61,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="263,32,76,81,74,76,261,26"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="85,79,152,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="272,33,162,76,160,71,270,28"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="176,79,243,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="287,33,237,72,233,68,284,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="267,79,333,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="303,31,303,65,297,65,297,31"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="357,79,435,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="317,29,371,68,368,72,314,33"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="459,79,642,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="339,27,498,72,497,78,337,33"/>
+<area shape="rect" id="Node000008" href="$_vortex_version_8h.html" title="Version information for the Vortex HAL and API." alt="" coords="666,79,790,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="339,23,652,75,652,80,338,28"/>
+</map>

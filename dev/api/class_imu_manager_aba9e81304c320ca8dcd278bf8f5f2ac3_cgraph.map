@@ -1,0 +1,5 @@
+<map id="ImuManager::InitializeOnboardBno08xDevice" name="ImuManager::InitializeOnboardBno08xDevice">
+<area shape="rect" id="Node000001" title="Initialize the onboard BNO08x IMU device with I2C transport." alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#ae1c0a3e0c3b189f1fca2814955186828" title="Get a built&#45;in I²C device by enum identifier." alt="" coords="276,5,459,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,23,262,23,262,28,228,28"/>
+</map>

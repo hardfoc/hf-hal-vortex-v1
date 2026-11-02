@@ -1,0 +1,5 @@
+<map id="MotorController::visitDriver" name="MotorController::visitDriver">
+<area shape="rect" id="Node000001" title="Visit the underlying typed TMC9660 driver by device index." alt="" coords="5,5,205,31"/>
+<area shape="rect" id="Node000002" href="$class_motor_controller.html#a88881cf3614bf87b7bc72100ca57ba3a" title="Get access to Tmc9660Handler by device index." alt="" coords="253,5,435,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,15,239,15,239,21,205,21"/>
+</map>
