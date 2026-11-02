@@ -390,8 +390,8 @@ static bool test_imu_handler_access() noexcept {
 
 static bool test_imu_sensor_access() noexcept {
   auto& imu = VORTEX_API.imu;
-  IBno08xDriverOps* sensor = imu.GetSensor(0);
-  if (vortex_api_test_strict::kSensorChecks && sensor == nullptr) {
+  const bool reached = imu.VisitSensor(0, [](IBno08xDriverOps& sensor) { (void)sensor; });
+  if (vortex_api_test_strict::kSensorChecks && !reached) {
     return false;
   }
   return true;

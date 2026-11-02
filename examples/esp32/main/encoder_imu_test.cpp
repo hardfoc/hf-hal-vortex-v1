@@ -95,8 +95,8 @@ static bool test_imu_handler_access() noexcept {
 }
 
 static bool test_imu_sensor_access() noexcept {
-  IBno08xDriverOps* sensor = IMU().GetSensor(0);
-  (void)sensor;
+  // The driver is reached through the manager's visitor (manager + handler locks held).
+  (void)IMU().VisitSensor(0, [](IBno08xDriverOps& sensor) { (void)sensor; });
   return true;
 }
 

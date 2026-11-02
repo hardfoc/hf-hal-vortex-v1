@@ -164,38 +164,44 @@ extern "C" void app_main(void) {
         return;
     }
 
-    IBno08xDriverOps* sensor = imu.GetSensor(ImuManager::ONBOARD_IMU_INDEX);
-    if (!sensor) {
-        ESP_LOGW(TAG, "GetSensor(0) null");
+    // Each block below runs with the IMU manager and handler locks held (VisitSensor()), so no other
+    // task can use the BNO08x or delete it meanwhile. The polling loop releases the locks between
+    // samples so other IMU users are not starved.
+    const auto onboard = ImuManager::ONBOARD_IMU_INDEX;
+    const bool reached = imu.VisitSensor(onboard, [](IBno08xDriverOps& sensor) {
+        // Default Bno08xConfig already enables rotation vector; add game RV for mag-free heading.
+        if (!sensor.EnableSensor(BNO085Sensor::GameRotationVector, 50, 0.0f)) {
+            ESP_LOGW(TAG, "EnableSensor(GameRotationVector) returned false (may already be on)");
+        }
+    });
+    if (!reached) {
+        ESP_LOGW(TAG, "Onboard BNO08x not ready (VisitSensor did not run)");
         imu.DumpStatistics();
         return;
     }
 
-    // Default Bno08xConfig already enables rotation vector; add game RV for mag-free heading.
-    if (!sensor->EnableSensor(BNO085Sensor::GameRotationVector, 50, 0.0f)) {
-        ESP_LOGW(TAG, "EnableSensor(GameRotationVector) returned false (may already be on)");
-    }
-
     ESP_LOGI(TAG, "--- Phase 5: poll SH-2 (~1.5 s) for accel + orientation ---");
     for (int i = 0; i < 50; ++i) {
-        sensor->Update();
+        (void)imu.VisitSensor(onboard, [](IBno08xDriverOps& sensor) { sensor.Update(); });
         vTaskDelay(pdMS_TO_TICKS(30));
     }
 
-    if (sensor->HasNewData(BNO085Sensor::Accelerometer)) {
-        const SensorEvent ev = sensor->GetLatest(BNO085Sensor::Accelerometer);
-        ESP_LOGI(TAG, "Accel: x=%.3f y=%.3f z=%.3f m/s2 accuracy=%u",
-                 static_cast<double>(ev.vector.x), static_cast<double>(ev.vector.y),
-                 static_cast<double>(ev.vector.z), static_cast<unsigned>(ev.vector.accuracy));
-    } else {
-        ESP_LOGW(TAG, "No accelerometer report yet (sensor enable / report rate path).");
-    }
+    (void)imu.VisitSensor(onboard, [](IBno08xDriverOps& sensor) {
+        if (sensor.HasNewData(BNO085Sensor::Accelerometer)) {
+            const SensorEvent ev = sensor.GetLatest(BNO085Sensor::Accelerometer);
+            ESP_LOGI(TAG, "Accel: x=%.3f y=%.3f z=%.3f m/s2 accuracy=%u",
+                     static_cast<double>(ev.vector.x), static_cast<double>(ev.vector.y),
+                     static_cast<double>(ev.vector.z), static_cast<unsigned>(ev.vector.accuracy));
+        } else {
+            ESP_LOGW(TAG, "No accelerometer report yet (sensor enable / report rate path).");
+        }
 
-    ESP_LOGI(TAG, "Fused orientation (mag-aided, earth-fixed):");
-    log_quaternion_report("RotationVector", sensor, BNO085Sensor::RotationVector);
+        ESP_LOGI(TAG, "Fused orientation (mag-aided, earth-fixed):");
+        log_quaternion_report("RotationVector", &sensor, BNO085Sensor::RotationVector);
 
-    ESP_LOGI(TAG, "Game rotation (gyro+accel, rel. yaw — good if magnetometer unused):");
-    log_quaternion_report("GameRotationVector", sensor, BNO085Sensor::GameRotationVector);
+        ESP_LOGI(TAG, "Game rotation (gyro+accel, rel. yaw — good if magnetometer unused):");
+        log_quaternion_report("GameRotationVector", &sensor, BNO085Sensor::GameRotationVector);
+    });
 
     imu.DumpStatistics();
     ESP_LOGI(TAG, "Bring-up done");
