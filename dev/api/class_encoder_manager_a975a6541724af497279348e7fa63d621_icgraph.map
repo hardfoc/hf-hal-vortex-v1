@@ -1,0 +1,5 @@
+<map id="EncoderManager::ReadyHandlerLocked" name="EncoderManager::ReadyHandlerLocked">
+<area shape="rect" id="Node000001" title="Handler of an active, initialised slot, or nullptr. Caller holds manager_mutex_." alt="" coords="261,5,492,45"/>
+<area shape="rect" id="Node000002" href="$class_encoder_manager.html#a5fd5f50ea2c258ece1910699c9480842" title="Run fn on the AS5047U driver of one initialised slot, under both locks." alt="" coords="5,13,213,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,28,214,28,214,23,248,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="vortex::motor::ClearLatchedFlags" name="vortex::motor::ClearLatchedFlags">
+<area shape="rect" id="Node000001" title="Clear latched (write&#45;1&#45;to&#45;clear) bits of the error words in one batch." alt="" coords="5,5,209,45"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#a65511fba8c45c7e637b85ce58b7d3980" title="Write a batch (SAP, pipelined; SAP is idempotent)." alt="" coords="257,13,448,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,23,243,23,243,28,209,28"/>
+</map>

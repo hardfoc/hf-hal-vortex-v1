@@ -1,0 +1,9 @@
+<map id="MotorController::WriteParameters" name="MotorController::WriteParameters">
+<area shape="rect" id="Node000001" title="Write several axis parameters in pipelined batches (SAP); per&#45;element status in items." alt="" coords="5,37,247,63"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#a65511fba8c45c7e637b85ce58b7d3980" title="Write a batch (SAP, pipelined; SAP is idempotent)." alt="" coords="295,5,485,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,35,280,29,281,34,231,40"/>
+<area shape="rect" id="Node000003" href="$namespaceanonymous__namespace_02_motor_controller_8cpp_03.html#a5ef8346a420a163f082f0cc14b73f8d5" title=" " alt="" coords="300,55,480,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,60,287,67,286,72,231,65"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#a0c32d63c9a5e0bbd19eaa4ae8bd7d60c" title="Monotonic microseconds since boot, at the MCU&#39;s high&#45;resolution timer (not the RTOS tick)." alt="" coords="533,69,748,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="480,79,519,79,519,85,480,85"/>
+</map>

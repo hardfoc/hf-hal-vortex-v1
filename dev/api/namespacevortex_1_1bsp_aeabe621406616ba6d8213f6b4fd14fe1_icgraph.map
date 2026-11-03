@@ -1,0 +1,35 @@
+<map id="vortex::bsp::StatusLedShow" name="vortex::bsp::StatusLedShow">
+<area shape="rect" id="Node000001" title="Latch colours onto the chain." alt="" coords="1560,104,1763,130"/>
+<area shape="rect" id="Node000002" href="$class_led_manager.html#a32cf3a054189142932736ab7a1e99a02" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="1336,104,1512,130"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1546,120,1512,120,1512,114,1546,114"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="1101,54,1268,79"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1349,104,1245,82,1246,76,1350,99"/>
+<area shape="rect" id="Node000008" href="$class_led_manager.html#a70ae6019c2839bdc8c371a440e10908d" title="Turn the LED off (set colour to black)." alt="" coords="542,30,698,55"/>
+<area shape="poly" id="edge16_Node000002_Node000008" title=" " alt="" coords="1394,98,1346,68,1287,44,1207,25,1124,14,1040,9,958,9,809,18,693,32,692,27,808,12,958,3,1040,4,1124,9,1208,20,1289,38,1348,64,1397,94"/>
+<area shape="rect" id="Node000010" href="$class_led_manager.html#a2dc2c5f9181410493ab66b14e6c40788" title="Turn off the LED and release driver resources." alt="" coords="819,192,994,218"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="1397,140,1348,170,1319,185,1289,196,1212,211,1134,218,1059,219,994,216,994,211,1059,214,1134,213,1211,206,1287,190,1317,180,1346,166,1394,135"/>
+<area shape="rect" id="Node000014" href="$class_led_manager.html#a121a6a5f0c2da5ebc117f9f7d054a12c" title="Stop the current animation and turn the LED off." alt="" coords="1081,155,1288,180"/>
+<area shape="poly" id="edge13_Node000002_Node000014" title=" " alt="" coords="1350,135,1246,158,1245,152,1349,130"/>
+<area shape="rect" id="Node000015" href="$class_led_manager.html#a1e4f703fea5db47a9bcbcbb32d6e573c" title=" " alt="" coords="780,130,1033,155"/>
+<area shape="poly" id="edge17_Node000002_Node000015" title=" " alt="" coords="1323,125,1034,139,1034,133,1322,119"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#afa325e20cb2d4356fb870fdd86d4c729" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="797,80,1016,106"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="1088,78,1017,85,1016,80,1087,73"/>
+<area shape="rect" id="Node000005" href="$class_vortex.html#a63871edd060b1e80f4db1271432598d3" title="Initialize LED management (step 4 — early for LED&#45;only benches)" alt="" coords="541,80,699,106"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="784,96,700,96,700,90,784,90"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="820,80,692,58,693,52,821,75"/>
+<area shape="rect" id="Node000009" href="$class_led_manager.html#a0357a6834f7f65e77a37536f357932d5" title="Advance the animation by one tick. Call periodically (~50 ms)." alt="" coords="508,130,732,155"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="819,111,695,132,694,127,819,105"/>
+<area shape="rect" id="Node000006" href="$class_vortex.html#a01a9fd7a3f9c03e9c5e900aa71f052ee" title="Initialize all component handlers in proper order." alt="" coords="233,80,460,106"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="527,96,460,96,460,90,527,90"/>
+<area shape="rect" id="Node000007" href="$class_vortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Bring the managers up in dependency order (idempotent)." alt="" coords="5,80,185,106"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="219,96,185,96,185,90,219,90"/>
+<area shape="rect" id="Node000011" href="$class_led_manager.html#a4c571368a2d02ce4dc616b6881878d4c" title="Alias for Shutdown()." alt="" coords="528,192,712,218"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="805,208,712,208,712,202,805,202"/>
+<area shape="rect" id="Node000012" href="$class_vortex.html#a8a5e57b64484bd66db36ecf5c0b0d174" title="Shut down every manager that is up, in reverse init order. Caller holds lifecycle_mutex_." alt="" coords="237,185,456,225"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="514,208,456,208,456,202,514,202"/>
+<area shape="rect" id="Node000013" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="27,192,163,218"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="223,208,163,208,163,202,223,202"/>
+<area shape="poly" id="edge15_Node000014_Node000008" title=" " alt="" coords="1154,149,1089,103,1032,70,945,49,855,38,770,36,698,38,698,33,770,30,856,33,946,43,1034,65,1092,98,1157,144"/>
+<area shape="poly" id="edge14_Node000014_Node000010" title=" " alt="" coords="1077,185,995,196,994,191,1076,180"/>
+<area shape="poly" id="edge18_Node000015_Node000009" title=" " alt="" coords="766,145,732,145,732,140,766,140"/>
+</map>

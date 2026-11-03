@@ -1,0 +1,72 @@
+<map id="ImuManager::Initialize" name="ImuManager::Initialize">
+<area shape="rect" id="Node000001" title="Initialize the IMU manager system." alt="" coords="5,609,173,635"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#af67cc44d654cf6c433e4d7ef4d3927d8" title="Initialise all communication buses if not already initialised." alt="" coords="257,310,440,350"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,607,319,358,323,362,104,611"/>
+<area shape="rect" id="Node000018" href="$class_gpio_manager.html#a88a01fcf59a2db604d59b5cca4503112" title="Register all GPIO pins and initialise drivers (idempotent)." alt="" coords="236,533,461,559"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="125,607,221,575,279,560,280,565,222,581,127,612"/>
+<area shape="rect" id="Node000021" href="$class_comm_channels_manager.html#ad1249df1c4ece9e2468d4b4536d237ae" title="Return the singleton CommChannelsManager instance." alt="" coords="1050,525,1233,565"/>
+<area shape="poly" id="edge29_Node000001_Node000021" title=" " alt="" coords="100,607,148,561,182,536,220,518,332,488,448,471,565,465,679,467,788,476,888,489,1048,519,1047,524,887,494,788,481,679,473,565,470,448,477,333,493,222,523,185,541,151,565,103,611"/>
+<area shape="rect" id="Node000026" href="$class_gpio_manager.html#ad57a4135f150ff0d33bad3047c4cde61" title="Get the pin object of a named pin." alt="" coords="545,636,685,661"/>
+<area shape="poly" id="edge27_Node000001_Node000026" title=" " alt="" coords="174,615,315,613,476,621,545,631,544,636,476,626,315,619,174,621"/>
+<area shape="rect" id="Node000027" href="$class_imu_manager.html#a060cedf87725a844b6d0a9303621febd" title="Get the number of active IMU devices." alt="" coords="239,684,458,709"/>
+<area shape="poly" id="edge28_Node000001_Node000027" title=" " alt="" coords="120,632,167,652,222,670,256,679,254,684,221,675,166,657,118,637"/>
+<area shape="rect" id="Node000028" href="$class_gpio_manager.html#af18a40c292b97c42dace2eb42c511053" title="Access the singleton instance (Meyers singleton, thread&#45;safe)." alt="" coords="251,733,446,759"/>
+<area shape="poly" id="edge30_Node000001_Node000028" title=" " alt="" coords="105,633,154,676,187,700,222,720,242,727,240,732,220,724,184,704,150,680,101,637"/>
+<area shape="rect" id="Node000029" href="$class_imu_manager.html#a8242bba0f9b07f69688badec8f7d5fff" title="Initialize GPIO interrupt for BNO08x INT pin." alt="" coords="221,635,476,660"/>
+<area shape="poly" id="edge31_Node000001_Node000029" title=" " alt="" coords="174,628,208,631,207,636,173,633"/>
+<area shape="rect" id="Node000030" href="$class_imu_manager.html#aba9e81304c320ca8dcd278bf8f5f2ac3" title="Initialize the onboard BNO08x IMU device with I2C transport." alt="" coords="237,158,460,198"/>
+<area shape="poly" id="edge33_Node000001_Node000030" title=" " alt="" coords="91,609,105,556,131,477,169,385,193,339,219,296,262,246,307,205,311,209,266,249,223,300,197,342,174,387,136,478,111,558,96,610"/>
+<area shape="rect" id="Node000032" href="$class_gpio_manager.html#a1e933b3948d2ebfe0816fcb926584afa" title="Check whether the manager is initialised." alt="" coords="253,783,445,808"/>
+<area shape="poly" id="edge36_Node000001_Node000032" title=" " alt="" coords="100,634,118,662,146,700,181,738,223,769,241,778,239,783,220,774,177,742,141,703,114,665,96,636"/>
+<area shape="rect" id="Node000033" href="$class_imu_manager.html#a6277a1f2c7a82fa283332ddb381fa574" title="Store a new error code and update per&#45;device counter." alt="" coords="240,832,457,857"/>
+<area shape="poly" id="edge37_Node000001_Node000033" title=" " alt="" coords="97,634,113,671,138,722,175,775,198,798,223,818,232,824,229,829,220,823,194,802,171,778,134,725,108,673,93,636"/>
+<area shape="rect" id="Node000003" href="$class_comm_channels_manager.html#a868bd4abe1ce3b5497983c2d8ec70914" title=" " alt="" coords="524,233,707,273"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="418,307,532,274,533,279,419,313"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#a6dac7d8251cea221c9352c9386bf099d" title="Open the CAN controller." alt="" coords="787,55,950,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="626,231,646,199,674,161,711,122,753,89,773,79,776,84,756,94,714,126,678,164,650,202,630,234"/>
+<area shape="rect" id="Node000005" href="$namespacevortex_1_1bsp.html#aebf1db0755a48037f22ccf89c6079cdc" title="Add a device." alt="" coords="773,104,965,129"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="634,230,685,183,718,159,753,138,771,131,773,136,756,143,721,163,688,188,637,234"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1bsp.html#acb5b4be1b8dd317f4448fd0729ccb8d5" title="The device at index, or nullptr." alt="" coords="785,5,952,31"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="629,231,704,121,716,97,724,77,734,58,753,40,771,30,774,34,756,44,738,61,729,79,721,99,709,123,633,234"/>
+<area shape="rect" id="Node000007" href="$namespacevortex_1_1bsp.html#afba371282227cd3238b34ddbc9016b26" title="Initialise the I2C bus." alt="" coords="791,153,947,179"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="655,230,702,209,754,189,787,179,788,184,756,194,704,214,657,235"/>
+<area shape="rect" id="Node000008" href="$class_comm_channels_manager.html#ac26134b220ce180e441ad956e8b2c77a" title="Close every bus through the binding and forget the indices. Caller holds mutex_." alt="" coords="777,203,960,243"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="706,239,763,233,764,238,707,245"/>
+<area shape="rect" id="Node000014" href="$namespacevortex_1_1bsp.html#aa0dc60e2e1e2cb4088784d2d7e8e7609" title="Add a chip select." alt="" coords="772,268,965,293"/>
+<area shape="poly" id="edge13_Node000003_Node000014" title=" " alt="" coords="707,260,758,266,758,271,707,265"/>
+<area shape="rect" id="Node000015" href="$namespacevortex_1_1bsp.html#ae46df572cb29f6583d722a17d1501ba7" title="Initialise the SPI bus." alt="" coords="790,317,947,343"/>
+<area shape="poly" id="edge14_Node000003_Node000015" title=" " alt="" coords="666,270,755,302,791,312,790,317,754,307,664,275"/>
+<area shape="rect" id="Node000016" href="$namespacevortex_1_1bsp.html#ae15f68dea0949890a311b38fd98ab006" title="Open the board UART." alt="" coords="786,367,951,392"/>
+<area shape="poly" id="edge15_Node000003_Node000016" title=" " alt="" coords="640,271,691,312,722,334,756,352,778,360,777,365,754,356,720,338,687,317,637,275"/>
+<area shape="rect" id="Node000017" href="$class_comm_channels_manager.html#a959f694cd6fbcd173aa0c16fc9b0cf67" title=" " alt="" coords="777,417,960,457"/>
+<area shape="poly" id="edge16_Node000003_Node000017" title=" " alt="" coords="632,271,682,336,717,371,756,401,770,409,767,413,753,406,713,375,678,339,628,275"/>
+<area shape="rect" id="Node000009" href="$namespacevortex_1_1bsp.html#ad26bd18d793f8e0fbbc21a6155a41853" title="Close the CAN controller (idempotent)." alt="" coords="1059,112,1223,137"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="952,201,981,188,995,178,1005,167,1014,157,1029,146,1046,139,1048,144,1032,151,1018,161,1008,171,999,182,984,192,954,206"/>
+<area shape="rect" id="Node000010" href="$namespacevortex_1_1bsp.html#a0cc7add19c6638325d27459be2904c60" title="Remove every device and release the bus (idempotent)." alt="" coords="1062,161,1221,187"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="960,204,1057,187,1057,192,961,209"/>
+<area shape="rect" id="Node000011" href="$namespacevortex_1_1bsp.html#a1ed38d2d17078ea2092389581c9935ea" title="Remove one device." alt="" coords="1031,211,1252,236"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="960,221,1017,221,1017,226,960,226"/>
+<area shape="rect" id="Node000012" href="$namespacevortex_1_1bsp.html#a1c98342fa8df72349ad475ee1996878a" title="Remove every device and release the bus (idempotent)." alt="" coords="1062,260,1221,285"/>
+<area shape="poly" id="edge11_Node000008_Node000012" title=" " alt="" coords="961,237,1057,255,1057,260,960,242"/>
+<area shape="rect" id="Node000013" href="$namespacevortex_1_1bsp.html#af992a8685e3d7827637b047758fb3f43" title="Close the UART opened by UartOpen() (idempotent)." alt="" coords="1058,309,1225,335"/>
+<area shape="poly" id="edge12_Node000008_Node000013" title=" " alt="" coords="957,241,984,253,999,264,1009,274,1018,285,1032,294,1052,303,1050,308,1029,299,1014,289,1005,278,995,268,981,258,955,246"/>
+<area shape="rect" id="Node000019" href="$class_gpio_manager.html#a71081920f92fb76254ccd258ec539c9e" title=" " alt="" coords="529,587,702,612"/>
+<area shape="poly" id="edge18_Node000018_Node000019" title=" " alt="" coords="413,556,539,581,537,587,412,561"/>
+<area shape="rect" id="Node000020" href="$class_gpio_manager.html#a9ce1eed8b041919d8bb970b729077993" title="Lazy&#45;init the PCAL95555 handler (needs I²C from CommChannelsManager)." alt="" coords="755,582,983,622"/>
+<area shape="poly" id="edge19_Node000019_Node000020" title=" " alt="" coords="702,598,741,598,741,603,702,603"/>
+<area shape="poly" id="edge22_Node000019_Node000021" title=" " alt="" coords="668,584,754,567,902,552,1036,545,1036,550,902,558,755,573,669,589"/>
+<area shape="rect" id="Node000022" href="$namespacevortex_1_1bsp.html#a05fe25c2307a70437b9a95809c8bbfcd" title="Create the MCU GPIO for a functional pin (one slot per pin; a second call returns the same object)." alt="" coords="1044,619,1239,644"/>
+<area shape="poly" id="edge23_Node000019_Node000022" title=" " alt="" coords="663,609,755,631,826,638,898,640,1030,637,1030,642,898,645,826,643,754,637,662,615"/>
+<area shape="rect" id="Node000023" href="$_gpio_manager_8cpp.html#a21c68b780d73db23df2fb67f98b2aff1" title=" " alt="" coords="799,697,939,723"/>
+<area shape="poly" id="edge24_Node000019_Node000023" title=" " alt="" coords="681,610,708,622,724,636,733,650,742,663,756,676,787,691,785,695,753,680,738,667,728,653,720,639,705,627,678,615"/>
+<area shape="rect" id="Node000024" href="$class_gpio_manager.html#ae88d40d145606f638c64bca174b06376" title="Drop every entry and destroy the pin objects and the expander handler. Caller holds mutex_." alt="" coords="761,747,976,772"/>
+<area shape="poly" id="edge25_Node000019_Node000024" title=" " alt="" coords="688,610,708,623,721,637,728,651,733,680,738,708,745,721,756,733,762,737,759,742,753,737,740,724,733,710,728,681,723,653,716,640,705,627,685,614"/>
+<area shape="poly" id="edge20_Node000020_Node000021" title=" " alt="" coords="964,579,1035,564,1037,569,965,585"/>
+<area shape="poly" id="edge21_Node000020_Node000022" title=" " alt="" coords="983,612,1031,617,1030,622,983,617"/>
+<area shape="rect" id="Node000025" href="$namespacevortex_1_1bsp.html#a499003a9556a4942fab14e1532443071" title="Destroy every MCU GPIO created by McuGpioOpen(). Pointers handed out become invalid." alt="" coords="1035,747,1248,772"/>
+<area shape="poly" id="edge26_Node000024_Node000025" title=" " alt="" coords="976,757,1021,757,1021,762,976,762"/>
+<area shape="poly" id="edge32_Node000029_Node000026" title=" " alt="" coords="476,645,531,646,531,651,476,651"/>
+<area shape="rect" id="Node000031" href="$class_comm_channels_manager.html#ae1c0a3e0c3b189f1fca2814955186828" title="Get a built&#45;in I²C device by enum identifier." alt="" coords="524,70,707,110"/>
+<area shape="poly" id="edge34_Node000030_Node000031" title=" " alt="" coords="410,155,540,112,542,117,411,160"/>
+<area shape="poly" id="edge35_Node000031_Node000006" title=" " alt="" coords="668,67,754,39,787,31,788,36,755,45,670,73"/>
+</map>
