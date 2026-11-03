@@ -40,29 +40,20 @@ inline constexpr float kBoardNtcHighThresholdC = 85.0f;
 
 /**
  * @brief NTC handler configuration for the board thermistor.
- * @details `enable_threshold_monitoring` stays false on purpose: with it set,
- *          NtcTemperatureHandler::Initialize() calls SetThresholds(), which calls
- *          EnsureInitialized() before the handler is marked initialised, and recurses until the stack
- *          overflows. Apply the window after initialisation with ApplyBoardNtcThresholds().
+ * @details Threshold monitoring is on with the board window; the handler applies it during
+ *          Initialize() (an inverted window fails init).
  * @return Handler defaults with the AIN3 channel id and the board threshold window.
  */
 [[nodiscard]] inline ntc_temp_handler_config_t MakeBoardNtcConfig() noexcept {
     ntc_temp_handler_config_t cfg = NTC_TEMP_HANDLER_CONFIG_DEFAULT();
     cfg.adc_channel = BoardNtcHwChannel();
-    cfg.enable_threshold_monitoring = false;
+    cfg.enable_threshold_monitoring = true;
     cfg.low_threshold_celsius = kBoardNtcLowThresholdC;
     cfg.high_threshold_celsius = kBoardNtcHighThresholdC;
     return cfg;
 }
 
-/**
- * @brief Set the board over-temperature window on an initialised NTC handler.
- * @param ntc Handler built from MakeBoardNtcConfig() whose EnsureInitialized() returned true.
- * @return true when the window was accepted.
- */
-inline bool ApplyBoardNtcThresholds(NtcTemperatureHandler& ntc) noexcept {
-    return ntc.SetThresholds(kBoardNtcLowThresholdC, kBoardNtcHighThresholdC) == hf_temp_err_t::TEMP_SUCCESS;
-}
+static_assert(kBoardNtcLowThresholdC < kBoardNtcHighThresholdC, "NTC threshold window must not be inverted");
 
 }  // namespace vortex::config
 

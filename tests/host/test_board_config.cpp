@@ -49,16 +49,14 @@ HF_TEST(NtcConfig_ReadsAin3NotAin0OnASharedAdc) {
     CHECK_EQ(adc.ReadCount(0), 0u);
 }
 
-HF_TEST(NtcConfig_ThresholdWindowIsAppliedAfterInit) {
-    // enable_threshold_monitoring in the handler config makes Initialize() recurse into
-    // EnsureInitialized() (stack overflow), so the window is applied once the handler is up.
+HF_TEST(NtcConfig_ThresholdWindowIsAppliedByInit) {
+    // The handler applies the configured window during Initialize() (hf-core #15).
     const ntc_temp_handler_config_t cfg = vortex::config::MakeBoardNtcConfig();
-    CHECK(!cfg.enable_threshold_monitoring);
+    CHECK(cfg.enable_threshold_monitoring);
     MockAdc adc(16, cfg.reference_voltage, 16);
     adc.SetVoltage(3, DividerVoltage(cfg, 10000.0f));
     NtcTemperatureHandler ntc(&adc, cfg);
     REQUIRE(ntc.EnsureInitialized());
-    CHECK(vortex::config::ApplyBoardNtcThresholds(ntc));
     float lo = 0.0f;
     float hi = 0.0f;
     CHECK(ntc.GetThresholds(&lo, &hi) == hf_temp_err_t::TEMP_SUCCESS);

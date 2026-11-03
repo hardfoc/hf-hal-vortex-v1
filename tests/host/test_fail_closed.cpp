@@ -143,8 +143,8 @@ HF_TEST(Gpio_PointersAreStableAndClearedOnShutdown) {
     REQUIRE(a != nullptr);
     CHECK(gpio.Get("GPIO_EXT_GPIO_CS_1") == a);
     CHECK(a == static_cast<BaseGpio*>(host::Gpio(HfFunctionalGpioPin::EXT_GPIO_CS_1)));
-    // No TMC9660 came up, so its bridge pins are not handed out (Tmc9660Handler::gpio() would
-    // dereference wrappers that only exist after a successful bring-up).
+    // No TMC9660 came up, so its bridge pins are not handed out (Tmc9660Handler::gpio() returns
+    // nullptr until a bring-up succeeds).
     CHECK(gpio.Get(HfFunctionalGpioPin::TMC_GPIO17) == nullptr);
     Done(v);
     CHECK(gpio.Get(HfFunctionalGpioPin::EXT_GPIO_CS_1) == nullptr);

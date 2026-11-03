@@ -11,6 +11,9 @@ What changed in the Vortex V1 HAL, newest first. Releases are tagged `vX.Y.Z` an
   figure toolkit are gone. The Doxyfile moved to the repository root.
 - The documentation follows the HAL page set: board card, quickstart, bring-up and troubleshooting, changelog; the
   roadmap links the CANopen node and drive observability designs.
+- hf-core is bumped to the null-safe TMC9660 accessors and the NTC init fix. The board NTC config enables threshold
+  monitoring with the 0–85 °C window again, so the handler applies it during init, and `ApplyBoardNtcThresholds()`
+  is gone. `GpioManager` leaves a TMC9660 bridge pin unregistered when `Tmc9660Handler::gpio()` returns nullptr.
 
 ### Added
 

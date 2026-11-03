@@ -40,8 +40,8 @@ bool Tmc9660TemperatureWrapper::Initialize() noexcept {
         return false;
     }
 
-    Tmc9660Handler::Temperature& tw = handler_.temperature();
-    if (!tw.EnsureInitialized()) {
+    Tmc9660Handler::Temperature* const tw = handler_.temperature();
+    if (tw == nullptr || !tw->EnsureInitialized()) {
         Logger::GetInstance().Error(TAG, "TMC9660 temperature init failed");
         return false;
     }
@@ -63,18 +63,24 @@ hf_temp_err_t Tmc9660TemperatureWrapper::ReadTemperatureCelsiusImpl(float* tempe
     if (!IsInitialized())    return TEMP_ERR_NOT_INITIALIZED;
     if (!handler_.IsDriverReady()) return TEMP_ERR_RESOURCE_UNAVAILABLE;
 
-    return handler_.temperature().ReadTemperatureCelsius(temperature_celsius);
+    Tmc9660Handler::Temperature* const tw = handler_.temperature();
+    if (tw == nullptr) return TEMP_ERR_RESOURCE_UNAVAILABLE;
+    return tw->ReadTemperatureCelsius(temperature_celsius);
 }
 
 hf_temp_err_t Tmc9660TemperatureWrapper::GetSensorInfo(hf_temp_sensor_info_t* info) const noexcept {
     if (!info)            return TEMP_ERR_NULL_POINTER;
     if (!IsInitialized()) return TEMP_ERR_NOT_INITIALIZED;
-    return handler_.temperature().GetSensorInfo(info);
+    Tmc9660Handler::Temperature* const tw = handler_.temperature();
+    if (tw == nullptr) return TEMP_ERR_RESOURCE_UNAVAILABLE;
+    return tw->GetSensorInfo(info);
 }
 
 hf_u32_t Tmc9660TemperatureWrapper::GetCapabilities() const noexcept {
     if (!IsInitialized()) return HF_TEMP_CAP_NONE;
-    return handler_.temperature().GetCapabilities();
+    Tmc9660Handler::Temperature* const tw = handler_.temperature();
+    if (tw == nullptr) return HF_TEMP_CAP_NONE;
+    return tw->GetCapabilities();
 }
 
 //==============================================================================
@@ -199,9 +205,6 @@ bool TemperatureManager::InitializeNtcThermistor() noexcept {
         Logger::GetInstance().Error(TAG, "NTC handler init failed");
         ntc_handler_.reset();
         return false;
-    }
-    if (!vortex::config::ApplyBoardNtcThresholds(*ntc_handler_)) {
-        Logger::GetInstance().Warn(TAG, "NTC threshold window not accepted");
     }
 
     auto& entry = entries_[registered_count_++];

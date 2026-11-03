@@ -14,7 +14,9 @@ call. The managers never use the raw accessors that bypass it (`GetSensor()`, `d
 Lock order, when one manager calls another while holding its own lock: `Vortex` lifecycle lock → any manager;
 `MotorController` → `GpioManager` (the TMC9660 SPI mux line is a PCAL95555 pin); `ImuManager` →
 `CommChannelsManager` (runtime I2C devices); and a manager's lock → its handler's lock. Nothing takes them in the
-other order.
+other order. `GpioManager` registers the TMC9660 GPIO17/18 bridge pins only once the handler reports
+`IsDriverReady()`, and fetches them with `Tmc9660Handler::gpio()` (which runs the handler's `EnsureInitialized()`)
+before it takes its own lock.
 
 Each manager (except `NvsManager`) has one `RtosMutex` from `hf-utils-rtos-wrap`. `EnsureInitialized()` uses a
 double-checked pattern: an atomic "initialised" flag is read first, then the lock is taken and the flag checked again.

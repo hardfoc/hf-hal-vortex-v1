@@ -326,11 +326,16 @@ void GpioManager::RegisterTmc9660BridgePinsIfNeeded() noexcept {
     // Lock order is MotorController -> GpioManager (MotorController drives PCAL_TMC_SPI_COMM_EN
     // through this manager while it holds its own lock), so look the handler up before taking ours.
     Tmc9660Handler* const h = MotorController::GetInstance().handler(0);
-    // Tmc9660Handler::gpio() dereferences wrappers that exist only after a successful bring-up;
-    // with a handler whose bootloader init failed it would hand back a null reference.
+    // IsDriverReady() is a cheap flag read: skip a chip that has not come up instead of letting
+    // gpio() start a bring-up from here. gpio() still returns nullptr if bring-up failed.
     if (!h || !h->IsDriverReady()) {
         return;
     }
+    // gpio() runs Tmc9660Handler::EnsureInitialized() under the handler's own mutex, so fetch
+    // the wrappers before taking ours: mutex_ is never held while calling into the handler.
+    BaseGpio* const bridge17 = h->gpio(17);
+    BaseGpio* const bridge18 = h->gpio(18);
+
     MutexLockGuard lock(mutex_);
     if (!initialized_.load(std::memory_order_acquire)) {
         return;
@@ -355,13 +360,16 @@ void GpioManager::RegisterTmc9660BridgePinsIfNeeded() noexcept {
             continue;
         }
 
-        BaseGpio& ref = h->gpio(static_cast<uint8_t>(m.physical_pin));
+        BaseGpio* const ref = (m.physical_pin == 17) ? bridge17 : bridge18;
+        if (ref == nullptr) {
+            continue;
+        }
         if (m.is_inverted) {
-            ref.SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
+            ref->SetActiveState(hf_gpio_active_state_t::HF_GPIO_ACTIVE_LOW);
         }
 
         auto& entry = entries_[i];
-        entry.driver = &ref;  // owned by the MotorController handler; see UnregisterTmc9660BridgePins()
+        entry.driver = ref;  // owned by the MotorController handler; see UnregisterTmc9660BridgePins()
         entry.functional_pin = static_cast<HfFunctionalGpioPin>(i);
         entry.registered = true;
         ++registered_count_;
