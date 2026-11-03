@@ -1,0 +1,5 @@
+<map id="CommChannelsManager::I2cScanBus" name="CommChannelsManager::I2cScanBus">
+<area shape="rect" id="Node000001" title="Scan the primary I²C bus and copy ACKing addresses into out." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#aadb1e2ffe327a58ed70f0f40f3d3ffcc" title="Probe every address in [first, last]." alt="" coords="236,13,389,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
+</map>

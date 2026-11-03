@@ -1,0 +1,5 @@
+<map id="Vortex::UpdateSystemDiagnostics" name="Vortex::UpdateSystemDiagnostics">
+<area shape="rect" id="Node000001" title="Update system diagnostics." alt="" coords="233,5,477,31"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Bring the managers up in dependency order (idempotent)." alt="" coords="5,5,185,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,21,186,21,186,15,220,15"/>
+</map>

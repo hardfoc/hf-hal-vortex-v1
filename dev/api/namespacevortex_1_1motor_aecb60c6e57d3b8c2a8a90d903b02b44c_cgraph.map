@@ -1,0 +1,9 @@
+<map id="vortex::motor::ReadTelemetry" name="vortex::motor::ReadTelemetry">
+<area shape="rect" id="Node000001" title="Refresh snap from one pipelined batch." alt="" coords="5,55,223,80"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#afaa6303fc1367ef2191e3d868b6e98c9" title="Read a batch (GAP, pipelined)." alt="" coords="283,5,473,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,52,295,31,296,36,183,57"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1bsp.html#a0c32d63c9a5e0bbd19eaa4ae8bd7d60c" title="Monotonic microseconds since boot, at the MCU&#39;s high&#45;resolution timer (not the RTOS tick)." alt="" coords="271,55,485,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,65,257,65,257,70,223,70"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1motor.html#aab094700b6452671196ad4f155e76dd7" title="Fields a set asks for, given the snapshot&#39;s next sequence number (Cyclic alternates 299/300)." alt="" coords="286,105,470,145"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,77,273,99,272,104,173,83"/>
+</map>

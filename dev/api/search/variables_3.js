@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['data_0',['data',['../structvortex__version_1_1_entry_span.html#a85be0a6b754116761a6d5b19d3ed09e7',1,'vortex_version::EntrySpan']]],
+  ['default_5fmax_5fbrightness_1',['DEFAULT_MAX_BRIGHTNESS',['../class_led_manager.html#aa735963f5b014c6bb5ef294234b11fda',1,'LedManager']]],
+  ['device_2',['device',['../structvortex_1_1bsp_1_1anonymous__namespace_02_vortex_board_bind_host_8cpp_03_1_1_i2c_slot.html#a6b95f385697acddac324a111eb754dc7',1,'vortex::bsp::anonymous_namespace{VortexBoardBindHost.cpp}::I2cSlot']]],
+  ['device_5factive_5f_3',['device_active_',['../class_encoder_manager.html#ad0928762613729d142745baa9d1bef85',1,'EncoderManager::device_active_'],['../class_imu_manager.html#a50ab7bf6de8f9d8d81eccd15552c502d',1,'ImuManager::device_active_']]],
+  ['device_5ferror_5fcounts_5f_4',['device_error_counts_',['../class_imu_manager.html#a851fca7b1d7cbaa35ddf8efb023014b5',1,'ImuManager']]],
+  ['device_5findex_5',['device_index',['../struct_comm_channels_manager_1_1_runtime_i2c_slot.html#a555e9087bfea6ae137389b35d846c73f',1,'CommChannelsManager::RuntimeI2cSlot']]],
+  ['device_5finitialized_5f_6',['device_initialized_',['../class_encoder_manager.html#a2dad68ace847f8bba12bdaea5e8b9671',1,'EncoderManager::device_initialized_'],['../class_imu_manager.html#ae420a0b5397d8c57f3f752fa40df7223',1,'ImuManager::device_initialized_']]],
+  ['deviceactive_5f_7',['deviceActive_',['../class_motor_controller.html#a4c3a594084c8b282969b794ff5a7650b',1,'MotorController']]],
+  ['deviceerrorcounts_5f_8',['deviceErrorCounts_',['../class_motor_controller.html#a465dfc69f489e6b644e1ab44119c83b6',1,'MotorController']]],
+  ['deviceinitialized_5f_9',['deviceInitialized_',['../class_motor_controller.html#a4a523032175d078581396cf705ce6c42',1,'MotorController']]],
+  ['devicemutex_5f_10',['deviceMutex_',['../class_motor_controller.html#ac190e6ecab10b76e6693c10ef9c2c19b',1,'MotorController']]],
+  ['devices_11',['devices',['../struct_encoder_system_diagnostics.html#aab17e80a48ef93e89a6367f5c5d42f4f',1,'EncoderSystemDiagnostics::devices'],['../struct_imu_system_diagnostics.html#ae2c25300d031fa29b7dcdaeb98e9e3ff',1,'ImuSystemDiagnostics::devices'],['../struct_motor_system_diagnostics.html#ae608f5e67944a707098bfe9646594e0b',1,'MotorSystemDiagnostics::devices']]],
+  ['diagnostics_5f_12',['diagnostics_',['../class_vortex.html#abc3ac57b19519621eb4248ee7bdb0925',1,'Vortex']]],
+  ['differential_13',['differential',['../structvortex_1_1motor_1_1_apply_options.html#a0537c3a2eb0fcbc420a84a6b4ef99669',1,'vortex::motor::ApplyOptions']]],
+  ['driver_14',['driver',['../struct_adc_entry.html#a520221768c792d1d683b1cb773cf1761',1,'AdcEntry::driver'],['../struct_gpio_entry.html#a74f448c3fa549d8851062de4b6cf4181',1,'GpioEntry::driver']]],
+  ['dropped_5f_15',['dropped_',['../class_vortex_boot_report.html#ab09babc81187ace03d6a673aa333c955',1,'VortexBootReport']]],
+  ['drv_5fen_16',['drv_en',['../struct_tmc9660_control_pins.html#a5ae30bc04a89b587417b9fdd550708d5',1,'Tmc9660ControlPins']]]
+];

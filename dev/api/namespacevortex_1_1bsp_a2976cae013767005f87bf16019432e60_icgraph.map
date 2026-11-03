@@ -1,0 +1,5 @@
+<map id="vortex::bsp::I2cProbe" name="vortex::bsp::I2cProbe">
+<area shape="rect" id="Node000001" title="Address&#45;only probe." alt="" coords="236,13,395,38"/>
+<area shape="rect" id="Node000002" href="$class_comm_channels_manager.html#a594e041cc25999df117c40c4136d15a6" title="Probe a single 7&#45;bit address on the primary I²C bus." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,28,188,28,188,23,222,23"/>
+</map>

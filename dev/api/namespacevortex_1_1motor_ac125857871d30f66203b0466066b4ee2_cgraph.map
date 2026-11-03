@@ -1,0 +1,9 @@
+<map id="vortex::motor::ApplyParameterImage" name="vortex::motor::ApplyParameterImage">
+<area shape="rect" id="Node000001" title="Apply a parameter image: MOTOR_TYPE first, then the rest in image order." alt="" coords="5,23,228,63"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor_1_1detail.html#a83ec819055361f0a9148a1ae6a92b099" title="Apply the image entries selected by take, in image order, kBatchChunk at a time." alt="" coords="276,23,432,63"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,41,262,41,262,46,228,46"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1motor.html#afaa6303fc1367ef2191e3d868b6e98c9" title="Read a batch (GAP, pipelined)." alt="" coords="481,5,670,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="432,32,466,28,467,33,433,37"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1motor.html#a65511fba8c45c7e637b85ce58b7d3980" title="Write a batch (SAP, pipelined; SAP is idempotent)." alt="" coords="480,55,671,80"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="433,49,467,53,466,58,432,54"/>
+</map>

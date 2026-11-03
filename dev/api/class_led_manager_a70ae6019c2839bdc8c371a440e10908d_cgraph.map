@@ -1,0 +1,29 @@
+<map id="LedManager::TurnOff" name="LedManager::TurnOff">
+<area shape="rect" id="Node000001" title="Turn the LED off (set colour to black)." alt="" coords="5,132,161,157"/>
+<area shape="rect" id="Node000002" href="$namespace_led_colors.html#ac73d9c4d71b45c9f83cf04a51e6dbb3c" title="Off / black." alt="" coords="490,5,629,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="94,130,140,84,172,60,208,41,277,21,348,10,416,7,476,8,476,13,416,12,348,15,278,26,210,46,175,64,143,88,97,134"/>
+<area shape="rect" id="Node000003" href="$class_led_manager.html#afa325e20cb2d4356fb870fdd86d4c729" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="209,157,428,183"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="162,150,196,154,195,159,161,156"/>
+<area shape="rect" id="Node000007" href="$class_led_manager.html#a32cf3a054189142932736ab7a1e99a02" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="727,57,903,83"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="161,134,713,78,714,83,162,139"/>
+<area shape="rect" id="Node000010" href="$class_led_manager.html#a6305fee5cff625bb3332808eb7e63207" title=" " alt="" coords="708,255,923,280"/>
+<area shape="poly" id="edge14_Node000001_Node000010" title=" " alt="" coords="112,155,157,174,210,191,338,219,468,238,590,251,694,259,694,265,589,257,467,243,337,224,209,197,156,179,110,160"/>
+<area shape="rect" id="Node000011" href="$class_led_manager.html#a121a6a5f0c2da5ebc117f9f7d054a12c" title="Stop the current animation and turn the LED off." alt="" coords="215,56,422,81"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="119,129,209,98,258,83,260,88,210,103,120,134"/>
+<area shape="rect" id="Node000012" href="$class_led_manager.html#aee4b32be72e10edb7a7d69d49f8967b4" title=" " alt="" coords="210,259,427,284"/>
+<area shape="poly" id="edge15_Node000001_Node000012" title=" " alt="" coords="100,156,147,195,178,218,211,237,248,252,246,257,208,242,175,222,143,200,96,160"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="476,157,643,183"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="428,167,462,167,462,173,428,173"/>
+<area shape="rect" id="Node000005" href="$class_led_manager.html#a38f49900a4847b036422fbd5edcbcf21" title=" " alt="" coords="712,107,919,132"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="622,155,690,141,734,132,735,137,691,146,623,160"/>
+<area shape="rect" id="Node000006" href="$class_led_manager.html#aec49368647c9b09857ea1b775d655e5e" title=" " alt="" coords="691,156,940,181"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="643,167,677,167,677,172,643,172"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="601,155,641,136,655,125,664,113,674,102,689,92,713,82,715,87,692,96,677,106,668,117,659,128,644,140,603,160"/>
+<area shape="rect" id="Node000009" href="$namespacevortex_1_1bsp.html#ae278939510e12d6f78ab2f042e53482f" title="Open the addressable status LED chain on data_pin." alt="" coords="715,205,916,231"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="628,180,734,200,733,205,627,185"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="602,180,644,200,659,211,668,222,678,232,692,241,709,248,707,253,689,246,674,236,664,225,655,215,641,204,600,185"/>
+<area shape="rect" id="Node000008" href="$namespacevortex_1_1bsp.html#aeabe621406616ba6d8213f6b4fd14fe1" title="Latch colours onto the chain." alt="" coords="988,57,1191,83"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="904,67,974,67,974,73,904,73"/>
+<area shape="poly" id="edge12_Node000011_Node000002" title=" " alt="" coords="380,53,485,31,486,36,381,58"/>
+<area shape="poly" id="edge13_Node000011_Node000007" title=" " alt="" coords="422,66,713,67,713,72,422,72"/>
+</map>

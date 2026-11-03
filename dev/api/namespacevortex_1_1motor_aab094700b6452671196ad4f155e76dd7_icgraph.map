@@ -1,0 +1,7 @@
+<map id="vortex::motor::TelemetryRequestMask" name="vortex::motor::TelemetryRequestMask">
+<area shape="rect" id="Node000001" title="Fields a set asks for, given the snapshot&#39;s next sequence number (Cyclic alternates 299/300)." alt="" coords="549,5,733,45"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#aecb60c6e57d3b8c2a8a90d903b02b44c" title="Refresh snap from one pipelined batch." alt="" coords="284,13,501,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="536,28,502,28,502,23,536,23"/>
+<area shape="rect" id="Node000003" href="$class_motor_controller.html#a61cb025b3c09f1781926c2fe157b0b20" title="Refresh a caller&#45;owned telemetry snapshot from one batch." alt="" coords="5,13,236,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

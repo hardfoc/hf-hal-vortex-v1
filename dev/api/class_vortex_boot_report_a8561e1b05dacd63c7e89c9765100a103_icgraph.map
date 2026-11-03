@@ -1,0 +1,33 @@
+<map id="VortexBootReport::AddFailed" name="VortexBootReport::AddFailed">
+<area shape="rect" id="Node000001" title="Record a component that failed to initialise." alt="" coords="767,203,975,228"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#a74ad27e8f8f6f37c1f01382b610ae8de" title="Initialize ADC management (step 6)" alt="" coords="537,5,689,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="853,192,831,159,800,118,762,78,717,44,689,32,691,27,720,40,765,74,804,115,835,155,858,190"/>
+<area shape="rect" id="Node000005" href="$class_vortex.html#a02af0d0d5718570ba6e916e6875677a0" title="Initialize communication channels (step 2)" alt="" coords="524,55,703,80"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="847,195,791,143,756,116,718,94,688,83,690,78,720,89,759,112,795,139,850,191"/>
+<area shape="rect" id="Node000006" href="$class_vortex.html#ad5c50fdca14e9b2768bc49a8a509cf25" title="Initialize encoder management (step 8)" alt="" coords="520,104,707,129"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="835,198,781,170,718,143,679,132,681,127,720,138,783,165,837,193"/>
+<area shape="rect" id="Node000007" href="$class_vortex.html#a0bee80a7c3452bf978cc97fec0b553f8" title="Initialize GPIO management (step 3)" alt="" coords="534,153,693,179"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="790,203,680,181,681,176,791,197"/>
+<area shape="rect" id="Node000008" href="$class_vortex.html#a185e42ede3c9fec7dbe84b322806b74b" title="Initialize IMU management (step 7)" alt="" coords="537,203,690,228"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="753,218,690,218,690,213,753,213"/>
+<area shape="rect" id="Node000009" href="$class_vortex.html#a63871edd060b1e80f4db1271432598d3" title="Initialize LED management (step 4 — early for LED&#45;only benches)" alt="" coords="534,252,693,277"/>
+<area shape="poly" id="edge12_Node000001_Node000009" title=" " alt="" coords="791,233,681,255,680,249,790,228"/>
+<area shape="rect" id="Node000010" href="$class_vortex.html#a306065b01a984ac3a714a0de35c8ddad" title="Initialize motor controllers (step 5 — after GPIO + LEDs)" alt="" coords="527,301,700,327"/>
+<area shape="poly" id="edge14_Node000001_Node000010" title=" " alt="" coords="836,237,782,265,720,291,677,304,676,299,718,286,780,260,834,232"/>
+<area shape="rect" id="Node000011" href="$class_vortex.html#aa2345f3768f6cd5ba035d953abf9012f" title=" " alt="" coords="537,351,690,376"/>
+<area shape="poly" id="edge16_Node000001_Node000011" title=" " alt="" coords="850,240,794,291,758,318,720,340,686,353,685,348,718,336,755,313,791,287,846,236"/>
+<area shape="rect" id="Node000012" href="$class_vortex.html#af5b5154114dfd9afe622d066d7e9b6f2" title="Initialize temperature management (step 9)" alt="" coords="508,400,719,425"/>
+<area shape="poly" id="edge18_Node000001_Node000012" title=" " alt="" coords="857,241,835,275,803,315,765,356,720,390,692,402,690,398,717,385,761,352,799,312,830,272,853,238"/>
+<area shape="rect" id="Node000003" href="$class_vortex.html#a01a9fd7a3f9c03e9c5e900aa71f052ee" title="Initialize all component handlers in proper order." alt="" coords="233,203,460,228"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="526,36,509,44,458,82,414,128,380,171,358,204,354,201,376,168,410,124,455,78,507,40,523,32"/>
+<area shape="rect" id="Node000004" href="$class_vortex.html#a4951d3bfbbc24511895cf64e4ebb0db7" title="Bring the managers up in dependency order (idempotent)." alt="" coords="5,203,185,228"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="219,218,185,218,185,213,219,213"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="526,87,509,94,464,120,422,151,362,205,359,201,419,146,461,115,507,89,524,82"/>
+<area shape="poly" id="edge7_Node000006_Node000003" title=" " alt="" coords="535,135,509,143,433,174,372,205,370,200,431,170,507,138,533,130"/>
+<area shape="poly" id="edge9_Node000007_Node000003" title=" " alt="" coords="531,184,417,205,416,200,530,179"/>
+<area shape="poly" id="edge11_Node000008_Node000003" title=" " alt="" coords="523,218,460,218,460,213,523,213"/>
+<area shape="poly" id="edge13_Node000009_Node000003" title=" " alt="" coords="530,252,416,231,417,225,531,247"/>
+<area shape="poly" id="edge15_Node000010_Node000003" title=" " alt="" coords="538,301,507,291,432,260,371,231,374,226,434,256,509,286,539,295"/>
+<area shape="poly" id="edge17_Node000011_Node000003" title=" " alt="" coords="528,349,507,340,461,314,419,284,359,230,363,226,423,279,464,310,509,336,530,344"/>
+<area shape="poly" id="edge19_Node000012_Node000003" title=" " alt="" coords="523,397,507,390,455,351,411,306,376,262,354,230,358,227,380,259,415,302,458,347,509,385,525,393"/>
+</map>

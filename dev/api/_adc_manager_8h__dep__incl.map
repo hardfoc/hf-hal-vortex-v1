@@ -1,0 +1,9 @@
+<map id="AdcManager.h" name="AdcManager.h">
+<area shape="rect" id="Node000001" title="ADC management for the HardFOC Vortex V1 platform." alt="" coords="195,5,310,31"/>
+<area shape="rect" id="Node000002" href="$_adc_manager_8cpp.html" title="Implementation of the Vortex V1 ADC manager." alt="" coords="5,79,135,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,38,101,81,99,76,210,33"/>
+<area shape="rect" id="Node000003" href="$_temperature_manager_8cpp.html" title="Implementation of the Vortex V1 temperature manager." alt="" coords="159,79,346,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="255,44,255,79,250,79,250,44"/>
+<area shape="rect" id="Node000004" href="$_vortex_8cpp.html" title="Implementation of the unified Vortex API singleton." alt="" coords="370,79,461,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="292,34,390,76,388,81,290,39"/>
+</map>
