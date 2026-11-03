@@ -1,7 +1,0 @@
-<map id="vortex::motor::detail::ApplyPhase" name="vortex::motor::detail::ApplyPhase">
-<area shape="rect" id="Node000001" title="Apply the image entries selected by take, in image order, kBatchChunk at a time." alt="" coords="5,23,161,63"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#afaa6303fc1367ef2191e3d868b6e98c9" title="Read a batch (GAP, pipelined)." alt="" coords="210,5,399,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,32,196,28,196,33,162,37"/>
-<area shape="rect" id="Node000003" href="$namespacevortex_1_1motor.html#a65511fba8c45c7e637b85ce58b7d3980" title="Write a batch (SAP, pipelined; SAP is idempotent)." alt="" coords="209,55,400,80"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="162,49,196,53,196,58,161,54"/>
-</map>

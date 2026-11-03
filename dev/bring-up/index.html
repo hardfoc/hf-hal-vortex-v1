@@ -1419,15 +1419,15 @@ app is built and flashed as in the <a href="../quickstart/">quickstart</a>
    TMC9660 control lines on the PCAL95555, brings the TMC9660 out of its bootloader and reads telemetry without
    moving anything. Then <code>vortex_bldc_telemetry_sweep</code> checks the power-stage configuration.</li>
 <li><strong>First spin.</strong> Follow the bench guides before you run any <code>vortex_bldc_*</code> motion app: the
-   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up guide</a> (bootloader and parameter-mode order) and the
-   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a> (per-app goals, supply and safety notes).
+   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up guide</a> (bootloader and parameter-mode order) and the
+   <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a> (per-app goals, supply and safety notes).
    <code>vortex_bldc_open_loop_uart</code> is the confirmed-working open-loop spin.</li>
 </ol>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Bench limits live in one file</p>
 <p>Supply, shunt, current caps, I²t and thermal limits for every bench app are in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/common/vortex_bench_safety.hpp"><code>vortex_bench_safety.hpp</code></a>. Check them against your
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/examples/esp32/main/common/vortex_bench_safety.hpp"><code>vortex_bench_safety.hpp</code></a>. Check them against your
 motor and supply before step 5.</p>
 </div>
 <h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>

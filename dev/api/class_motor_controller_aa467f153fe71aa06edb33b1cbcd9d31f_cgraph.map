@@ -1,9 +1,0 @@
-<map id="MotorController::ReadParameters" name="MotorController::ReadParameters">
-<area shape="rect" id="Node000001" title="Read several axis parameters in pipelined batches (GAP)." alt="" coords="5,37,244,63"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#afaa6303fc1367ef2191e3d868b6e98c9" title="Read a batch (GAP, pipelined)." alt="" coords="292,5,481,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,35,278,29,279,34,229,40"/>
-<area shape="rect" id="Node000003" href="$namespaceanonymous__namespace_02_motor_controller_8cpp_03.html#a5ef8346a420a163f082f0cc14b73f8d5" title=" " alt="" coords="297,55,477,109"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="229,60,283,67,283,72,229,65"/>
-<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#a0c32d63c9a5e0bbd19eaa4ae8bd7d60c" title="Monotonic microseconds since boot, at the MCU&#39;s high&#45;resolution timer (not the RTOS tick)." alt="" coords="529,69,744,95"/>
-<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="477,79,516,79,516,85,477,85"/>
-</map>

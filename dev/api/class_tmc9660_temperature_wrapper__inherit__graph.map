@@ -1,5 +1,0 @@
-<map id="Tmc9660TemperatureWrapper" name="Tmc9660TemperatureWrapper">
-<area shape="rect" id="Node000001" title="Adapter wrapping Tmc9660Handler&#39;s internal temperature into BaseTemperature." alt="" coords="5,79,224,104"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="47,5,183,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,44,117,79,112,79,112,44"/>
-</map>

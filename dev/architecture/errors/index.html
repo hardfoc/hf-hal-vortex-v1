@@ -1302,7 +1302,7 @@ in the return value. This page lists the error types, where to read the last err
 </ol>
 <h2 id="one-catalog-managererror">One catalog: <code>ManagerError</code><a class="headerlink" href="#one-catalog-managererror" title="Permanent link">&para;</a></h2>
 <p>Each manager keeps its own error type (table below), and the facade maps all of them onto one catalog,
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/lib/api/VortexDiagnostics.h"><code>ManagerError</code></a>: <code>None</code>, <code>NotInitialized</code>, <code>DependencyNotReady</code>,
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/lib/api/VortexDiagnostics.h"><code>ManagerError</code></a>: <code>None</code>, <code>NotInitialized</code>, <code>DependencyNotReady</code>,
 <code>BusUnavailable</code>, <code>DeviceNotFound</code>, <code>InitFailed</code>, <code>CommunicationFailed</code>, <code>InvalidParameter</code>, <code>HardwareFault</code>,
 <code>Unknown</code>. <code>Vortex::GetLastError()</code> uses it to say why the last <code>EnsureInitialized()</code> failed, and
 <code>CollectDiagnostics()</code> reports every manager in it, with the manager's own code alongside.</p>

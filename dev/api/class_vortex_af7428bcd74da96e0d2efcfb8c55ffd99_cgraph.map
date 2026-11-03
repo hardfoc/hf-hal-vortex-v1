@@ -1,9 +1,0 @@
-<map id="Vortex::CollectDiagnostics" name="Vortex::CollectDiagnostics">
-<area shape="rect" id="Node000001" title="Aggregated health of every manager, the buses and the device counts." alt="" coords="5,77,199,102"/>
-<area shape="rect" id="Node000002" href="$namespaceanonymous__namespace_02_vortex_8cpp_03.html#a29fb6556b6b5987996aa43dc7152c348" title=" " alt="" coords="267,5,447,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="153,74,263,46,264,51,155,79"/>
-<area shape="rect" id="Node000003" href="$namespaceanonymous__namespace_02_vortex_8cpp_03.html#af9aa80717655e06b5755e544e168ff9e" title=" " alt="" coords="247,69,468,109"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="199,87,233,87,233,92,199,92"/>
-<area shape="rect" id="Node000004" href="$namespaceanonymous__namespace_02_vortex_8cpp_03.html#ae979c3a4060b530871d5cd8741f76ab4" title=" " alt="" coords="247,134,468,189"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="149,99,248,128,246,133,147,105"/>
-</map>
