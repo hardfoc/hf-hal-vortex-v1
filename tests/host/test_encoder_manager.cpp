@@ -179,3 +179,14 @@ HF_TEST(Encoder_VisitDriverRunsOnlyOnAReadySlot) {
     CHECK(!f.enc.VisitDriver(EncoderManager::ENCODER_SLOT_3, [](auto&) {}));
     CHECK(!f.enc.VisitDriver(EncoderManager::MAX_ENCODER_DEVICES, [](auto&) {}));
 }
+
+HF_TEST(Encoder_ABusErrorFailsOneReadOnly) {
+    // The driver's sticky flags no longer clear on GetStickyErrorFlags(); the manager consumes them
+    // per access with ClearStickyErrorFlags(), so one failed transfer fails that read and no other.
+    Fixture f;
+    uint16_t angle = 0;
+    f.spi.FailNext(hf_spi_err_t::SPI_ERR_TRANSFER_FAILED, 1);
+    CHECK(f.enc.ReadAngle(kSlot, angle) == EncoderError::SPI_COMMUNICATION_FAILED);
+    CHECK(f.enc.ReadAngle(kSlot, angle) == EncoderError::SUCCESS);
+    CHECK_EQ(angle, 0x1234u);
+}
