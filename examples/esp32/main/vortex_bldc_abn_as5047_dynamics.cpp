@@ -180,39 +180,53 @@ inline As5047uConfig MakeAs5047uConfig() noexcept {
     bool mag_ok = false;
     const bool reached = enc.VisitDriver(EncoderManager::ENCODER_SLOT_0, [&](auto& drv) {
         // 1. Read & clear any latched error flags from boot.
-        const uint16_t err_flags = drv.GetErrorFlags(2);
+        // Every getter returns as5047u::Result<T>: .value, and .error when the read failed.
+        const auto err_flags = drv.GetErrorFlags(2);
+        if (!err_flags.ok()) {
+            burst_ok = false;
+            ESP_LOGE(tag, "  ERRFL read failed (error 0x%04X)", static_cast<unsigned>(err_flags.error));
+            return;
+        }
         ESP_LOGI(tag, "  ERRFL boot snapshot: 0x%04X (cleared by read)",
-                 static_cast<unsigned>(err_flags));
+                 static_cast<unsigned>(err_flags.value));
 
         // 2. AGC + magnitude — primary "is the magnet present and at the right gap" check.
-        const uint8_t  agc  = drv.GetAGC(2);
-        const uint16_t mag  = drv.GetMagnitude(2);
-        agc_ok = (agc > 16 && agc < 240);   // healthy AGC band
-        mag_ok = (mag > 200);               // non-trivial field strength
+        const auto agc  = drv.GetAGC(2);
+        const auto mag  = drv.GetMagnitude(2);
+        agc_ok = agc.ok() && (agc.value > 16 && agc.value < 240);   // healthy AGC band
+        mag_ok = mag.ok() && (mag.value > 200);                     // non-trivial field strength
         ESP_LOGI(tag, "  AGC=%u (%s), Magnitude=%u (%s)",
-                 static_cast<unsigned>(agc), agc_ok ? "OK" : "WARN: rail",
-                 static_cast<unsigned>(mag), mag_ok ? "OK" : "WARN: weak field");
+                 static_cast<unsigned>(agc.value), agc.ok() ? (agc_ok ? "OK" : "WARN: rail") : "READ FAILED",
+                 static_cast<unsigned>(mag.value), mag.ok() ? (mag_ok ? "OK" : "WARN: weak field") : "READ FAILED");
 
         // 3. Burst angle reads — detect SPI / framing issues.
         for (int i = 0; i < 8; ++i) {
-            const uint16_t raw = drv.GetAngle(2);
-            if (raw > 16383) {                        // 14-bit field; >16383 = corrupted
+            const auto raw = drv.GetAngle(2);
+            if (!raw.ok()) {                          // bus, CRC or framing error
+                burst_ok = false;
+                ESP_LOGW(tag, "  angle burst[%d] read failed (error 0x%04X)",
+                         i, static_cast<unsigned>(raw.error));
+            } else if (raw.value > 16383) {           // 14-bit field; >16383 = corrupted
                 burst_ok = false;
                 ESP_LOGW(tag, "  angle burst[%d] = 0x%04X (out of 14-bit range)",
-                         i, static_cast<unsigned>(raw));
+                         i, static_cast<unsigned>(raw.value));
             } else if (i == 0 || i == 7) {
                 ESP_LOGI(tag, "  angle[%d] = %u LSB (%.2f deg)",
-                         i, static_cast<unsigned>(raw),
-                         static_cast<double>(raw) * (360.0 / 16384.0));
+                         i, static_cast<unsigned>(raw.value),
+                         static_cast<double>(raw.value) * (360.0 / 16384.0));
             }
             vTaskDelay(pdMS_TO_TICKS(2));
         }
 
         // 4. Re-read ERRFL — anything latched during the burst is a red flag.
-        const uint16_t err_after = drv.GetErrorFlags(2);
-        if (err_after != 0) {
+        const auto err_after = drv.GetErrorFlags(2);
+        if (!err_after.ok()) {
+            burst_ok = false;
+            ESP_LOGW(tag, "  ERRFL read after burst failed (error 0x%04X)",
+                     static_cast<unsigned>(err_after.error));
+        } else if (err_after.value != 0) {
             ESP_LOGW(tag, "  ERRFL after burst: 0x%04X (post-comm errors latched)",
-                     static_cast<unsigned>(err_after));
+                     static_cast<unsigned>(err_after.value));
         }
     });
     if (!reached) {
