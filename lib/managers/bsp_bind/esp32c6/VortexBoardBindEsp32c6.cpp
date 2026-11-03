@@ -331,11 +331,9 @@ bool StatusLedOpen(int data_pin, uint32_t led_count) noexcept {
     cfg.led_type = LedType::RGB;
     cfg.brightness = 255;
     cfg.rmt_channel = 0;
-    // RMT symbol timings the Vortex LED has been brought up with (t0h, t1h, t0l, t1l).
-    cfg.t0h = 14;
-    cfg.t1h = 52;
-    cfg.t0l = 52;
-    cfg.t1l = 52;
+    // Bit times: the handler defaults, the WS2812B nominal 400 / 800 / 850 / 450 ns, which it
+    // rounds to the strip's 100 ns RMT ticks. The old 14 / 52 / 52 / 52 were raw ticks (1.4 to
+    // 5.2 us, read as all ones by a WS2812B), and Config now takes nanoseconds.
     slot.emplace(cfg);
     if (slot->Initialize() != ESP_OK) {
         slot.reset();

@@ -340,13 +340,18 @@ EncoderError EncoderManager::mapDriverError(AS5047U_Error sticky_flags) noexcept
     auto flags = static_cast<uint16_t>(sticky_flags);
     
     // Communication errors (highest severity)
-    if (flags & static_cast<uint16_t>(AS5047U_Error::CrcError)) {
+    if (flags & static_cast<uint16_t>(AS5047U_Error::BusError)) {
+        return EncoderError::SPI_COMMUNICATION_FAILED;  // BaseSpi::Transfer() failed
+    }
+    if (flags & (static_cast<uint16_t>(AS5047U_Error::CrcError) |
+                 static_cast<uint16_t>(AS5047U_Error::ReplyCrcError))) {
         return EncoderError::CRC_ERROR;
     }
     if (flags & static_cast<uint16_t>(AS5047U_Error::FramingError)) {
         return EncoderError::FRAMING_ERROR;
     }
-    if (flags & static_cast<uint16_t>(AS5047U_Error::CommandError)) {
+    if (flags & (static_cast<uint16_t>(AS5047U_Error::CommandError) |
+                 static_cast<uint16_t>(AS5047U_Error::ReplyError))) {
         return EncoderError::SPI_COMMUNICATION_FAILED;
     }
     
@@ -387,6 +392,11 @@ As5047uHandler* EncoderManager::ReadyHandlerLocked(uint8_t deviceIndex) noexcept
 
 EncoderError EncoderManager::FinishRead(uint8_t deviceIndex, AS5047U_Error sticky,
                                         bool count_measurement) noexcept {
+    // `sticky` is what ClearStickyErrorFlags() returned for this access (GetStickyErrorFlags() no
+    // longer clears). The warning bit of a MISO frame (ReplyWarning, e.g. AGC at a limit) does not
+    // invalidate the value read; ReadDiagnostics() reports field warnings from ERRFL.
+    sticky = static_cast<AS5047U_Error>(static_cast<uint16_t>(sticky) &
+                                        static_cast<uint16_t>(~static_cast<uint16_t>(AS5047U_Error::ReplyWarning)));
     if (sticky != AS5047U_Error::None) {
         communication_error_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
         const EncoderError err = mapDriverError(sticky);
@@ -410,7 +420,7 @@ EncoderError EncoderManager::ReadAngle(uint8_t deviceIndex, uint16_t& angle) noe
     handler->visitDriver([&](auto& sensor) {
         ran = true;
         angle = sensor.GetAngle();
-        sticky = sensor.GetStickyErrorFlags();
+        sticky = sensor.ClearStickyErrorFlags();
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -429,7 +439,7 @@ EncoderError EncoderManager::ReadAngleDegrees(uint8_t deviceIndex, double& angle
     handler->visitDriver([&](auto& sensor) {
         ran = true;
         angle_degrees = static_cast<double>(sensor.GetAngle(as5047u::AngleUnit::Degrees));
-        sticky = sensor.GetStickyErrorFlags();
+        sticky = sensor.ClearStickyErrorFlags();
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -448,7 +458,7 @@ EncoderError EncoderManager::ReadVelocityRPM(uint8_t deviceIndex, double& veloci
     handler->visitDriver([&](auto& sensor) {
         ran = true;
         velocity_rpm = static_cast<double>(sensor.GetVelocity(as5047u::VelocityUnit::Rpm));
-        sticky = sensor.GetStickyErrorFlags();
+        sticky = sensor.ClearStickyErrorFlags();
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -469,7 +479,7 @@ EncoderError EncoderManager::ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnos
     handler->visitDriver([&](auto& sensor) {
         ran = true;
         error_flags = sensor.GetErrorFlags();
-        (void)sensor.GetStickyErrorFlags();  // drop transport flags raised by this read
+        (void)sensor.ClearStickyErrorFlags();  // drop transport flags raised by this read
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -502,7 +512,7 @@ EncoderError EncoderManager::ReadFieldStrength(uint8_t deviceIndex, EncoderField
         ran = true;
         field.agc = sensor.GetAGC();
         field.magnitude = sensor.GetMagnitude();
-        sticky = sensor.GetStickyErrorFlags();
+        sticky = sensor.ClearStickyErrorFlags();
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -522,7 +532,7 @@ EncoderError EncoderManager::SetZeroPosition(uint8_t deviceIndex, uint16_t zero_
     handler->visitDriver([&](auto& sensor) {
         ran = true;
         ok = sensor.SetZeroPosition(zero_position);
-        sticky = sensor.GetStickyErrorFlags();
+        sticky = sensor.ClearStickyErrorFlags();
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
