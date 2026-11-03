@@ -1,5 +1,0 @@
-<map id="vortex::motor::ReadTelemetry" name="vortex::motor::ReadTelemetry">
-<area shape="rect" id="Node000001" title="Refresh snap from one pipelined batch." alt="" coords="284,5,501,31"/>
-<area shape="rect" id="Node000002" href="$class_motor_controller.html#a61cb025b3c09f1781926c2fe157b0b20" title="Refresh a caller&#45;owned telemetry snapshot from one batch." alt="" coords="5,5,236,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,21,236,21,236,15,270,15"/>
-</map>

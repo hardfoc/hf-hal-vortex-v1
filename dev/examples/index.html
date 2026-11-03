@@ -1328,7 +1328,7 @@
 
 
 <h1 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h1>
-<p>Every buildable app in <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32"><code>examples/esp32</code></a>. Each app is one <code>main/*.cpp</code> file selected by name
+<p>Every buildable app in <a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32"><code>examples/esp32</code></a>. Each app is one <code>main/*.cpp</code> file selected by name
 at build time; the table below is generated from the app list and each file's description, so it always matches the
 code.</p>
 <h2 id="run-one">Run one<a class="headerlink" href="#run-one" title="Permanent link">&para;</a></h2>
@@ -1342,12 +1342,12 @@ bench (motor supply on, sensors fitted) turn on its strict checks in <code>idf.p
 <div class="admonition warning">
 <p class="admonition-title">Motor benches move the motor</p>
 <p>The apps under <em>Motor benches</em> spin a motor. Clamp the motor, set current limits for it, and read the
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a> and the
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up notes</a> first.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/docs/BENCH_MATRIX.md">bench matrix</a> and the
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up notes</a> first.</p>
 </div>
 <h2 id="catalogue">Catalogue<a class="headerlink" href="#catalogue" title="Permanent link">&para;</a></h2>
 <!-- generated: examples-catalogue -->
-<p>From <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/app_config.yml"><code>examples/esp32/app_config.yml</code></a>
+<p>From <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/app_config.yml"><code>examples/esp32/app_config.yml</code></a>
 and each source file's <code>@brief</code>; do not edit.</p>
 <p>31 apps, 31 built by CI on every pull request. Target <code>esp32c6</code>, ESP-IDF release/v5.5.</p>
 <h3 id="start-here">Start here<a class="headerlink" href="#start-here" title="Permanent link">&para;</a></h3>
@@ -1365,7 +1365,7 @@ and each source file's <code>@brief</code>; do not edit.</p>
 <td><code>vortex_api_test</code></td>
 <td>Primary hardware integration test for the Vortex HAL on ESP32 (noexcept)</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_api_test.cpp"><code>vortex_api_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_api_test.cpp"><code>vortex_api_test.cpp</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1384,37 +1384,37 @@ and each source file's <code>@brief</code>; do not edit.</p>
 <td><code>gpio_stress_test</code></td>
 <td>GPIO manager focused stress test for ESP32</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/gpio_stress_test.cpp"><code>gpio_stress_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/gpio_stress_test.cpp"><code>gpio_stress_test.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>adc_calibration_test</code></td>
 <td>ADC manager focused calibration &amp; reading test for ESP32</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/adc_calibration_test.cpp"><code>adc_calibration_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/adc_calibration_test.cpp"><code>adc_calibration_test.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>motor_controller_test</code></td>
 <td>Motor controller focused test for ESP32 Shares its source with <code>motor_controller_uart_test</code>; selected by <code>EXAMPLE_TYPE_motor_controller_test</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/motor_controller_test.cpp"><code>motor_controller_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/motor_controller_test.cpp"><code>motor_controller_test.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>motor_controller_uart_test</code></td>
 <td>Motor controller focused test for ESP32 Shares its source with <code>motor_controller_test</code>; selected by <code>EXAMPLE_TYPE_motor_controller_uart_test</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/motor_controller_test.cpp"><code>motor_controller_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/motor_controller_test.cpp"><code>motor_controller_test.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>encoder_imu_test</code></td>
 <td>Encoder &amp; IMU manager focused test for ESP32</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/encoder_imu_test.cpp"><code>encoder_imu_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/encoder_imu_test.cpp"><code>encoder_imu_test.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>led_temp_test</code></td>
 <td>LED &amp; Temperature manager focused test for ESP32</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/led_temp_test.cpp"><code>led_temp_test.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/led_temp_test.cpp"><code>led_temp_test.cpp</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1433,43 +1433,43 @@ and each source file's <code>@brief</code>; do not edit.</p>
 <td><code>vortex_tmcl_param_scan</code></td>
 <td>Exhaustive TMCL read probe: GAP on motor 0 (Table 57 NRs 0…334, gaps skipped) + GGP (banks 0, 2, 3) over numeric TYPE ranges. Shares its source with <code>vortex_tmcl_param_scan_spi</code>; selected by <code>EXAMPLE_TYPE_vortex_tmcl_param_scan</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_param_scan.cpp"><code>vortex_tmcl_param_scan.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_param_scan.cpp"><code>vortex_tmcl_param_scan.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_tmcl_param_scan_spi</code></td>
 <td>Exhaustive TMCL read probe: GAP on motor 0 (Table 57 NRs 0…334, gaps skipped) + GGP (banks 0, 2, 3) over numeric TYPE ranges. Shares its source with <code>vortex_tmcl_param_scan</code>; selected by <code>EXAMPLE_TYPE_vortex_tmcl_param_scan_spi</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_param_scan.cpp"><code>vortex_tmcl_param_scan.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_param_scan.cpp"><code>vortex_tmcl_param_scan.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_tmcl_param_scan_post_config</code></td>
 <td>Post-config TMCL read probe — same sweep as <code>vortex_tmcl_param_scan</code> but runs AFTER <code>configure_complete_bldc()</code> so the chip is in <code>MOTOR_TYPE = BLDC_MOTOR</code> with DRV_EN asserted before any GAP is issued. Shares its source with <code>vortex_tmcl_param_scan_post_config_spi</code>; selected by <code>EXAMPLE_TYPE_vortex_tmcl_param_scan_post_config</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_param_scan_post_config.cpp"><code>vortex_tmcl_param_scan_post_config.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_param_scan_post_config.cpp"><code>vortex_tmcl_param_scan_post_config.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_tmcl_param_scan_post_config_spi</code></td>
 <td>Post-config TMCL read probe — same sweep as <code>vortex_tmcl_param_scan</code> but runs AFTER <code>configure_complete_bldc()</code> so the chip is in <code>MOTOR_TYPE = BLDC_MOTOR</code> with DRV_EN asserted before any GAP is issued. Shares its source with <code>vortex_tmcl_param_scan_post_config</code>; selected by <code>EXAMPLE_TYPE_vortex_tmcl_param_scan_post_config_spi</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_param_scan_post_config.cpp"><code>vortex_tmcl_param_scan_post_config.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_param_scan_post_config.cpp"><code>vortex_tmcl_param_scan_post_config.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_tmcl_manual_compliance</code></td>
 <td>ESP32 harness: representative TMCL operations vs <em>TMC9660 Parameter Mode Reference Manual</em> (Analog Devices Rev 0, 02/25).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_manual_compliance.cpp"><code>vortex_tmcl_manual_compliance.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_manual_compliance.cpp"><code>vortex_tmcl_manual_compliance.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_tmcl_param_existence</code></td>
 <td>ESP32 harness: per-NR read path inventory (GAP vs GGP) for TMC9660 parameter mode ROM.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_param_existence.cpp"><code>vortex_tmcl_param_existence.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_param_existence.cpp"><code>vortex_tmcl_param_existence.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_tmcl_gap_smoke</code></td>
 <td>Minimal TMCL-over-UART check: init onboard TMC9660 on UART, one GAP read (type 0, motor 0).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_tmcl_gap_smoke.cpp"><code>vortex_tmcl_gap_smoke.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_tmcl_gap_smoke.cpp"><code>vortex_tmcl_gap_smoke.cpp</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1488,55 +1488,55 @@ and each source file's <code>@brief</code>; do not edit.</p>
 <td><code>vortex_bldc_open_loop</code></td>
 <td>Open-loop BLDC spin on the onboard SPI TMCL path (PCAL mux enables <code>SPI_COMM_EN</code> — see <code>Vortex::SetOnboardTmc9660Transport</code>). Uses the same Vortex power-stage workaround as <code>vortex_bldc_open_loop_uart</code>: disable UVW VGS-short protection defaults before entering <code>FOC_OPENLOOP_VOLTAGE_MODE</code>.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_open_loop.cpp"><code>vortex_bldc_open_loop.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_open_loop.cpp"><code>vortex_bldc_open_loop.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_dynamics</code></td>
 <td>Closed-loop hall-FOC dynamics test for a robot-dog-class BLDC actuator. Same multi-phase trajectory as before, but with <code>FOC_HALL_SENSOR</code> commutation so the chip can hold synchronism through the aggressive ramps that pole-slipped under open-loop voltage mode.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_dynamics.cpp"><code>vortex_bldc_dynamics.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_dynamics.cpp"><code>vortex_bldc_dynamics.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_open_loop_uart</code></td>
 <td>Confirmed-working open-loop current-mode BLDC bring-up over the TMC9660 UART transport. Spins the bench motor under <code>FOC_OPENLOOP_CURRENT_MODE</code> with full live telemetry of the electrical angle, per-phase currents and the inverter voltage commands.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_open_loop_uart.cpp"><code>vortex_bldc_open_loop_uart.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_open_loop_uart.cpp"><code>vortex_bldc_open_loop_uart.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_probe</code></td>
 <td>Comprehensive read/write probe for the Vortex V1 + TMC9660 BLDC stack.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_probe.cpp"><code>vortex_bldc_probe.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_probe.cpp"><code>vortex_bldc_probe.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_velocity_foc_hall</code></td>
 <td>Hall-FOC velocity loop bench — full bring-up + velocity profile.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_velocity_foc_hall.cpp"><code>vortex_bldc_velocity_foc_hall.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_velocity_foc_hall.cpp"><code>vortex_bldc_velocity_foc_hall.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_velocity_foc_abn</code></td>
 <td>ABN-FOC velocity loop bench — full bring-up + velocity profile.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_velocity_foc_abn.cpp"><code>vortex_bldc_velocity_foc_abn.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_velocity_foc_abn.cpp"><code>vortex_bldc_velocity_foc_abn.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_position_foc_as5047</code></td>
 <td>Position loop on ABN-style feedback — AS5047U angle via EncoderManager; TMC uses ABN CPR.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_position_foc_as5047.cpp"><code>vortex_bldc_position_foc_as5047.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_position_foc_as5047.cpp"><code>vortex_bldc_position_foc_as5047.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_abn_as5047_dynamics</code></td>
 <td>Closed-loop ABN-FOC velocity test with dual rotor-position feedback paths exposed to the host:</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_abn_as5047_dynamics.cpp"><code>vortex_bldc_abn_as5047_dynamics.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_abn_as5047_dynamics.cpp"><code>vortex_bldc_abn_as5047_dynamics.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_torque_foc_hall</code></td>
 <td>Hall-FOC torque-mode bench — direct Iq command (no velocity loop).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_torque_foc_hall.cpp"><code>vortex_bldc_torque_foc_hall.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_torque_foc_hall.cpp"><code>vortex_bldc_torque_foc_hall.cpp</code></a></td>
 </tr>
 </tbody>
 </table>
@@ -1555,49 +1555,49 @@ and each source file's <code>@brief</code>; do not edit.</p>
 <td><code>vortex_led_ws2812_smoke</code></td>
 <td>WS2812 smoke + visual demo on Vortex V1 (LedManager, pincfg <code>WS2812_LED_DAT</code> / GPIO3).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_led_ws2812_smoke.cpp"><code>vortex_led_ws2812_smoke.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_led_ws2812_smoke.cpp"><code>vortex_led_ws2812_smoke.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_led_ws2812_cycle</code></td>
 <td>Continuous WS2812 exercise: colours, brightness, rainbow, breath, blink (infinite loop).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_led_ws2812_cycle.cpp"><code>vortex_led_ws2812_cycle.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_led_ws2812_cycle.cpp"><code>vortex_led_ws2812_cycle.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_i2c_scan_pcal_bno_pca</code></td>
 <td>I2C bring-up: shared bus devices after HAL init — PCAL95555, BNO08x, optional PCA9685.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_i2c_scan_pcal_bno_pca.cpp"><code>vortex_i2c_scan_pcal_bno_pca.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_i2c_scan_pcal_bno_pca.cpp"><code>vortex_i2c_scan_pcal_bno_pca.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_pcal_gpio_imu_bringup</code></td>
 <td>PCAL95555 + IMU (BNO08x) bring-up with full I²C diagnostics.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_pcal_gpio_imu_bringup.cpp"><code>vortex_pcal_gpio_imu_bringup.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_pcal_gpio_imu_bringup.cpp"><code>vortex_pcal_gpio_imu_bringup.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_i2c_la_trace</code></td>
 <td>Minimal, slow I²C patterns for logic-analyzer correlation with UART.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_i2c_la_trace.cpp"><code>vortex_i2c_la_trace.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_i2c_la_trace.cpp"><code>vortex_i2c_la_trace.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_motor_comms_smoke</code></td>
 <td>TMC9660 comms smoke: PCAL95555 control-line readback, bootloader bring-up, telemetry (no motion).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_motor_comms_smoke.cpp"><code>vortex_motor_comms_smoke.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_motor_comms_smoke.cpp"><code>vortex_motor_comms_smoke.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_bldc_telemetry_sweep</code></td>
 <td>No-motion telemetry / configuration smoke test for the TMC9660 power stage.</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_bldc_telemetry_sweep.cpp"><code>vortex_bldc_telemetry_sweep.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_bldc_telemetry_sweep.cpp"><code>vortex_bldc_telemetry_sweep.cpp</code></a></td>
 </tr>
 <tr>
 <td><code>vortex_brake_dissipator_gpio</code></td>
 <td>GPIO-level exercise of TMC9660 chip GPIO lines (brake / dissipator paths per schematic).</td>
 <td style="text-align: center;">yes</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/main/vortex_brake_dissipator_gpio.cpp"><code>vortex_brake_dissipator_gpio.cpp</code></a></td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/main/vortex_brake_dissipator_gpio.cpp"><code>vortex_brake_dissipator_gpio.cpp</code></a></td>
 </tr>
 </tbody>
 </table>

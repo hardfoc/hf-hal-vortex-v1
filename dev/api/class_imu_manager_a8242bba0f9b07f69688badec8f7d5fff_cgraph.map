@@ -1,5 +1,0 @@
-<map id="ImuManager::InitializeInterruptGpio" name="ImuManager::InitializeInterruptGpio">
-<area shape="rect" id="Node000001" title="Initialize GPIO interrupt for BNO08x INT pin." alt="" coords="5,5,260,31"/>
-<area shape="rect" id="Node000002" href="$class_gpio_manager.html#ad57a4135f150ff0d33bad3047c4cde61" title="Get the pin object of a named pin." alt="" coords="308,5,448,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,15,294,15,294,21,260,21"/>
-</map>

@@ -1279,7 +1279,9 @@ call. The managers never use the raw accessors that bypass it (<code>GetSensor()
 <p>Lock order, when one manager calls another while holding its own lock: <code>Vortex</code> lifecycle lock → any manager;
 <code>MotorController</code> → <code>GpioManager</code> (the TMC9660 SPI mux line is a PCAL95555 pin); <code>ImuManager</code> →
 <code>CommChannelsManager</code> (runtime I2C devices); and a manager's lock → its handler's lock. Nothing takes them in the
-other order.</p>
+other order. <code>GpioManager</code> registers the TMC9660 GPIO17/18 bridge pins only once the handler reports
+<code>IsDriverReady()</code>, and fetches them with <code>Tmc9660Handler::gpio()</code> (which runs the handler's <code>EnsureInitialized()</code>)
+before it takes its own lock.</p>
 <p>Each manager (except <code>NvsManager</code>) has one <code>RtosMutex</code> from <code>hf-utils-rtos-wrap</code>. <code>EnsureInitialized()</code> uses a
 double-checked pattern: an atomic "initialised" flag is read first, then the lock is taken and the flag checked again.</p>
 <table>
@@ -1363,7 +1365,7 @@ double-checked pattern: an atomic "initialised" flag is read first, then the loc
 <h2 id="stack-size">Stack size<a class="headerlink" href="#stack-size" title="Permanent link">&para;</a></h2>
 <p><code>Vortex::EnsureInitialized()</code> brings up the TMC9660 bootloader, the BNO08x SH-2 stack and the sensors with deep call
 chains. The examples set <code>CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192</code> in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/examples/esp32/sdkconfig.defaults"><code>sdkconfig.defaults</code></a>; keep at least that much if you initialise from
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/examples/esp32/sdkconfig.defaults"><code>sdkconfig.defaults</code></a>; keep at least that much if you initialise from
 <code>app_main()</code>.</p>
 
 

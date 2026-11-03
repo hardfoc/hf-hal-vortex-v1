@@ -1087,6 +1087,9 @@
   figure toolkit are gone. The Doxyfile moved to the repository root.</li>
 <li>The documentation follows the HAL page set: board card, quickstart, bring-up and troubleshooting, changelog; the
   roadmap links the CANopen node and drive observability designs.</li>
+<li>hf-core is bumped to the null-safe TMC9660 accessors and the NTC init fix. The board NTC config enables threshold
+  monitoring with the 0–85 °C window again, so the handler applies it during init, and <code>ApplyBoardNtcThresholds()</code>
+  is gone. <code>GpioManager</code> leaves a TMC9660 bridge pin unregistered when <code>Tmc9660Handler::gpio()</code> returns nullptr.</li>
 </ul>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>

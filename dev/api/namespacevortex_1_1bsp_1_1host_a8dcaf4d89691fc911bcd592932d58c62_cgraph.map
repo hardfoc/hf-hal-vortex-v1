@@ -1,5 +1,0 @@
-<map id="vortex::bsp::host::I2c" name="vortex::bsp::host::I2c">
-<area shape="rect" id="Node000001" title="I2C device by the index I2cAddDevice() returned." alt="" coords="5,5,164,31"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#acb5b4be1b8dd317f4448fd0729ccb8d5" title="The device at index, or nullptr." alt="" coords="212,5,379,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,15,198,15,198,21,164,21"/>
-</map>

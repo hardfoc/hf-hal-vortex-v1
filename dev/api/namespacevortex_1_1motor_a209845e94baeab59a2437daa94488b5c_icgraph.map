@@ -1,7 +1,0 @@
-<map id="vortex::motor::DecodeDriveStatus" name="vortex::motor::DecodeDriveStatus">
-<area shape="rect" id="Node000001" title="Decode the four status words into named conditions and a severity." alt="" coords="488,5,691,45"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#ad288be8453dd61876a8b2b89a23f9852" title="Read the four status words in one batch and decode them." alt="" coords="253,5,440,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="475,28,440,28,440,23,475,23"/>
-<area shape="rect" id="Node000003" href="$class_motor_controller.html#ab526eb6443c6d24ff6aa3faa05882c61" title="Read the four status words (289/299/300/301) in one batch and decode them." alt="" coords="5,5,205,45"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="239,28,205,28,205,23,239,23"/>
-</map>

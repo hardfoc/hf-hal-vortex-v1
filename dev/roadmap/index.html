@@ -1106,7 +1106,7 @@ host tests that run the same node against a simulated motor.</p>
 </tr>
 <tr>
 <td>CANopenNode sources</td>
-<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/d51ee48ea0fa467bdc1f2fdc85c9145b19613116/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
+<td><a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/cc94d43187c75263b583420f5ca819dbf582b38d/third_party/README.md"><code>third_party/CANopenNode</code></a> (submodule), built with the HAL's <em>Build CANopenNode slave stack</em> option</td>
 <td>Present</td>
 </tr>
 </tbody>
@@ -1136,19 +1136,9 @@ boundary that makes this a port of four managers rather than a rewrite, and list
 <td><a href="../adr/0002-static-allocation/">ADR 0002</a></td>
 </tr>
 <tr>
-<td>hf-core <code>Tmc9660Handler::gpio()</code> / <code>adc()</code> dereference wrappers that exist only after a successful bring-up; the HAL guards its calls</td>
-<td>hf-core <code>handlers/tmc9660</code></td>
-<td><a href="../managers/gpio/">GpioManager</a></td>
-</tr>
-<tr>
 <td>13 example apps still include HAL internals (handlers, TMC9660 driver headers, the pin map)</td>
 <td><code>tools/lint/hal_boundary_allowlist.txt</code></td>
 <td><a href="../adr/0001-mcu-agnostic-boundary/">ADR 0001</a></td>
-</tr>
-<tr>
-<td>hf-core <code>NtcTemperatureHandler</code> recurses until the stack overflows when <code>enable_threshold_monitoring</code> is set in its config; the HAL applies the window after init instead</td>
-<td>hf-core <code>handlers/ntc</code></td>
-<td><a href="../managers/temperature/">TemperatureManager</a></td>
 </tr>
 </tbody>
 </table>

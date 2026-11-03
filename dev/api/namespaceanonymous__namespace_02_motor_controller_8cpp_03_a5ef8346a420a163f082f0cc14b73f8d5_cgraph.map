@@ -1,5 +1,0 @@
-<map id="anonymous_namespace{MotorController::cpp}::TimedBatch" name="anonymous_namespace{MotorController::cpp}::TimedBatch">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,185,60"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#a0c32d63c9a5e0bbd19eaa4ae8bd7d60c" title="Monotonic microseconds since boot, at the MCU&#39;s high&#45;resolution timer (not the RTOS tick)." alt="" coords="233,20,448,45"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,30,220,30,220,35,186,35"/>
-</map>
