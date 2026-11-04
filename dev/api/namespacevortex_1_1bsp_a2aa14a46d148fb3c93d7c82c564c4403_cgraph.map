@@ -1,5 +1,0 @@
-<map id="vortex::bsp::Nvs" name="vortex::bsp::Nvs">
-<area shape="rect" id="Node000001" title="The NVS object of a region. Constructing it touches no hardware; call EnsureInitialized() on it." alt="" coords="5,5,133,31"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#a864caf15c1f4ebda9162ba8fa5b0b2ec" title="Namespace name of a region." alt="" coords="181,5,387,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="134,15,167,15,167,21,134,21"/>
-</map>

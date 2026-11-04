@@ -1338,7 +1338,7 @@ repository's README and docs.</p>
 <li>The pin map is shared by every HardFOC HAL through <code>hf-pincfg</code>; the board is chosen at build time with
   <code>HARDFOC_BOARD_VORTEX_V1</code> (set in this repository's <code>CMakeLists.txt</code>).</li>
 <li>The examples that call ESP-IDF directly get their GPIO numbers from
-  <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/examples/esp32/main/common/vortex_board_pins.hpp"><code>vortex_board_pins.hpp</code></a>, which reads them from the pin
+  <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/examples/esp32/main/common/vortex_board_pins.hpp"><code>vortex_board_pins.hpp</code></a>, which reads them from the pin
   map at compile time and <code>static_assert</code>s that each net is an ESP32 pin; there is no second copy.</li>
 </ul>
 

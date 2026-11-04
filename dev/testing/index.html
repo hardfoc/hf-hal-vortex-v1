@@ -1091,7 +1091,7 @@
 
 <h1 id="testing-and-ci">Testing and CI<a class="headerlink" href="#testing-and-ci" title="Permanent link">&para;</a></h1>
 <p>What runs on a pull request, what each check means, and how to run it on your machine first. All workflows are in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/be26625f0c868240b188f78f25a570ef5d490413/.github/workflows"><code>.github/workflows</code></a>; most call reusable workflows in
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/.github/workflows"><code>.github/workflows</code></a>; most call reusable workflows in
 <a href="https://github.com/hardfoc/hf-general-ci-tools">hf-general-ci-tools</a> or
 <a href="https://github.com/hardfoc/hf-espidf-ci-tools">hf-espidf-ci-tools</a>.</p>
 <h2 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">&para;</a></h2>
@@ -1163,7 +1163,7 @@
 </table>
 <p>The examples are integration tests: they run on a board, not in CI. CI proves they compile; a person flashes them.</p>
 <h2 id="host-unit-tests">Host unit tests<a class="headerlink" href="#host-unit-tests" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/be26625f0c868240b188f78f25a570ef5d490413/tests/host"><code>tests/host</code></a> builds every source in <code>lib/api</code> and <code>lib/managers</code>, with hf-core added as a
+<p><a href="https://github.com/hardfoc/hf-hal-vortex-v1/tree/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/tests/host"><code>tests/host</code></a> builds every source in <code>lib/api</code> and <code>lib/managers</code>, with hf-core added as a
 subdirectory (<code>HF_CORE_MCU=NONE</code>, <code>HF_CORE_RTOS=NONE</code>) and the host board binding (<code>bsp_bind/host/</code>) in place of the
 ESP32-C6 one. The binding hands the managers hf-core's scriptable <code>Base*</code> fakes (<code>hf_core_host_mocks</code>) and logs
 what they asked for; a test reaches the fakes through <code>vortex::bsp::host</code> to put a chip model behind them or inject

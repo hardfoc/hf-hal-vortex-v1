@@ -1,5 +1,0 @@
-<map id="CommChannelsManager::GetI2cDevice" name="CommChannelsManager::GetI2cDevice">
-<area shape="rect" id="Node000001" title="Get a built&#45;in I²C device by enum identifier." alt="" coords="5,5,188,45"/>
-<area shape="rect" id="Node000002" href="$namespacevortex_1_1bsp.html#acb5b4be1b8dd317f4448fd0729ccb8d5" title="The device at index, or nullptr." alt="" coords="236,13,403,38"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
-</map>

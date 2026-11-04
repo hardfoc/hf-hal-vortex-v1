@@ -945,6 +945,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#changed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1026,6 +1048,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#changed" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1081,6 +1125,19 @@
 <p>What changed in the Vortex V1 HAL, newest first. Releases are tagged <code>vX.Y.Z</code> and listed on
 <a href="https://github.com/hardfoc/hf-hal-vortex-v1/releases">GitHub releases</a>; no release has been tagged yet.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="breaking">Breaking<a class="headerlink" href="#breaking" title="Permanent link">&para;</a></h3>
+<ul>
+<li>hf-core and hf-as5047u-driver are bumped to the AS5047U getters that return <code>as5047u::Result&lt;T&gt;</code>. Code that reads
+  the sensor through <code>EncoderManager::VisitDriver()</code> or the handler reads <code>.value</code> after checking <code>.ok()</code>.</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>EncoderManager::ReadDiagnostics()</code> filled <code>As5047uDiagnostics</code> with <code>communication_ok = true</code> when its ERRFL read
+  failed (the failed read came back as 0, and the read's transport flags were discarded). It now returns the bus
+  error and leaves the struct alone. <code>ReadAngle()</code>, <code>ReadAngleDegrees()</code>, <code>ReadVelocityRPM()</code> and
+  <code>ReadFieldStrength()</code> no longer overwrite the caller's value with the 0 of a failed read; their error now also
+  comes from the read's own <code>Result</code>, not only from the sticky flags.</li>
+</ul>
 <h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
 <ul>
 <li>The documentation builds with the shared HardFOC theme (<code>hardfoc-mkdocs-theme</code>); the copied template, hooks and

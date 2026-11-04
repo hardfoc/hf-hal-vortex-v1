@@ -1362,7 +1362,7 @@
 <h1 id="encodermanager">EncoderManager<a class="headerlink" href="#encodermanager" title="Permanent link">&para;</a></h1>
 <p>Owns up to four AS5047U magnetic angle encoders. Vortex V1 has a chip select wired for one encoder
 (<code>AS5047U_POSITION_ENCODER</code>, GPIO20) and two external chip selects that can each take another, but <strong>no encoder is
-created automatically</strong>: you create each device. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/lib/managers/EncoderManager.h"><code>EncoderManager.h</code></a>.</p>
+created automatically</strong>: you create each device. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/lib/managers/EncoderManager.h"><code>EncoderManager.h</code></a>.</p>
 <h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1390,7 +1390,7 @@ created automatically</strong>: you create each device. Source: <a href="https:/
 </tr>
 <tr>
 <td><code>ReadDiagnostics(index, As5047uDiagnostics&amp;)</code></td>
-<td>Error flags (one ERRFL read) and the manager's counters</td>
+<td>Error flags (one ERRFL read) and the manager's counters; when that read fails, the bus error is returned and the struct is not filled in</td>
 </tr>
 <tr>
 <td><code>ReadFieldStrength(index, EncoderFieldStrength&amp;)</code></td>
@@ -1406,7 +1406,7 @@ created automatically</strong>: you create each device. Source: <a href="https:/
 </tr>
 <tr>
 <td><code>GetAs5047uHandler(index)</code>, <code>VisitDriver(index, fn)</code></td>
-<td>The handler, or <code>fn(driver)</code> on the typed driver under the manager and handler locks, for chip features the manager does not wrap</td>
+<td>The handler, or <code>fn(driver)</code> on the typed driver under the manager and handler locks, for chip features the manager does not wrap. The driver's getters return <code>as5047u::Result&lt;T&gt;</code>: check <code>.ok()</code> before using <code>.value</code></td>
 </tr>
 <tr>
 <td><code>IsDeviceValid</code>, <code>GetActiveDeviceIndices</code>, <code>GetAvailableDevices</code>, <code>GetDeviceType</code></td>

@@ -1429,7 +1429,7 @@
 <p>Owns the TMC9660 motor controllers: the onboard one, and up to two more on the external SPI chip selects. The
 TMC9660 runs the motor loops itself (FOC current, velocity and position, ramps); this manager creates its handler,
 manages the host link and gives you unit-aware velocity and position calls in the motor frame or, through a gear
-ratio, the load frame. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/lib/managers/MotorController.h"><code>MotorController.h</code></a>.</p>
+ratio, the load frame. Source: <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/lib/managers/MotorController.h"><code>MotorController.h</code></a>.</p>
 <h2 id="devices">Devices<a class="headerlink" href="#devices" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1520,7 +1520,7 @@ counts per revolution.</p>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>Commanding motion assumes the TMC9660 has been configured for your motor (type, pole pairs, current limits,
-feedback, commutation mode). The <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up notes</a> and the motor
+feedback, commutation mode). The <a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/examples/esp32/docs/BLDC_BRINGUP.md">BLDC bring-up notes</a> and the motor
 bench examples (<code>vortex_bldc_*</code> in <a href="../../examples/">Examples</a>) show the full sequence.</p>
 <h2 id="diagnostics">Diagnostics<a class="headerlink" href="#diagnostics" title="Permanent link">&para;</a></h2>
 <p><code>GetSystemDiagnostics()</code> fills <code>MotorSystemDiagnostics</code>: whether the manager is up, how many device slots are active
@@ -1530,7 +1530,7 @@ and initialised, the last error, and per device whether it is active, initialise
 needs from the HAL. Each call is one pipelined TMCL batch (on SPI, N accesses cost N + 1 frames instead of 2N), sent
 through the handler's <code>visitDriver()</code> with the device lock held. A call never starts a bootloader bring-up: a device
 that is not up returns <code>NOT_INITIALIZED</code> and sends nothing. The helpers live in
-<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/be26625f0c868240b188f78f25a570ef5d490413/lib/managers/api_helpers/Tmc9660DriveObservability.h"><code>api_helpers/Tmc9660DriveObservability.h</code></a>.</p>
+<a href="https://github.com/hardfoc/hf-hal-vortex-v1/blob/10b3aa0e0d5446f0ae7dfc4f62cb05b85be41075/lib/managers/api_helpers/Tmc9660DriveObservability.h"><code>api_helpers/Tmc9660DriveObservability.h</code></a>.</p>
 <table>
 <thead>
 <tr>
