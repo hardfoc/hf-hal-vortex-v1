@@ -1,0 +1,9 @@
+<map id="EncoderManager::Deinitialize" name="EncoderManager::Deinitialize">
+<area shape="rect" id="Node000001" title="Deinitialize all encoders and release resources." alt="" coords="456,45,669,70"/>
+<area shape="rect" id="Node000002" href="$class_vortex.html#a8a5e57b64484bd66db36ecf5c0b0d174" title="Shut down every manager that is up, in reverse init order. Caller holds lifecycle_mutex_." alt="" coords="189,5,408,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="444,46,408,41,409,36,445,40"/>
+<area shape="rect" id="Node000004" href="$class_encoder_manager.html#a0a7fc1d6c34428af9878da677c0fc6f5" title="Private destructor." alt="" coords="197,69,400,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="445,74,400,80,400,74,444,69"/>
+<area shape="rect" id="Node000003" href="$class_vortex.html#a7154f99300a138e2a2c1b5445496d9f6" title="Shut down all subsystems in reverse initialization order." alt="" coords="5,13,141,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="176,28,142,28,142,23,176,23"/>
+</map>

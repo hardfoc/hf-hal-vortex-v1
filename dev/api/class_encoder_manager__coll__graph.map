@@ -1,0 +1,37 @@
+<map id="EncoderManager" name="EncoderManager">
+<area shape="rect" id="Node000001" title="Singleton for managing multiple AS5047U encoder devices with indexed access." alt="" coords="1103,226,1233,251"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="329,65,482,90"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="462,59,582,33,659,22,743,17,830,19,917,30,1002,54,1042,71,1080,92,1114,123,1139,160,1156,197,1166,225,1161,227,1151,199,1134,162,1110,126,1077,97,1040,76,1000,59,916,35,829,24,743,22,660,28,583,38,463,64"/>
+<area shape="rect" id="Node000006" href="$class_comm_channels_manager.html" title="Singleton managing all board communication channels for Vortex V1." alt="" coords="707,283,889,309"/>
+<area shape="poly" id="edge10_Node000006_Node000002" title=" " alt="" coords="496,73,597,81,640,90,668,105,683,125,688,146,687,167,682,188,676,229,680,249,693,269,708,281,705,285,689,272,675,251,671,229,677,187,682,166,683,146,678,127,665,109,638,95,597,86,496,79"/>
+<area shape="rect" id="Node000012" href="$class_gpio_manager.html" title="Singleton managing GPIO pins across ESP32, PCAL95555 I/O expander, and TMC9660 controllers." alt="" coords="743,370,853,395"/>
+<area shape="poly" id="edge15_Node000012_Node000002" title=" " alt="" coords="452,92,534,121,573,128,607,128,638,134,653,143,669,157,682,178,688,198,684,237,679,277,683,297,693,319,707,335,723,348,760,368,758,372,721,352,703,338,688,321,677,299,674,277,679,237,683,198,678,180,665,160,650,147,636,139,606,134,573,133,533,127,450,98"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="694,90,902,115"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="917,109,999,126,1040,139,1080,156,1104,171,1126,190,1158,224,1154,227,1122,193,1101,176,1077,161,1039,144,997,131,916,115"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="699,139,897,194"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="911,173,994,184,1079,201,1140,223,1139,228,1078,207,993,189,910,178"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="713,219,883,259"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="897,236,1102,236,1102,241,897,241"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="903,282,1078,256,1114,249,1115,254,1079,261,903,287"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="307,132,504,172"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="518,171,606,195,643,209,668,223,678,235,681,247,684,258,692,269,714,281,711,285,689,273,679,261,676,249,673,238,665,227,641,214,605,200,516,177"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="309,196,502,236"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="516,236,735,281,734,286,515,241"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="304,261,507,315"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="521,288,707,291,707,297,521,293"/>
+<area shape="rect" id="Node000010" href="$struct_comm_channels_manager_1_1_runtime_i2c_slot.html" title=" " alt="" coords="5,268,188,308"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="202,285,304,285,304,291,202,291"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="306,339,505,365"/>
+<area shape="poly" id="edge11_Node000006_Node000011" title=" " alt="" coords="508,335,708,306,709,311,509,340"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="865,367,967,341,1023,322,1077,299,1118,274,1150,249,1154,254,1121,279,1080,304,1025,327,969,346,866,372"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="322,389,489,429"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="502,403,666,393,743,386,743,391,667,399,502,408"/>
+<area shape="rect" id="Node000014" href="$struct_gpio_entry.html" title="A single GPIO entry in the fixed&#45;size registry." alt="" coords="53,397,140,422"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="154,407,322,407,322,412,154,412"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="301,453,509,493"/>
+<area shape="poly" id="edge16_Node000012_Node000015" title=" " alt="" coords="522,451,666,420,758,393,760,398,667,425,523,456"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="691,447,905,502"/>
+<area shape="poly" id="edge17_Node000001_Node000016" title=" " alt="" coords="918,464,959,455,1001,443,1041,425,1077,402,1111,366,1135,323,1152,282,1161,251,1166,253,1157,284,1140,326,1115,369,1080,406,1043,430,1003,448,961,460,920,469"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="316,518,495,543"/>
+<area shape="poly" id="edge18_Node000016_Node000017" title=" " alt="" coords="508,529,586,525,666,515,724,499,725,505,667,520,587,530,509,534"/>
+</map>

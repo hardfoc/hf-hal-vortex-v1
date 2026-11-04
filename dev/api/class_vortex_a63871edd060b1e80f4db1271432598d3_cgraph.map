@@ -1,0 +1,23 @@
+<map id="Vortex::InitializeLeds" name="Vortex::InitializeLeds">
+<area shape="rect" id="Node000001" title="Initialize LED management (step 4 — early for LED&#45;only benches)" alt="" coords="5,80,164,105"/>
+<area shape="rect" id="Node000002" href="$class_vortex_boot_report.html#a8561e1b05dacd63c7e89c9765100a103" title="Record a component that failed to initialise." alt="" coords="217,55,425,80"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,82,204,77,204,83,165,87"/>
+<area shape="rect" id="Node000004" href="$class_led_manager.html#afa325e20cb2d4356fb870fdd86d4c729" title="Initialise the WS2812 LED strip (idempotent)." alt="" coords="212,104,431,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="165,98,199,102,198,107,164,103"/>
+<area shape="rect" id="Node000003" href="$class_vortex_boot_report.html#ae4e34ba98fdc68473668afc554eb2616" title=" " alt="" coords="479,55,649,80"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="425,65,465,65,465,70,425,70"/>
+<area shape="rect" id="Node000005" href="$class_led_manager.html#aeb27eef4ebf25b19bd864c9822a6c892" title=" " alt="" coords="481,104,647,129"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="431,114,467,114,467,119,431,119"/>
+<area shape="rect" id="Node000006" href="$class_led_manager.html#a38f49900a4847b036422fbd5edcbcf21" title=" " alt="" coords="719,5,925,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="621,102,648,89,662,77,671,65,680,52,696,40,711,33,713,38,699,44,684,55,675,68,666,81,651,94,623,106"/>
+<area shape="rect" id="Node000007" href="$class_led_manager.html#aec49368647c9b09857ea1b775d655e5e" title=" " alt="" coords="697,55,947,80"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="631,101,741,80,742,85,632,107"/>
+<area shape="rect" id="Node000008" href="$class_led_manager.html#a32cf3a054189142932736ab7a1e99a02" title="Latch one colour at a brightness onto the LED through the board binding." alt="" coords="734,104,910,129"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="648,114,720,114,720,119,648,119"/>
+<area shape="rect" id="Node000010" href="$namespacevortex_1_1bsp.html#ae278939510e12d6f78ab2f042e53482f" title="Open the addressable status LED chain on data_pin." alt="" coords="721,153,923,179"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="632,127,742,148,741,153,631,132"/>
+<area shape="rect" id="Node000011" href="$class_led_manager.html#a6305fee5cff625bb3332808eb7e63207" title=" " alt="" coords="715,203,929,228"/>
+<area shape="poly" id="edge10_Node000005_Node000011" title=" " alt="" coords="586,127,635,158,698,188,728,197,727,202,696,192,633,162,583,132"/>
+<area shape="rect" id="Node000009" href="$namespacevortex_1_1bsp.html#aeabe621406616ba6d8213f6b4fd14fe1" title="Latch colours onto the chain." alt="" coords="995,104,1197,129"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="910,114,981,114,981,119,910,119"/>
+</map>

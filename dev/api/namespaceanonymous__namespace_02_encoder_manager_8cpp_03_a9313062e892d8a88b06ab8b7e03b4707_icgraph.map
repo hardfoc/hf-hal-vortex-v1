@@ -1,0 +1,11 @@
+<map id="anonymous_namespace{EncoderManager::cpp}::WithReadError" name="anonymous_namespace{EncoderManager::cpp}::WithReadError">
+<area shape="rect" id="Node000001" title="The sticky flags of an access plus the error of the read itself (an as5047u::Result&#39;s error)." alt="" coords="307,80,487,135"/>
+<area shape="rect" id="Node000002" href="$class_encoder_manager.html#ab3018404938f9072f4a7ff4bd9333269" title="Read angle from specific encoder device." alt="" coords="27,5,237,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="331,76,258,46,210,33,212,28,260,41,333,71"/>
+<area shape="rect" id="Node000003" href="$class_encoder_manager.html#a26d4ef1b981945f22df48c3f5c83df3b" title="Read angle in degrees from specific encoder device." alt="" coords="27,55,237,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="293,98,237,91,237,85,294,92"/>
+<area shape="rect" id="Node000004" href="$class_encoder_manager.html#ac69753b155055cc2396b6508e5a7b25f" title="Read the AGC value and the CORDIC magnitude (magnet field strength) of one encoder." alt="" coords="31,119,233,159"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="294,122,234,130,233,124,293,117"/>
+<area shape="rect" id="Node000005" href="$class_encoder_manager.html#a13af0e082a3b2741b06508cd0d8bf506" title="Read velocity from specific encoder device." alt="" coords="5,184,259,209"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="333,143,260,174,212,187,210,181,258,169,331,138"/>
+</map>

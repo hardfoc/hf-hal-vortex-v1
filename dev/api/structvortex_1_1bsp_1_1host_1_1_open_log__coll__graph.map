@@ -1,0 +1,19 @@
+<map id="vortex::bsp::host::OpenLog" name="vortex::bsp::host::OpenLog">
+<area shape="rect" id="Node000001" title="Every Open() call the managers made, and what the binding was asked to configure." alt="" coords="625,134,764,174"/>
+<area shape="rect" id="Node000002" href="$structvortex_1_1bsp_1_1_uart_spec.html" title="UART port, framing 8N1, no flow control." alt="" coords="325,5,488,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="491,31,547,48,603,73,644,102,676,132,673,136,640,106,600,78,545,53,490,37"/>
+<area shape="rect" id="Node000003" href="$structvortex_1_1bsp_1_1_spi_bus_spec.html" title="SPI master bus (one per board on Vortex: SPI2)." alt="" coords="317,55,496,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="477,81,602,115,646,131,644,136,601,121,476,86"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="321,105,493,145"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="507,132,625,144,625,150,506,137"/>
+<area shape="rect" id="Node000005" href="$structvortex_1_1bsp_1_1_spi_device_spec.html" title="One chip select on the SPI bus." alt="" coords="5,112,204,137"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="217,122,320,122,320,127,217,127"/>
+<area shape="rect" id="Node000006" href="$structvortex_1_1bsp_1_1_i2c_bus_spec.html" title="I2C master bus." alt="" coords="318,169,495,195"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="509,178,601,171,625,168,626,173,602,177,509,184"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="321,219,492,259"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="505,223,553,212,600,198,658,172,660,176,602,203,554,217,506,228"/>
+<area shape="rect" id="Node000008" href="$structvortex_1_1bsp_1_1_i2c_device_spec.html" title="One 7&#45;bit device on the I2C bus." alt="" coords="5,227,204,252"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="218,237,321,237,321,242,218,242"/>
+<area shape="rect" id="Node000009" href="$structvortex_1_1bsp_1_1_can_spec.html" title="Classic CAN controller." alt="" coords="327,284,486,309"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="497,278,550,263,600,240,643,207,676,172,679,176,646,211,603,244,551,268,499,283"/>
+</map>

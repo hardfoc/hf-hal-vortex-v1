@@ -1,0 +1,23 @@
+<map id="VortexBoardBind.h" name="VortexBoardBind.h">
+<area shape="rect" id="Node000001" title="The board binding: the only way the Vortex managers reach MCU peripherals." alt="" coords="560,5,703,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,101,76,126"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="560,25,308,44,180,60,129,70,90,81,65,95,63,90,88,76,127,65,180,55,308,39,559,20"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="101,101,167,126"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="560,27,354,47,252,63,180,81,158,94,155,90,178,76,251,57,353,42,560,22"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="192,101,319,126"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="560,32,452,51,332,81,291,97,289,92,331,76,451,46,559,26"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="343,101,474,126"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="604,33,487,81,448,98,446,93,485,76,602,28"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="498,101,618,126"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="624,32,577,92,573,88,620,29"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="643,101,769,126"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="643,29,690,88,686,92,638,32"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="793,101,915,126"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="663,28,783,76,819,92,817,97,781,81,661,33"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="939,101,1121,126"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="701,28,808,49,928,76,986,94,984,99,927,81,807,54,700,33"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="1145,101,1275,126"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="703,18,791,23,900,33,1018,50,1135,76,1177,92,1176,97,1133,81,1017,56,899,39,791,29,703,24"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="1299,79,1483,148"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="703,18,814,22,957,32,1120,49,1286,76,1285,81,1119,55,957,37,813,28,703,23"/>
+</map>

@@ -1,0 +1,21 @@
+<map id="TemperatureManager::Initialize" name="TemperatureManager::Initialize">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,121,167,161"/>
+<area shape="rect" id="Node000002" href="$class_temperature_manager.html#a61d59b98806b5283ee9bae390add2ba5" title=" " alt="" coords="217,7,391,47"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,118,251,52,253,56,127,123"/>
+<area shape="rect" id="Node000004" href="$class_temperature_manager.html#a48a4292dbf5a5f12e5a2d7a2b5546621" title=" " alt="" coords="215,89,393,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="167,126,201,121,201,126,167,131"/>
+<area shape="rect" id="Node000008" href="$class_temperature_manager.html#aeb17de86eb7304571a865a82c53460f4" title=" " alt="" coords="217,153,391,193"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="167,150,203,155,203,160,167,155"/>
+<area shape="rect" id="Node000010" href="$class_temperature_manager.html#a503f6b4c9bfe61aa47f9655b2c92f668" title="Destroy every sensor object and clear the table. Caller holds mutex_." alt="" coords="223,217,385,257"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="126,158,216,202,233,209,231,214,214,207,124,163"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1bsp.html#afab45bbe57376f5b888ffaf1a73e77a5" title="The MCU&#39;s on&#45;chip temperature sensor (not yet initialised), or nullptr if the MCU has none." alt="" coords="441,5,653,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="391,21,427,20,428,25,392,27"/>
+<area shape="rect" id="Node000005" href="$class_adc_manager.html#ae3d2137cd97edce8f97092d5b4a6d1d1" title="Return the singleton AdcManager instance." alt="" coords="453,55,642,80"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="393,91,458,80,459,85,394,96"/>
+<area shape="rect" id="Node000006" href="$namespacevortex_1_1config.html#a0c99e15a578efa31c01f863e9e398ade" title="NTC handler configuration for the board thermistor." alt="" coords="451,105,643,145"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="394,112,438,115,438,120,393,117"/>
+<area shape="rect" id="Node000007" href="$namespacevortex_1_1config.html#aa32abea2dbd3abcbb148d668c41970e9" title="Hardware channel id of the board NTC on the shared TMC9660 ADC wrapper, from the pin map." alt="" coords="701,105,880,145"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="643,122,688,122,688,127,643,127"/>
+<area shape="rect" id="Node000009" href="$class_motor_controller.html#a2800ce6994196eaf98678cf543aaa1ca" title="Get the singleton instance." alt="" coords="442,169,653,195"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="392,173,429,175,428,180,391,179"/>
+</map>

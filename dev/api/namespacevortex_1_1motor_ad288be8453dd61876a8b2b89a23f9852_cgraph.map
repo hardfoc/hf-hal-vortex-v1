@@ -1,0 +1,9 @@
+<map id="vortex::motor::ReadDriveDiagnostics" name="vortex::motor::ReadDriveDiagnostics">
+<area shape="rect" id="Node000001" title="Read the four status words in one batch and decode them." alt="" coords="5,55,192,95"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#afaa6303fc1367ef2191e3d868b6e98c9" title="Read a batch (GAP, pipelined)." alt="" coords="253,5,442,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,53,278,31,279,36,187,58"/>
+<area shape="rect" id="Node000003" href="$namespacevortex_1_1motor.html#a209845e94baeab59a2437daa94488b5c" title="Decode the four status words into named conditions and a severity." alt="" coords="246,55,449,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,73,232,73,232,78,192,78"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1bsp.html#a0c32d63c9a5e0bbd19eaa4ae8bd7d60c" title="Monotonic microseconds since boot, at the MCU&#39;s high&#45;resolution timer (not the RTOS tick)." alt="" coords="240,120,455,145"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="187,93,279,114,278,120,185,98"/>
+</map>

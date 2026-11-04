@@ -1,0 +1,21 @@
+<map id="vortex::bsp::MonotonicMicros" name="vortex::bsp::MonotonicMicros">
+<area shape="rect" id="Node000001" title="Monotonic microseconds since boot, at the MCU&#39;s high&#45;resolution timer (not the RTOS tick)." alt="" coords="560,70,775,95"/>
+<area shape="rect" id="Node000002" href="$namespacevortex_1_1motor.html#ad288be8453dd61876a8b2b89a23f9852" title="Read the four status words in one batch and decode them." alt="" coords="310,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="594,70,495,48,496,43,595,64"/>
+<area shape="rect" id="Node000004" href="$namespacevortex_1_1motor.html#aecb60c6e57d3b8c2a8a90d903b02b44c" title="Refresh snap from one pipelined batch." alt="" coords="295,70,512,95"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="546,85,512,85,512,80,546,80"/>
+<area shape="rect" id="Node000006" href="$namespaceanonymous__namespace_02_motor_controller_8cpp_03.html#a5ef8346a420a163f082f0cc14b73f8d5" title=" " alt="" coords="313,177,493,231"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="627,104,465,179,462,174,625,99"/>
+<area shape="rect" id="Node000003" href="$class_motor_controller.html#ab526eb6443c6d24ff6aa3faa05882c61" title="Read the four status words (289/299/300/301) in one batch and decode them." alt="" coords="26,5,226,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="296,28,226,28,226,23,296,23"/>
+<area shape="rect" id="Node000005" href="$class_motor_controller.html#a61cb025b3c09f1781926c2fe157b0b20" title="Refresh a caller&#45;owned telemetry snapshot from one batch." alt="" coords="11,70,241,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="281,85,241,85,241,80,281,80"/>
+<area shape="rect" id="Node000007" href="$class_motor_controller.html#a0fac432271a4de16a9c7742987539120" title="Apply a parameter image (MOTOR_TYPE first), optionally only where the chip differs and with read&#45;back..." alt="" coords="8,120,244,160"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="299,183,213,163,214,157,300,178"/>
+<area shape="rect" id="Node000008" href="$class_motor_controller.html#a1334daa06a4c0cc914eeb0cdf935c82b" title="Clear latched (write&#45;1&#45;to&#45;clear) bits of the general error, gate&#45;driver and ADC words." alt="" coords="17,184,235,224"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="300,207,235,207,235,201,300,201"/>
+<area shape="rect" id="Node000009" href="$class_motor_controller.html#aa467f153fe71aa06edb33b1cbcd9d31f" title="Read several axis parameters in pipelined batches (GAP)." alt="" coords="7,249,245,274"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="301,228,189,251,188,246,300,223"/>
+<area shape="rect" id="Node000010" href="$class_motor_controller.html#a583827f67b783b36111f7a1184973675" title="Write several axis parameters in pipelined batches (SAP); per&#45;element status in items." alt="" coords="5,298,247,323"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="348,241,300,266,248,289,208,301,206,295,246,284,298,262,346,236"/>
+</map>

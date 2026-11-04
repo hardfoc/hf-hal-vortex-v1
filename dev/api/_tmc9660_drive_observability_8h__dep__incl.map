@@ -1,0 +1,15 @@
+<map id="Tmc9660DriveObservability.h" name="Tmc9660DriveObservability.h">
+<area shape="rect" id="Node000001" title="TMC9660 telemetry snapshots, fault decoding and parameter&#45;image apply for MotorController." alt="" coords="285,5,500,31"/>
+<area shape="rect" id="Node000002" href="$_motor_controller_8h.html" title="Singleton class for managing multiple TMC9660 motor controllers and their interfaces." alt="" coords="325,79,460,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="395,44,395,79,390,79,390,44"/>
+<area shape="rect" id="Node000003" href="$_adc_manager_8cpp.html" title="Implementation of the Vortex V1 ADC manager." alt="" coords="5,152,135,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="328,110,123,154,122,149,327,104"/>
+<area shape="rect" id="Node000004" href="$_gpio_manager_8cpp.html" title="Implementation of the Vortex V1 GPIO manager." alt="" coords="159,152,293,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="354,112,254,154,252,149,352,107"/>
+<area shape="rect" id="Node000005" href="$_motor_controller_8cpp.html" title=" " alt="" coords="317,152,468,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="395,118,395,152,390,152,390,118"/>
+<area shape="rect" id="Node000006" href="$_temperature_manager_8cpp.html" title="Implementation of the Vortex V1 temperature manager." alt="" coords="493,152,679,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="437,106,555,149,553,154,435,111"/>
+<area shape="rect" id="Node000007" href="$_vortex_8cpp.html" title="Implementation of the unified Vortex API singleton." alt="" coords="703,152,794,177"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="464,104,703,152,702,157,463,109"/>
+</map>

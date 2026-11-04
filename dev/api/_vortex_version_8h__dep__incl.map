@@ -1,0 +1,9 @@
+<map id="VortexVersion.h" name="VortexVersion.h">
+<area shape="rect" id="Node000001" title="Version information for the Vortex HAL and API." alt="" coords="69,5,193,31"/>
+<area shape="rect" id="Node000002" href="$_vortex_8h.html" title="Unified API singleton for the HardFOC Vortex platform." alt="" coords="13,79,89,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,42,66,80,62,76,106,38"/>
+<area shape="rect" id="Node000004" href="$_vortex_version_manifest_8cpp.html" title="Static manifest of components the Vortex HAL links against." alt="" coords="113,79,309,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="155,38,199,76,196,80,152,42"/>
+<area shape="rect" id="Node000003" href="$_vortex_8cpp.html" title="Implementation of the unified Vortex API singleton." alt="" coords="5,152,96,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="53,118,53,152,48,152,48,118"/>
+</map>
