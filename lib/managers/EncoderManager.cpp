@@ -390,6 +390,13 @@ As5047uHandler* EncoderManager::ReadyHandlerLocked(uint8_t deviceIndex) noexcept
     return &*as5047u_handlers_[deviceIndex];
 }
 
+namespace {
+/// The sticky flags of an access plus the error of the read itself (an as5047u::Result's error).
+AS5047U_Error WithReadError(AS5047U_Error sticky, AS5047U_Error read_error) noexcept {
+    return static_cast<AS5047U_Error>(static_cast<uint16_t>(sticky) | static_cast<uint16_t>(read_error));
+}
+}  // namespace
+
 EncoderError EncoderManager::FinishRead(uint8_t deviceIndex, AS5047U_Error sticky,
                                         bool count_measurement) noexcept {
     // `sticky` is what ClearStickyErrorFlags() returned for this access (GetStickyErrorFlags() no
@@ -419,8 +426,11 @@ EncoderError EncoderManager::ReadAngle(uint8_t deviceIndex, uint16_t& angle) noe
     AS5047U_Error sticky = AS5047U_Error::None;
     handler->visitDriver([&](auto& sensor) {
         ran = true;
-        angle = sensor.GetAngle();
-        sticky = sensor.ClearStickyErrorFlags();
+        const auto r = sensor.GetAngle();
+        sticky = WithReadError(sensor.ClearStickyErrorFlags(), r.error);
+        if (r.ok()) {
+            angle = r.value;  // a failed read leaves the caller's value alone
+        }
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -438,8 +448,11 @@ EncoderError EncoderManager::ReadAngleDegrees(uint8_t deviceIndex, double& angle
     AS5047U_Error sticky = AS5047U_Error::None;
     handler->visitDriver([&](auto& sensor) {
         ran = true;
-        angle_degrees = static_cast<double>(sensor.GetAngle(as5047u::AngleUnit::Degrees));
-        sticky = sensor.ClearStickyErrorFlags();
+        const auto r = sensor.GetAngle(as5047u::AngleUnit::Degrees);
+        sticky = WithReadError(sensor.ClearStickyErrorFlags(), r.error);
+        if (r.ok()) {
+            angle_degrees = static_cast<double>(r.value);
+        }
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -457,8 +470,11 @@ EncoderError EncoderManager::ReadVelocityRPM(uint8_t deviceIndex, double& veloci
     AS5047U_Error sticky = AS5047U_Error::None;
     handler->visitDriver([&](auto& sensor) {
         ran = true;
-        velocity_rpm = static_cast<double>(sensor.GetVelocity(as5047u::VelocityUnit::Rpm));
-        sticky = sensor.ClearStickyErrorFlags();
+        const auto r = sensor.GetVelocity(as5047u::VelocityUnit::Rpm);
+        sticky = WithReadError(sensor.ClearStickyErrorFlags(), r.error);
+        if (r.ok()) {
+            velocity_rpm = static_cast<double>(r.value);
+        }
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
@@ -476,13 +492,24 @@ EncoderError EncoderManager::ReadDiagnostics(uint8_t deviceIndex, As5047uDiagnos
     // ReadFieldStrength() reads them when a caller wants them.
     bool ran = false;
     uint16_t error_flags = 0;
+    AS5047U_Error read_error = AS5047U_Error::None;
     handler->visitDriver([&](auto& sensor) {
         ran = true;
-        error_flags = sensor.GetErrorFlags();
+        const auto r = sensor.GetErrorFlags();
+        error_flags = r.value;
+        read_error = r.error;
         (void)sensor.ClearStickyErrorFlags();  // drop transport flags raised by this read
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;
+    }
+    if (read_error != AS5047U_Error::None) {
+        // No ERRFL read went through: nothing is known about the chip, least of all that the bus
+        // is healthy. Report the failure; `diagnostics` is not filled in.
+        communication_error_counts_[deviceIndex].fetch_add(1, std::memory_order_acq_rel);
+        const EncoderError err = mapDriverError(read_error);
+        last_error_.store(err, std::memory_order_release);
+        return err;
     }
 
     const auto has = [error_flags](AS5047U_Error bit) noexcept {
@@ -510,9 +537,13 @@ EncoderError EncoderManager::ReadFieldStrength(uint8_t deviceIndex, EncoderField
     AS5047U_Error sticky = AS5047U_Error::None;
     handler->visitDriver([&](auto& sensor) {
         ran = true;
-        field.agc = sensor.GetAGC();
-        field.magnitude = sensor.GetMagnitude();
-        sticky = sensor.ClearStickyErrorFlags();
+        const auto agc = sensor.GetAGC();
+        const auto magnitude = sensor.GetMagnitude();
+        sticky = WithReadError(WithReadError(sensor.ClearStickyErrorFlags(), agc.error), magnitude.error);
+        if (agc.ok() && magnitude.ok()) {
+            field.agc = agc.value;
+            field.magnitude = magnitude.value;
+        }
     });
     if (!ran) {
         return EncoderError::NOT_INITIALIZED;

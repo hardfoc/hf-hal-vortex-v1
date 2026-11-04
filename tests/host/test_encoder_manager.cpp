@@ -174,7 +174,7 @@ HF_TEST(Encoder_EmptyOrUninitialisedSlotIsRefusedWithoutSpi) {
 HF_TEST(Encoder_VisitDriverRunsOnlyOnAReadySlot) {
     Fixture f;
     uint16_t angle = 0;
-    CHECK(f.enc.VisitDriver(kSlot, [&](auto& drv) { angle = drv.GetAngle(); }));
+    CHECK(f.enc.VisitDriver(kSlot, [&](auto& drv) { angle = drv.GetAngle().value; }));
     CHECK_EQ(angle, 0x1234u);
     CHECK(!f.enc.VisitDriver(EncoderManager::ENCODER_SLOT_3, [](auto&) {}));
     CHECK(!f.enc.VisitDriver(EncoderManager::MAX_ENCODER_DEVICES, [](auto&) {}));
@@ -189,4 +189,32 @@ HF_TEST(Encoder_ABusErrorFailsOneReadOnly) {
     CHECK(f.enc.ReadAngle(kSlot, angle) == EncoderError::SPI_COMMUNICATION_FAILED);
     CHECK(f.enc.ReadAngle(kSlot, angle) == EncoderError::SUCCESS);
     CHECK_EQ(angle, 0x1234u);
+}
+
+// The driver's getters return as5047u::Result<T>: a failed read carries its error and is never
+// reported, or stored, as a reading.
+
+HF_TEST(Encoder_ReadDiagnosticsReportsADeadBus) {
+    // A failed ERRFL read used to come back as 0 and the diagnostics said communication_ok.
+    Fixture f;
+    As5047uDiagnostics d{};
+    d.communication_ok = true;
+    f.spi.FailNext(hf_spi_err_t::SPI_ERR_TRANSFER_FAILED, 1000);
+    CHECK(f.enc.ReadDiagnostics(kSlot, d) == EncoderError::SPI_COMMUNICATION_FAILED);
+}
+
+HF_TEST(Encoder_AFailedReadLeavesTheOutputUntouched) {
+    Fixture f;
+    uint16_t angle = 0xBEEF;
+    f.spi.FailNext(hf_spi_err_t::SPI_ERR_TRANSFER_FAILED, 1);
+    CHECK(f.enc.ReadAngle(kSlot, angle) == EncoderError::SPI_COMMUNICATION_FAILED);
+    CHECK_EQ(angle, 0xBEEFu);  // not overwritten with the 0 of a failed read
+    double rpm = 1.5;
+    f.spi.FailNext(hf_spi_err_t::SPI_ERR_TRANSFER_FAILED, 1);
+    CHECK(f.enc.ReadVelocityRPM(kSlot, rpm) == EncoderError::SPI_COMMUNICATION_FAILED);
+    CHECK(rpm == 1.5);
+    EncoderFieldStrength field{};
+    field.agc = 7;
+    f.spi.FailNext(hf_spi_err_t::SPI_ERR_TRANSFER_FAILED, 1);
+    CHECK(f.enc.ReadFieldStrength(kSlot, field) == EncoderError::SPI_COMMUNICATION_FAILED);
 }

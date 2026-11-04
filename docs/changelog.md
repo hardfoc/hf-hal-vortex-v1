@@ -5,6 +5,19 @@ What changed in the Vortex V1 HAL, newest first. Releases are tagged `vX.Y.Z` an
 
 ## Unreleased
 
+### Breaking
+
+- hf-core and hf-as5047u-driver are bumped to the AS5047U getters that return `as5047u::Result<T>`. Code that reads
+  the sensor through `EncoderManager::VisitDriver()` or the handler reads `.value` after checking `.ok()`.
+
+### Fixed
+
+- `EncoderManager::ReadDiagnostics()` filled `As5047uDiagnostics` with `communication_ok = true` when its ERRFL read
+  failed (the failed read came back as 0, and the read's transport flags were discarded). It now returns the bus
+  error and leaves the struct alone. `ReadAngle()`, `ReadAngleDegrees()`, `ReadVelocityRPM()` and
+  `ReadFieldStrength()` no longer overwrite the caller's value with the 0 of a failed read; their error now also
+  comes from the read's own `Result`, not only from the sticky flags.
+
 ### Changed
 
 - The documentation builds with the shared HardFOC theme (`hardfoc-mkdocs-theme`); the copied template, hooks and

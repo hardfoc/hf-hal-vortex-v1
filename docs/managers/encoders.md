@@ -12,11 +12,11 @@ created automatically**: you create each device. Source: [`EncoderManager.h`](..
 | `DeleteDevice(index)` | Removes it |
 | `ReadAngle(index, uint16_t& counts)`, `ReadAngleDegrees(index, double& deg)` | 14-bit angle, or degrees |
 | `ReadVelocityRPM(index, double& rpm)` | Velocity from the sensor |
-| `ReadDiagnostics(index, As5047uDiagnostics&)` | Error flags (one ERRFL read) and the manager's counters |
+| `ReadDiagnostics(index, As5047uDiagnostics&)` | Error flags (one ERRFL read) and the manager's counters; when that read fails, the bus error is returned and the struct is not filled in |
 | `ReadFieldStrength(index, EncoderFieldStrength&)` | AGC value and CORDIC magnitude: how strong the magnet looks |
 | `SetZeroPosition(index, counts)` | Zero offset |
 | `ReadAllAngles(...)`, `ReadAllVelocities(...)`, `CheckAllDevicesHealth()` | Every active device, under the manager lock |
-| `GetAs5047uHandler(index)`, `VisitDriver(index, fn)` | The handler, or `fn(driver)` on the typed driver under the manager and handler locks, for chip features the manager does not wrap |
+| `GetAs5047uHandler(index)`, `VisitDriver(index, fn)` | The handler, or `fn(driver)` on the typed driver under the manager and handler locks, for chip features the manager does not wrap. The driver's getters return `as5047u::Result<T>`: check `.ok()` before using `.value` |
 | `IsDeviceValid`, `GetActiveDeviceIndices`, `GetAvailableDevices`, `GetDeviceType` | Device bookkeeping |
 | `GetLastError()`, `GetSystemDiagnostics(EncoderSystemDiagnostics&)`, `DumpStatistics()` | Counters and the last error |
 
